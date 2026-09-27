@@ -381,6 +381,19 @@ class CliDispatchTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Adapter sync passed.", result.stdout)
 
+    def test_version_reports_location_and_repository_revision(self) -> None:
+        result = subprocess.run(
+            [sys.executable, (ROOT / "scripts" / "tailtrail.py").as_posix(), "version"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Location:", result.stdout)
+        self.assertRegex(result.stdout, r"Revision: [0-9a-f]{7,40}( \(dirty\))?")
+
 
 if __name__ == "__main__":
     unittest.main()

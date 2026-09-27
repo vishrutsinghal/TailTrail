@@ -490,7 +490,27 @@ def print_version() -> int:
         print(f"Install manifest: {manifest}")
     else:
         print("Install manifest: not present")
+    print(f"Revision: {repository_revision()}")
     return 0
+
+
+def repository_revision() -> str:
+    """Report the checkout revision answering 'which code ran', best-effort."""
+    try:
+        completed = subprocess.run(
+            ["git", "-C", ROOT.as_posix(), "rev-parse", "--short", "HEAD"],
+            text=True, capture_output=True, check=False, timeout=15,
+        )
+        sha = completed.stdout.strip()
+        if completed.returncode != 0 or not sha:
+            return "not-a-git-checkout"
+        dirty = subprocess.run(
+            ["git", "-C", ROOT.as_posix(), "status", "--porcelain"],
+            text=True, capture_output=True, check=False, timeout=15,
+        )
+        return sha + (" (dirty)" if dirty.stdout.strip() else "")
+    except (OSError, ValueError):
+        return "revision-unavailable"
 
 
 def package_info(args: list[str]) -> int:
