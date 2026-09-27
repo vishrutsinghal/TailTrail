@@ -132,6 +132,86 @@ class SessionControlTests(unittest.TestCase):
         self.assertEqual(stopped["attachment"]["temporary_approvals"], "expired")
         self.assertEqual(stopped["attachment"]["reservation_release"], "released")
 
+    def test_archive_unarchive_round_trip_is_byte_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            LEDGER.init_run(root, "archive-me", "stale probe")
+            note = root / ".tailtrail" / "runs" / "archive-me" / "note.txt"
+            note.write_text("evidence payload\n", encoding="utf-8")
+            receipt = LEDGER.archive_run(root, "archive-me", "stale probe run")
+            self.assertFalse((root / ".tailtrail" / "runs" / "archive-me").exists())
+            self.assertTrue((root / ".tailtrail" / "archive" / "archive-me" / "note.txt").is_file())
+            self.assertEqual(receipt["run_id"], "archive-me")
+            self.assertFalse(receipt["forced"])
+            events = LEDGER.read_events(root / ".tailtrail" / "archive" / "archive-me" / "events.jsonl")
+            self.assertTrue(any(event["event_type"] == "tailtrail_run_archived" for event in events))
+            restored = LEDGER.unarchive_run(root, "archive-me")
+            self.assertEqual((root / ".tailtrail" / "runs" / "archive-me" / "note.txt").read_text(encoding="utf-8"), "evidence payload\n")
+            live_events = LEDGER.read_events(root / ".tailtrail" / "runs" / "archive-me" / "events.jsonl")
+            self.assertTrue(any(event["event_type"] == "tailtrail_run_unarchived" for event in live_events))
+        self.assertEqual(restored["run_id"], "archive-me")
+        self.assertEqual(restored["file_count"], len(receipt["files"]))
+
+    def test_active_lock_refuses_archive_without_forced_rationale(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            LOCK.create(root, "active probe", "active-run")
+            with self.assertRaisesRegex(ValueError, "active lock"):
+                LEDGER.archive_run(root, "active-run", "cleanup")
+            with self.assertRaisesRegex(ValueError, "rationale"):
+                LEDGER.archive_run(root, "active-run", "", True)
+            forced = LEDGER.archive_run(root, "active-run", "operator cleanup", True)
+            self.assertTrue(forced["forced"])
+            self.assertEqual(forced["lock_status"], "awaiting-approval")
+
+    def test_unarchive_refuses_missing_conflict_and_tampering(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with self.assertRaisesRegex(ValueError, "does not exist"):
+                LEDGER.unarchive_run(root, "ghost-run")
+            LEDGER.init_run(root, "conflict-run", "first incarnation")
+            LEDGER.archive_run(root, "conflict-run", "park it")
+            LEDGER.init_run(root, "conflict-run", "second incarnation")
+            with self.assertRaisesRegex(ValueError, "already exists live"):
+                LEDGER.unarchive_run(root, "conflict-run")
+            LEDGER.init_run(root, "tamper-run", "tamper probe")
+            LEDGER.archive_run(root, "tamper-run", "park it")
+            (root / ".tailtrail" / "archive" / "tamper-run" / "manifest.json").write_text("{}\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "byte-exact verification"):
+                LEDGER.unarchive_run(root, "tamper-run")
+
+    def test_list_separates_live_and_archived_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            LEDGER.init_run(root, "live-run", "keep working")
+            LEDGER.init_run(root, "parked-run", "park it")
+            LEDGER.archive_run(root, "parked-run", "done for now")
+            live = LEDGER.list_runs(root, False)
+            archived = LEDGER.list_runs(root, True)
+        self.assertEqual([row["run_id"] for row in live["runs"]], ["live-run"])
+        self.assertFalse(live["runs"][0]["archived"])
+        self.assertEqual([row["run_id"] for row in archived["runs"]], ["parked-run"])
+        self.assertTrue(archived["runs"][0]["archived"])
+
+    def test_archive_cli_reports_receipt_as_json(self) -> None:
+        import subprocess
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            LEDGER.init_run(root, "cli-run", "cli probe")
+            archived = subprocess.run(
+                [sys.executable, (ROOT / "scripts" / "session-control.py").as_posix(),
+                 "archive", "--root", root.as_posix(), "--run-id", "cli-run",
+                 "--reason", "cli cleanup", "--format", "json"],
+                cwd=ROOT, text=True, capture_output=True, check=False)
+            listed = subprocess.run(
+                [sys.executable, (ROOT / "scripts" / "session-control.py").as_posix(),
+                 "list", "--root", root.as_posix(), "--archived", "--format", "json"],
+                cwd=ROOT, text=True, capture_output=True, check=False)
+        self.assertEqual(archived.returncode, 0, archived.stdout + archived.stderr)
+        self.assertEqual(json.loads(archived.stdout)["run_id"], "cli-run")
+        self.assertEqual(listed.returncode, 0, listed.stdout + listed.stderr)
+        self.assertEqual([row["run_id"] for row in json.loads(listed.stdout)["runs"]], ["cli-run"])
+
 
 if __name__ == "__main__":
     unittest.main()

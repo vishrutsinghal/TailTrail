@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,6 +35,8 @@ EVENT_TYPES.add("host_decision_recorded")
 EVENT_TYPES.update({"learning_use_decision_recorded", "learning_use_attribution_recorded"})
 EVENT_TYPES.add("workflow_compiler_plan_rebased")
 EVENT_TYPES.add("workflow_ownership_rebased")
+EVENT_TYPES.add("tailtrail_run_archived")
+EVENT_TYPES.add("tailtrail_run_unarchived")
 
 EVENT_TYPES.update({"host_runtime_conformance_recorded", "spec_kit_anchor_and_slices_created", "spec_kit_slice_advanced", "spec_kit_evidence_planned", "spec_kit_evidence_recorded", "spec_kit_amendment_proposed", "spec_kit_amendment_approved", "spec_kit_recovery_planned", "spec_kit_convergence_recorded", "spec_kit_observability_recorded", "planning_revision_proposed", "planning_revision_superseded", "planning_revision_approved", "planning_authority_routed", "planning_aidlc_mode_switch_proposed", "planning_aidlc_mode_switch_approved", "planning_aidlc_mode_switch_fell_back", "planning_feature_controls_proposed", "planning_feature_controls_approved", "question_context_prepared", "question_quality_validated", "official_aidlc_host_questions_recorded", "aidlc_question_clarified", "aidlc_question_revision_proposed", "aidlc_question_revision_recorded", "aidlc_question_revision_approved", "workflow_ownership_bound", "workflow_capability_plan_declared", "workflow_preapproval_granted", "workflow_scope_captured", "workflow_code_change_lock_acquired", "workflow_code_change_lock_released", "workflow_storage_initialized", "workflow_storage_snapshot_captured", "workflow_state_created", "workflow_state_paused", "workflow_state_resumed", "workflow_state_cancelled", "workflow_compiler_plan_created", "workflow_runtime_activated", "workflow_stage_approval_recorded", "workflow_stage_approval_expired", "workflow_evidence_collected", "workflow_freshness_updated", "workflow_completion_receipt_recorded", "execution_evidence_recorded", "workflow_adapter_prepared", "workflow_adapter_result_recorded", "workflow_template_stage_advanced", "workflow_template_completed", "workflow_operational_checkpoint_recorded", "workflow_freshness_classified", "workflow_retry_prepared", "workflow_retry_recorded", "workflow_correction_packet_created", "workflow_recovery_replan_routed", "workflow_context_recorded", "workflow_token_telemetry_recorded", "workflow_learning_candidate_linked", "workflow_evaluation_emitted", "workflow_ci_receipt_ingested", "workflow_ci_continuation_advanced", "workflow_action_denied", "workflow_retention_cleanup_completed", "workflow_release_scenario_recorded", "workflow_real_run_proof_recorded", "workflow_enterprise_adapter_activated", "workflow_enterprise_child_linked", "workflow_enterprise_lease_acquired", "workflow_enterprise_event_ingested", "workflow_enterprise_backup_verified", "workflow_enterprise_migration_applied", "workflow_enterprise_rollback_applied", "workflow_enterprise_support_bundle_exported"})
 
@@ -170,6 +173,129 @@ def projection(root: Path, run_id: str) -> dict[str, Any]:
     invalidated = [event for event in events if event["event_type"] == "anchor_invalidated"]
     activity = {event_type: len([event for event in events if event["event_type"] == event_type]) for event_type in sorted(EVENT_TYPES) if any(event["event_type"] == event_type for event in events)}
     return {"schema_version": SCHEMA_VERSION, "type": "tailtrail-run-projection", "run_id": run_id, "goal": manifest["goal"], "status": "invalidated" if invalidated else ("approved" if approved else "draft"), "events": len(events), "activity": activity, "approved_anchor": approved[-1]["payload"] if approved else None, "latest_invalidation": invalidated[-1]["payload"] if invalidated else None}
+
+
+ARCHIVE_DIR_NAME = "archive"
+ACTIVE_LOCK_STATES = {"awaiting-approval", "approved"}
+ARCHIVE_RECEIPT_NAME = "archive-receipt.json"
+
+
+def archive_dir(root: Path) -> Path:
+    return root.resolve() / ".tailtrail" / ARCHIVE_DIR_NAME
+
+
+def archived_run_dir(root: Path, run_id: str) -> Path:
+    return archive_dir(root) / run_id
+
+
+def _manifest_files(directory: Path) -> list[dict[str, Any]]:
+    """Hash every file under a run directory, excluding the archive receipt itself."""
+    rows: list[dict[str, Any]] = []
+    for path in sorted(directory.rglob("*")):
+        if not path.is_file() or path.name == ARCHIVE_RECEIPT_NAME:
+            continue
+        rows.append({"path": path.relative_to(directory).as_posix(), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    return rows
+
+
+def _lock_status(directory: Path) -> str | None:
+    """Read a run's Planning Lock status best-effort; None when absent or unreadable."""
+    try:
+        payload = json.loads((directory / "planning" / "lock-v1.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+    return str(payload.get("status", "")) if isinstance(payload, dict) else None
+
+
+def archive_run(root: Path, run_id: str, reason: str, force: bool = False) -> dict[str, Any]:
+    """Retire a run to the archive with audit continuity (never delete).
+
+    Writes the archive receipt into the run first, records the archive event
+    in the live ledger, then moves the whole directory. Active locks
+    (awaiting-approval, approved) refuse without --force plus a rationale;
+    an unreadable lock file also refuses without force. Resolution ignores
+    archived runs automatically because they leave `.tailtrail/runs/`.
+    """
+    root = root.resolve()
+    source = state_dir(root, run_id)
+    if not (source / "manifest.json").is_file():
+        raise ValueError(f"run `{run_id}` does not exist")
+    rationale = str(reason or "").strip()
+    if not rationale:
+        raise ValueError("archive requires a rationale")
+    lock_path = source / "planning" / "lock-v1.json"
+    status = _lock_status(source)
+    if lock_path.exists() and status is None:
+        if not force:
+            raise ValueError(f"run `{run_id}` lock state is unreadable; archive requires --force with a rationale")
+    elif status in ACTIVE_LOCK_STATES and not force:
+        raise ValueError(f"run `{run_id}` has an active lock (`{status}`); archive requires --force with a rationale")
+    with RunLock(root / ".tailtrail" / ".lock"):
+        append_event(root, run_id, "tailtrail_run_archived",
+                     {"reason": rationale, "forced": bool(force), "lock_status": status})
+        files = _manifest_files(source)
+        receipt = {"schema_version": SCHEMA_VERSION, "type": "tailtrail-run-archive-receipt", "run_id": run_id,
+                   "archived_at": utc_now(), "reason": rationale, "forced": bool(force),
+                   "lock_status": status, "files": files}
+        atomic_json(source / ARCHIVE_RECEIPT_NAME, receipt)
+        destination = archived_run_dir(root, run_id)
+        if destination.exists():
+            raise ValueError(f"archived run `{run_id}` already exists")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(source.as_posix(), destination.as_posix())
+    return receipt
+
+
+def unarchive_run(root: Path, run_id: str) -> dict[str, Any]:
+    """Restore an archived run byte-exactly, verified against its receipt.
+
+    Verification runs before the move: any drift aborts with no partial
+    restore. Restoring over a live run directory is refused.
+    """
+    root = root.resolve()
+    source = archived_run_dir(root, run_id)
+    live = state_dir(root, run_id)
+    receipt_path = source / ARCHIVE_RECEIPT_NAME
+    if not source.is_dir() or not (source / "manifest.json").is_file():
+        raise ValueError(f"archived run `{run_id}` does not exist")
+    if live.exists():
+        raise ValueError(f"run `{run_id}` already exists live; resolve the conflict first")
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ValueError(f"archived run `{run_id}` has no readable receipt ({error})") from error
+    expected = receipt.get("files", []) if isinstance(receipt, dict) else []
+    with RunLock(root / ".tailtrail" / ".lock"):
+        current = _manifest_files(source)
+        if current != expected:
+            raise ValueError(f"archived run `{run_id}` fails byte-exact verification against its receipt; refusing restore")
+        shutil.move(source.as_posix(), live.as_posix())
+    event = append_event(root, run_id, "tailtrail_run_unarchived", {"file_count": len(expected)})
+    return {"schema_version": SCHEMA_VERSION, "type": "tailtrail-run-unarchive-receipt", "run_id": run_id,
+            "restored_at": event["created_at"], "file_count": len(expected),
+            "boundary": "Restore verified byte-exact before moving; the unarchive event is new history, not rewritten history."}
+
+
+def list_runs(root: Path, archived: bool = False) -> dict[str, Any]:
+    """List live runs, or archived runs with --archived. Read-only."""
+    root = root.resolve()
+    base = archive_dir(root) if archived else root / ".tailtrail" / "runs"
+    rows: list[dict[str, Any]] = []
+    if base.is_dir():
+        for child in sorted(path for path in base.iterdir() if path.is_dir()):
+            manifest_path = child / "manifest.json"
+            if not manifest_path.is_file():
+                continue
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (ValueError, json.JSONDecodeError):
+                continue
+            rows.append({"run_id": child.name, "archived": archived,
+                         "status": str(manifest.get("status", "unknown")),
+                         "lock_status": _lock_status(child),
+                         "goal": str(manifest.get("goal", ""))})
+    return {"schema_version": SCHEMA_VERSION, "type": "tailtrail-run-list", "archived": archived, "runs": rows,
+            "boundary": "Read-only inventory. Archived runs never surface in live resolution unless explicitly unarchived."}
 
 
 def parser() -> argparse.ArgumentParser:
