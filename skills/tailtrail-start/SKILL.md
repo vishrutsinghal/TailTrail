@@ -29,4 +29,4 @@ description: Use when the user explicitly asks TailTrail to handle a task, inclu
 - Portable commands: quote for the host shell (POSIX single-quotes break `cmd.exe`; `list2cmdline` quoting on Windows); prefer `sys.executable -m ...` proofs that run on sh, cmd, and PowerShell.
 
 ---
-_TailTrail instructions revision: `9dce4f402022` — quote this line if asked whether instructions are current._
+_TailTrail instructions revision: `cafc2ff9f867` — quote this line if asked whether instructions are current._

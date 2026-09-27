@@ -36,7 +36,7 @@ class WorkflowCiContinuationTests(unittest.TestCase):
 
     def setup_workflow(self, root: Path, suffix: str = "", progress: bool = True, feature_ids: list[str] | None = None) -> tuple[str, str, str]:
         self._git(root, "init", "-q"); self._git(root, "config", "user.email", "phase9@example.invalid"); self._git(root, "config", "user.name", "Phase 9 Test")
-        (root / "src").mkdir(); (root / "src" / "service.py").write_text("def safe(): return True\n", encoding="utf-8")
+        (root / "src").mkdir(); (root / "src" / "service.py").write_bytes(b"def safe(): return True\n")
         self._git(root, "add", "src/service.py"); self._git(root, "commit", "-qm", "initial")
         run_id = f"phase9-run{suffix}"
         selected = feature_ids or ["code-graph-mapper","requirement-completion-harness","evidence-aware-testing","review"]
