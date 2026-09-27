@@ -190,6 +190,19 @@ BEHAVIOR_CHAIN_LINE_SPAN = 160
 SCOPE_QUESTION_OPTION_CAP = 3
 RESOLVED_OWNER_MIN_STRONG_EDGES = 2
 RESOLVED_OWNER_MIN_EDGE_KINDS = 2
+DEEP_EDGE_KINDS = frozenset({
+    "tested-by",
+    "calls-symbol",
+    "captures-returned-value",
+    "writes-ui-state",
+    "catches-error",
+    "renders-returned-value",
+    "renders-ui-state",
+    "renders-caught-error",
+    "defines-behavior-handler",
+    "imports-module",
+    "loads-module",
+})
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -2760,10 +2773,20 @@ def evidence_document(
     if state == "not-run":
         state = "resolved" if implementation_owners else "unresolved"
     if state == "resolved" and implementation_owners:
-        thin = sorted({path for path in implementation_owners if _thin_owner_evidence(candidate_rows, edge_rows, path)})
+        sources_by_path = {
+            str(row.get("path", "")): {str(value) for value in row.get("seed_sources", [])}
+            for row in candidate_rows if isinstance(row, dict)
+        }
+        asserted = {path for path in implementation_owners if "explicit-path" in sources_by_path.get(path, set())}
+        thin = sorted({path for path in implementation_owners if path not in asserted and _thin_owner_evidence(candidate_rows, edge_rows, path)})
         if thin:
             state = "ambiguous"
             investigation_row["resolution_failure_reason"] = "thin-owner-evidence-requires-confirmation"
+        else:
+            shallow = sorted({path for path in implementation_owners if path not in asserted and not _has_deep_support(candidate_rows, edge_rows, path)})
+            if shallow:
+                state = "ambiguous"
+                investigation_row["resolution_failure_reason"] = "shallow-owner-evidence-requires-confirmation"
     requirements = []
     resolved_reason_codes = (
         ["bounded-static-owner-resolved"]
@@ -2857,6 +2880,33 @@ def _thin_owner_evidence(candidate_rows: list[dict[str, Any]], edge_rows: list[d
     """
     count, kinds = _owner_strong_support(candidate_rows, edge_rows, path)
     return count < RESOLVED_OWNER_MIN_STRONG_EDGES or len(kinds) < RESOLVED_OWNER_MIN_EDGE_KINDS
+
+
+def _has_deep_support(candidate_rows: list[dict[str, Any]], edge_rows: list[dict[str, Any]], path: str) -> bool:
+    """Check whether one owner has behavior-grade relationship evidence.
+
+    Deep edges (behavior, caller, structural, proof links at medium strength
+    or better) prove the file does something; lexical proximity
+    (definitions, error strings, literals, scope echo) only proves it exists
+    nearby. All-shallow support asks no matter how many edges pile on.
+    """
+    edges = {str(row.get("edge_id")): row for row in edge_rows if isinstance(row, dict)}
+    candidate = next((row for row in candidate_rows if isinstance(row, dict) and str(row.get("path", "")) == path), {})
+    candidate_id = str(candidate.get("candidate_id", ""))
+    for edge_id in candidate.get("evidence_edge_ids", []):
+        edge = edges.get(str(edge_id), {})
+        if not isinstance(edge, dict):
+            continue
+        if str(edge.get("strength", "")) not in {"strong", "medium"}:
+            continue
+        if not candidate_id or candidate_id not in {
+            str(edge.get("from_candidate_id", "")),
+            str(edge.get("to_candidate_id", "")),
+        }:
+            continue
+        if str(edge.get("kind", "")) in DEEP_EDGE_KINDS:
+            return True
+    return False
 
 
 def resolved_scope_breadth(document: dict[str, Any]) -> dict[str, Any] | None:

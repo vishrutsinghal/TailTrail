@@ -2704,12 +2704,12 @@ class ThinEvidenceGateTests(unittest.TestCase):
              "status": "included", "confidence": "high", "reason_codes": ["bounded-static-owner-evidence"],
              "evidence_edge_ids": [row["edge_id"] for row in edges
                                    if "cand-aaaaaaaaaaaa" in (row["from_candidate_id"], row["to_candidate_id"])],
-             "content_fingerprint": "sha256:" + "a" * 64, "seed_sources": ["explicit-path"]},
+             "content_fingerprint": "sha256:" + "a" * 64, "seed_sources": ["lexical-path"]},
             {"path": "tests/test_service.py", "candidate_id": "cand-bbbbbbbbbbbb", "role": "test",
              "status": "proof-only", "confidence": "high", "reason_codes": ["test-is-proof-not-owner"],
              "evidence_edge_ids": [row["edge_id"] for row in edges
                                    if "cand-bbbbbbbbbbbb" in (row["from_candidate_id"], row["to_candidate_id"])],
-             "content_fingerprint": "sha256:" + "b" * 64, "seed_sources": ["explicit-path"]},
+             "content_fingerprint": "sha256:" + "b" * 64, "seed_sources": ["lexical-path"]},
         ]
         frames = [{"requirement_id": "req-frame-000000000001", "display_id": "REQ-01",
                    "statement": "Fix the service.", "query_terms": ["service"]}]
@@ -2753,6 +2753,89 @@ class ThinEvidenceGateTests(unittest.TestCase):
             projection = navigator_scope.role_projection(document)
         self.assertEqual(document["requirements"][0]["proof_paths"], ["tests/test_service.py"])
         self.assertEqual([row["path"] for row in projection["proof_paths"]], ["tests/test_service.py"])
+
+
+class DepthGateTests(unittest.TestCase):
+    def _document(self, root: Path, edges):
+        candidates = [
+            {"path": "src/service.py", "candidate_id": "cand-aaaaaaaaaaaa", "role": "implementation-owner",
+             "status": "included", "confidence": "high", "reason_codes": ["bounded-static-owner-evidence"],
+             "evidence_edge_ids": [row["edge_id"] for row in edges
+                                   if "cand-aaaaaaaaaaaa" in (row["from_candidate_id"], row["to_candidate_id"])],
+             "content_fingerprint": "sha256:" + "a" * 64, "seed_sources": ["lexical-path"]},
+        ]
+        frames = [{"requirement_id": "req-frame-000000000001", "display_id": "REQ-01",
+                   "statement": "Fix the service.", "query_terms": ["service"]}]
+        return navigator_scope.evidence_document(
+            root, "Fix the service.", frames, candidates, edges=edges, investigation={"state": "resolved"},
+        )
+
+    def _edge(self, edge_id: str, kind: str, strength: str = "strong"):
+        return {"edge_id": edge_id, "kind": kind, "from_candidate_id": "cand-aaaaaaaaaaaa",
+                "to_candidate_id": "cand-aaaaaaaaaaaa", "strength": strength, "reason_codes": ["static-relationship"]}
+
+    def test_shallow_pile_on_asks_despite_edge_count(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "asserts-behavior-guard"),
+                self._edge("edge-cccccccccccc", "raises-behavior-error"),
+                self._edge("edge-dddddddddddd", "contains-user-visible-literal"),
+            ])
+        self.assertEqual(document["state"], "ambiguous")
+        self.assertEqual(document["investigation"]["resolution_failure_reason"], "shallow-owner-evidence-requires-confirmation")
+
+    def test_single_deep_edge_still_fails_thin_first(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self._document(Path(temp), [self._edge("edge-aaaaaaaaaaaa", "tested-by")])
+        self.assertEqual(document["state"], "ambiguous")
+        self.assertEqual(document["investigation"]["resolution_failure_reason"], "thin-owner-evidence-requires-confirmation")
+
+    def test_deep_support_resolves_and_medium_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            strong = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "tested-by"),
+            ])
+            self.assertEqual(strong["state"], "resolved")
+            medium = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "asserts-behavior-guard"),
+                self._edge("edge-cccccccccccc", "tested-by", "medium"),
+            ])
+            weak = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "asserts-behavior-guard"),
+                self._edge("edge-cccccccccccc", "tested-by", "weak"),
+            ])
+        self.assertEqual(medium["state"], "resolved")
+        self.assertEqual(weak["state"], "ambiguous")
+        self.assertEqual(weak["investigation"]["resolution_failure_reason"], "shallow-owner-evidence-requires-confirmation")
+
+    def test_weak_deep_edge_confirms_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "tested-by", "weak"),
+            ])
+        self.assertEqual(document["state"], "ambiguous")
+
+    def test_explicit_host_assertion_bypasses_evidence_gates(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            candidates = [
+                {"path": "src/service.py", "candidate_id": "cand-aaaaaaaaaaaa", "role": "implementation-owner",
+                 "status": "included", "confidence": "high", "reason_codes": ["explicit-path-owner-candidate"],
+                 "evidence_edge_ids": ["edge-aaaaaaaaaaaa"],
+                 "content_fingerprint": "sha256:" + "a" * 64, "seed_sources": ["explicit-path"]},
+            ]
+            edges = [self._edge("edge-aaaaaaaaaaaa", "defines-symbol")]
+            frames = [{"requirement_id": "req-frame-000000000001", "display_id": "REQ-01",
+                       "statement": "Fix the service.", "query_terms": ["service"]}]
+            document = navigator_scope.evidence_document(
+                root, "Fix the service.", frames, candidates, edges=edges, investigation={"state": "resolved"},
+            )
+        self.assertEqual(document["state"], "resolved")
 
     def test_resolved_scope_breadth_counts_owners_only(self) -> None:
         resolved = {"state": "resolved", "requirements": [
