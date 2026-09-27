@@ -2638,6 +2638,64 @@ class ScopeAnswerTests(unittest.TestCase):
         self.assertIn("--scope-owner", result.stdout)
         self.assertIn("--scope-round", result.stdout)
 
+    def test_from_run_inherits_single_owner_answers_only(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            prior = root / ".tailtrail" / "runs" / "start-00000000000000-aaaaaa" / "planning"
+            prior.mkdir(parents=True)
+            goal = "Fix the widget"
+            interpretation = {"schema_version": "1", "type": "tailtrail-host-requirement-interpretation",
+                              "goal": goal}
+            (prior / "start-report-v1.json").write_text(json.dumps({"report": {
+                "goal": goal,
+                "navigator": {
+                    "requirement_interpretation": interpretation,
+                    "scope_evidence": {"requirements": [
+                        {"requirement_id": "req-1", "display_id": "REQ-01",
+                         "implementation_owners": ["src/widget.py"]},
+                        {"requirement_id": "req-2", "display_id": "REQ-02",
+                         "implementation_owners": ["a.py", "b.py"]},
+                    ]},
+                },
+            }}), encoding="utf-8")
+            answers = task_start.inherit_from_run(root, "start-00000000000000-aaaaaa", goal)
+            self.assertEqual(answers, ["REQ-01=src/widget.py"])
+            with self.assertRaisesRegex(ValueError, "exact same goal"):
+                task_start.inherit_from_run(root, "start-00000000000000-aaaaaa", "Different goal")
+            with self.assertRaisesRegex(ValueError, "cannot read prior run"):
+                task_start.inherit_from_run(root, "start-99999999999999-bbbbbb", goal)
+            with self.assertRaisesRegex(ValueError, "invalid run ID"):
+                task_start.inherit_from_run(root, "../escape", goal)
+
+    def test_locked_scope_breadth_overrides_lexical_counts_in_mode_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            likely = [{"path": f"src/mod{i}.py"} for i in range(32)]
+            resolved_evidence = {"state": "resolved", "requirements": [
+                {"implementation_owners": ["src/widget.py"]}]}
+            calibration: dict[str, Any] = {}
+            lite = task_start._aidlc_mode_selection_inner(
+                "Fix the widget", None, root,
+                {"likely_impacted_files": likely, "scope_evidence": resolved_evidence},
+                None, calibration)
+            lexical = task_start._aidlc_mode_selection_inner(
+                "Fix the widget", None, root,
+                {"likely_impacted_files": likely, "scope_evidence": None},
+                None, {})
+        # Tmp roots lack the official pack, so both fall back to lite mode;
+        # the routing selection is what the breadth override changes.
+        self.assertEqual(lite["selection"], "default")
+        self.assertEqual(lexical["selection"], "scope-complexity-standard")
+        self.assertEqual(calibration["locked_scope_breadth"], {"editable_files": 1, "paths": ["src/widget.py"]})
+
+    def test_from_run_flag_in_start_help(self) -> None:
+        result = subprocess.run(
+            [sys.executable, (ROOT / "scripts" / "task-start.py").as_posix(), "--help"],
+            cwd=ROOT, text=True, capture_output=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--from-run", result.stdout)
+
 
 class ThinEvidenceGateTests(unittest.TestCase):
     def _document(self, root: Path, edges):
@@ -2695,6 +2753,18 @@ class ThinEvidenceGateTests(unittest.TestCase):
             projection = navigator_scope.role_projection(document)
         self.assertEqual(document["requirements"][0]["proof_paths"], ["tests/test_service.py"])
         self.assertEqual([row["path"] for row in projection["proof_paths"]], ["tests/test_service.py"])
+
+    def test_resolved_scope_breadth_counts_owners_only(self) -> None:
+        resolved = {"state": "resolved", "requirements": [
+            {"implementation_owners": ["a.py", "b.py"]},
+            {"implementation_owners": ["b.py", "c.py"]},
+        ]}
+        breadth = navigator_scope.resolved_scope_breadth(resolved)
+        assert breadth is not None
+        self.assertEqual(breadth, {"editable_files": 3, "paths": ["a.py", "b.py", "c.py"]})
+        self.assertIsNone(navigator_scope.resolved_scope_breadth({"state": "ambiguous", "requirements": []}))
+        self.assertIsNone(navigator_scope.resolved_scope_breadth({"state": "resolved", "requirements": []}))
+        self.assertIsNone(navigator_scope.resolved_scope_breadth(None))
 
 
 class PacketIdentityTests(unittest.TestCase):

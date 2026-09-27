@@ -1236,6 +1236,14 @@ def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, pl
         plan.get("scope_evidence"),
         root,
     )
+    locked_scope = navigator_scope.resolved_scope_breadth(plan.get("scope_evidence")) if isinstance(plan, dict) else None
+    if locked_scope is not None:
+        complexity = {
+            **complexity,
+            "affected_files": locked_scope["editable_files"],
+            "affected_paths": locked_scope["paths"],
+            "source": f"{complexity.get('source', '')}+locked-scope",
+        }
     scope_signal, scope_floor_lite = evaluate_scope_signal(complexity)
     # Derive host-agent intent signal: when _aidlc_intent returns "requested" or "standard",
     # the user's natural-language goal already contains an AIDLC mode request
@@ -1248,6 +1256,7 @@ def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, pl
         "keyword_signal": keyword_signal,
         "scope_signal": scope_signal,
         "scope_floor_lite": scope_floor_lite,
+        "locked_scope_breadth": locked_scope,
         "routing_selected": routing["selected"],
         "complexity": complexity,
     })
@@ -2773,6 +2782,39 @@ def build_report(
         "code_intelligence": code_intelligence_policy(command_prefix),
         "next_step": "Review the guided delivery plan, then approve or edit before implementation.",
     }
+
+
+def inherit_from_run(root: Path, run_id: str, goal: str) -> list[str]:
+    """Inherit single-owner scope answers from a prior run with the same goal.
+
+    Returns REQ-ID=path display forms for requirements the prior run
+    resolved to exactly one owner. Multi-owner requirements are left for
+    fresh answers. The requirement interpretation itself is NOT inherited:
+    only the original submission contract validates, and it is not
+    persisted — supply it normally. Anything else fails loudly instead of
+    carrying stale decisions forward.
+    """
+    safe = str(run_id or "")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{1,80}", safe) or ".." in safe:
+        raise ValueError(f"invalid run ID for --from-run: {run_id}")
+    report_path = root.resolve() / ".tailtrail" / "runs" / safe / "planning" / "start-report-v1.json"
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ValueError(f"cannot read prior run `{safe}` for --from-run ({error})") from error
+    saved = report.get("report", {}) if isinstance(report, dict) else {}
+    if not isinstance(saved, dict) or saved.get("goal") != goal:
+        raise ValueError("--from-run requires the exact same goal as the prior run")
+    navigator = saved.get("navigator", {}) if isinstance(saved.get("navigator"), dict) else {}
+    answers: list[str] = []
+    for row in (navigator.get("scope_evidence", {}) or {}).get("requirements", []):
+        if not isinstance(row, dict):
+            continue
+        owners = sorted({str(path) for path in row.get("implementation_owners", []) if str(path)})
+        display = str(row.get("display_id", "")).strip()
+        if len(owners) == 1 and display:
+            answers.append(f"{display}={owners[0]}")
+    return answers
 
 
 def prepare_scope_answer_proposal(report: dict[str, Any], root: Path, raw_answers: list[str], answer_round: int, host: str | None) -> tuple[dict[str, Any] | None, list[str], str | None]:
@@ -5597,6 +5639,7 @@ def main() -> int:
     parser.add_argument("--command", dest="reproduction_command", help="Declare that a reproduction command is available. Its content is not copied into the DI-2 plan.")
     parser.add_argument("--run-id", help="Optional exact TailTrail run ID. Enables evidence-driven correction and recovery routing for that run only.")
     parser.add_argument("--planning-run-id", help="Optional new Planning Lock run ID. Defaults to a generated run ID.")
+    parser.add_argument("--from-run", help="Inherit single-owner scope answers from a prior run with the exact same goal. Cannot combine with --requirement-intake-id or --scope-owner; supply --requirement-interpretation normally.")
     parser.add_argument("--reference-root", action="append", default=[], help="Read-only reference repository path for this plan. Repeat for multiple references.")
     parser.add_argument("--related-repo", action="append", default=[], help="Read-only sibling/related repository path. Repeat as needed.")
     parser.add_argument("--design-reference", action="append", default=[], help="Read-only local or external design reference. Repeat as needed.")
@@ -5843,6 +5886,15 @@ def main() -> int:
         host_requirement_proposal = _parse_json_flag(
             "--requirement-interpretation", args.requirement_interpretation, args.requirement_interpretation_base64
         )
+        if args.from_run:
+            if args.requirement_intake_id:
+                parser.error("--from-run cannot be combined with --requirement-intake-id")
+            if args.scope_owner:
+                parser.error("--from-run carries the prior run's scope answers; pass no --scope-owner with it")
+            try:
+                args.scope_owner = inherit_from_run(root, args.from_run, goal)
+            except ValueError as error:
+                parser.error(str(error))
         if host_requirement_proposal and (
             workflow_preview.workflow_type == "debug-investigation"
             or (

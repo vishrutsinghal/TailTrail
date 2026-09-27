@@ -2859,6 +2859,29 @@ def _thin_owner_evidence(candidate_rows: list[dict[str, Any]], edge_rows: list[d
     return count < RESOLVED_OWNER_MIN_STRONG_EDGES or len(kinds) < RESOLVED_OWNER_MIN_EDGE_KINDS
 
 
+def resolved_scope_breadth(document: dict[str, Any]) -> dict[str, Any] | None:
+    """Return locked-scope breadth for mode routing, or None when unresolved.
+
+    Counts distinct implementation owners across requirements — the files
+    the evidence actually proposes editing — instead of every lexically
+    adjacent candidate. Mode selection prefers this over lexical breadth
+    whenever the scope already resolved; ambiguous scope keeps the existing
+    conservative signal.
+    """
+    if not isinstance(document, dict) or document.get("state") != "resolved":
+        return None
+    owners = sorted({
+        str(path)
+        for row in document.get("requirements", [])
+        if isinstance(row, dict)
+        for path in row.get("implementation_owners", [])
+        if str(path)
+    })
+    if not owners:
+        return None
+    return {"editable_files": len(owners), "paths": owners}
+
+
 def verify_decision_fingerprint(document: dict[str, Any]) -> bool:
     candidate = dict(document)
     observed = candidate.pop("decision_fingerprint", None)
