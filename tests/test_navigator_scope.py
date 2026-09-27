@@ -2785,6 +2785,17 @@ class DepthGateTests(unittest.TestCase):
         self.assertEqual(document["state"], "ambiguous")
         self.assertEqual(document["investigation"]["resolution_failure_reason"], "shallow-owner-evidence-requires-confirmation")
 
+    def test_structural_edges_alone_do_not_prove_ownership(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "imports-module"),
+                self._edge("edge-cccccccccccc", "loads-module"),
+                self._edge("edge-dddddddddddd", "declares-edit-boundary"),
+            ])
+        self.assertEqual(document["state"], "ambiguous")
+        self.assertEqual(document["investigation"]["resolution_failure_reason"], "shallow-owner-evidence-requires-confirmation")
+
     def test_single_deep_edge_still_fails_thin_first(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             document = self._document(Path(temp), [self._edge("edge-aaaaaaaaaaaa", "tested-by")])
@@ -2819,6 +2830,19 @@ class DepthGateTests(unittest.TestCase):
                 self._edge("edge-bbbbbbbbbbbb", "tested-by", "weak"),
             ])
         self.assertEqual(document["state"], "ambiguous")
+
+    def test_ui_behavior_edges_count_as_deep_support(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "renders-destination"),
+            ])
+            single_kind = self._document(Path(temp), [
+                self._edge("edge-aaaaaaaaaaaa", "defines-symbol"),
+                self._edge("edge-bbbbbbbbbbbb", "defines-ui-handler"),
+            ])
+        self.assertEqual(document["state"], "resolved")
+        self.assertEqual(single_kind["state"], "resolved")
 
     def test_explicit_host_assertion_bypasses_evidence_gates(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

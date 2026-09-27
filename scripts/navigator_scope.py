@@ -199,9 +199,12 @@ DEEP_EDGE_KINDS = frozenset({
     "renders-returned-value",
     "renders-ui-state",
     "renders-caught-error",
+    "renders-destination",
+    "emits-user-visible-literal",
+    "writes-navigation-state",
+    "defines-ui-handler",
+    "binds-ui-action",
     "defines-behavior-handler",
-    "imports-module",
-    "loads-module",
 })
 
 
@@ -2885,10 +2888,10 @@ def _thin_owner_evidence(candidate_rows: list[dict[str, Any]], edge_rows: list[d
 def _has_deep_support(candidate_rows: list[dict[str, Any]], edge_rows: list[dict[str, Any]], path: str) -> bool:
     """Check whether one owner has behavior-grade relationship evidence.
 
-    Deep edges (behavior, caller, structural, proof links at medium strength
-    or better) prove the file does something; lexical proximity
-    (definitions, error strings, literals, scope echo) only proves it exists
-    nearby. All-shallow support asks no matter how many edges pile on.
+    Deep edges (behavior, caller, proof links at medium strength or better)
+    prove the file does something; structural dependency (imports/loads),
+    lexical proximity, and scope echo only prove it exists nearby. An owner
+    resting solely on the latter asks no matter how many edges pile on.
     """
     edges = {str(row.get("edge_id")): row for row in edge_rows if isinstance(row, dict)}
     candidate = next((row for row in candidate_rows if isinstance(row, dict) and str(row.get("path", "")) == path), {})
