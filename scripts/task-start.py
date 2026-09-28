@@ -1167,7 +1167,54 @@ def scope_question_precondition(
     }
 
 
-def aidlc_mode_selection(goal: str, requested: str | None, root: Path, plan: dict[str, Any], manifest: str | None) -> dict[str, Any]:
+# --- Complexity corroboration (REQ-01/REQ-02) ---------------------------------
+#
+# File-count breadth alone is lexical noise (twenty candidate files, one real
+# edit). A scope_signal escalates only when corroborated by a second witness
+# from the same complexity dict. Threshold keys are read from the dict itself
+# (shared with metrics_extractor.evaluate_scope_signal); no new constants.
+_CORROBORATING_SCOPE_SIGNALS: tuple[tuple[str, str], ...] = (
+    ("cross_layer_edges", "cross_layer_edges_standard"),
+    ("call_chain_depth_stddev", "call_chain_depth_stddev_standard"),
+    ("module_resolution_ambiguous", "module_resolution_ambiguous_standard"),
+    ("new_external_deps", "new_external_deps_standard"),
+)
+
+
+def _corroborated_scope_signal(complexity: dict[str, Any] | None) -> tuple[bool, list[str]]:
+    """Return (corroborated, fired) for the non-file-count scope signals.
+
+    ``corroborated`` is True when at least one corroborating signal fired.
+    ``fired`` names every corroborating signal at or above its threshold,
+    including ``behavior_chain_incomplete``. ``affected_files`` is deliberately
+    excluded: it is the signal that requires corroboration, never the witness.
+    Unknown input (missing thresholds) reports uncorroborated — the caller
+    decides whether that conservatism applies.
+    """
+    fired: list[str] = []
+    if not isinstance(complexity, dict):
+        return False, fired
+    thresholds = complexity.get("thresholds")
+    if not isinstance(thresholds, dict) or not thresholds:
+        return False, fired
+    for metric_key, threshold_key in _CORROBORATING_SCOPE_SIGNALS:
+        try:
+            value = complexity.get(metric_key, 0)
+            threshold = thresholds.get(threshold_key)
+            if threshold is None or isinstance(value, bool):
+                continue
+            if float(value) >= float(threshold):
+                fired.append(metric_key)
+        except (TypeError, ValueError):
+            continue
+    if complexity.get("behavior_chain_incomplete") is True and bool(
+        thresholds.get("behavior_chain_incomplete_standard", True)
+    ):
+        fired.append("behavior_chain_incomplete")
+    return bool(fired), fired
+
+
+def aidlc_mode_selection(goal: str, requested: str | None, root: Path, plan: dict[str, Any], manifest: str | None, declared_complexity: str | None = None) -> dict[str, Any]:
     """Choose the smallest lifecycle mode from explicit wording and task evidence.
 
     A user-provided flag wins. Standard and Full are official-pack-backed when
@@ -1176,8 +1223,10 @@ def aidlc_mode_selection(goal: str, requested: str | None, root: Path, plan: dic
     R1 calibration runway: the dual-gate decision is appended to
     .tailtrail/aidlc-mode-decisions.jsonl (best-effort, never fails Start).
     """
+    if declared_complexity is not None and str(declared_complexity).strip().lower() not in ("simple", "complex"):
+        raise ValueError(f"declared complexity must be 'simple' or 'complex', got {declared_complexity!r}")
     calibration: dict[str, Any] = {}
-    selected = _aidlc_mode_selection_inner(goal, requested, root, plan, manifest, calibration)
+    selected = _aidlc_mode_selection_inner(goal, requested, root, plan, manifest, calibration, declared_complexity)
     if calibration:
         try:
             from metrics_extractor import append_mode_decision, build_mode_decision_entry
@@ -1191,7 +1240,7 @@ def aidlc_mode_selection(goal: str, requested: str | None, root: Path, plan: dic
     return selected
 
 
-def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, plan: dict[str, Any], manifest: str | None, calibration: dict[str, Any]) -> dict[str, Any]:
+def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, plan: dict[str, Any], manifest: str | None, calibration: dict[str, Any], declared_complexity: str | None = None) -> dict[str, Any]:
     """Dual-gate mode routing; publishes decision signals via ``calibration``.
 
     The calibration dict stays empty for explicit-flag / opt-out / explicit
@@ -1245,10 +1294,34 @@ def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, pl
             "source": f"{complexity.get('source', '')}+locked-scope",
         }
     scope_signal, scope_floor_lite = evaluate_scope_signal(complexity)
+    # --- Complexity corroboration + declared-complexity tie-break ---
+    # A bare file-count signal (lexical candidate breadth) does not escalate
+    # alone: it needs a corroborating witness from the same complexity dict.
+    # A host --complexity declaration is recorded evidence, never a verdict:
+    # "complex" may escalate one notch (safe direction); "simple" can never
+    # de-escalate corroborated evidence (unsafe direction) — disagreement is
+    # recorded for the host to see instead of being silently honored.
+    corroborated, corroborating_fired = _corroborated_scope_signal(complexity)
+    scope_signal_uncorroborated = bool(scope_signal) and not corroborated
+    effective_scope_signal = bool(scope_signal) and corroborated
+    declared = str(declared_complexity or "").strip().lower() or None
+    complexity_disagreement: str | None = None
+    if declared == "simple" and effective_scope_signal:
+        complexity_disagreement = (
+            "Host declared 'simple' but corroborated scope-complexity evidence "
+            f"fired ({', '.join(corroborating_fired)}); evidence wins, mode stays Standard. "
+            "A declaration cannot de-escalate corroborated evidence."
+        )
     # Derive host-agent intent signal: when _aidlc_intent returns "requested" or "standard",
     # the user's natural-language goal already contains an AIDLC mode request
     # (the host agent reliably captures this; the keyword table is retired).
     keyword_signal = intent in ("requested", "standard")
+    if declared == "simple" and not effective_scope_signal and (keyword_signal or routing["selected"]):
+        complexity_disagreement = (
+            "Host declared 'simple' but host-agent intent or Navigator risk routing "
+            "selected Standard; routing evidence wins. "
+            "A declaration cannot de-escalate routing evidence."
+        )
     # R1 calibration runway: publish the decision signals for the mode-decision log.
     calibration.update({
         "intent": intent,
@@ -1256,20 +1329,33 @@ def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, pl
         "keyword_signal": keyword_signal,
         "scope_signal": scope_signal,
         "scope_floor_lite": scope_floor_lite,
+        "scope_signal_corroborated": corroborated,
+        "scope_signal_fired": corroborating_fired,
+        "scope_signal_uncorroborated": scope_signal_uncorroborated,
+        "corroborated_scope_signal": effective_scope_signal,
+        "declared_complexity": declared,
+        "complexity_disagreement": complexity_disagreement,
         "locked_scope_breadth": locked_scope,
         "routing_selected": routing["selected"],
         "complexity": complexity,
     })
-    # Dual-gate routing: host-agent intent OR quantitative scope signal → Standard.
-    # scope_floor_lite stays published to calibration and the Phase 6
-    # re-evaluation hook; it no longer vetoes an explicit mode request here.
-    if intent == "none" and not hands_free and not routing["selected"] and not scope_signal:
+    # Dual-gate routing: host-agent intent OR corroborated quantitative scope
+    # signal → Standard. scope_floor_lite stays published to calibration and
+    # the Phase 6 re-evaluation hook; it no longer vetoes an explicit mode
+    # request here.
+    if intent == "none" and not hands_free and not routing["selected"] and not effective_scope_signal and declared != "complex":
         selected = official_aidlc_bridge.preflight(root, "lite", manifest)
         selected["selection"] = "default"
         selected["routing_evidence"] = routing
-        selected["full_escalation"] = {"state": "not-eligible", "reason": "Navigator found no material evidence requiring stronger AIDLC routing."}
+        if scope_signal_uncorroborated:
+            selected["selection"] = "scope-complexity-uncorroborated"
+            selected["full_escalation"] = {"state": "not-eligible", "reason": "Scope-complexity file-count breadth fired without a corroborating signal; uncorroborated breadth stays Lite."}
+        else:
+            selected["full_escalation"] = {"state": "not-eligible", "reason": "Navigator found no material evidence requiring stronger AIDLC routing."}
+        if complexity_disagreement is not None:
+            selected["complexity_disagreement"] = complexity_disagreement
         return selected
-    if hands_free and (routing["selected"] or scope_signal):
+    if hands_free and (routing["selected"] or effective_scope_signal):
         selected = official_aidlc_bridge.preflight(root, "full", manifest)
         if selected.get("state") == "official-pack-unavailable-fallback":
             selected["selection"] = "navigator-hands-free-escalation"
@@ -1300,10 +1386,18 @@ def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, pl
         selected = official_aidlc_bridge.preflight(root, "standard", manifest)
         selected["selection"] = "navigator-risk-routing"
         selected["full_escalation"] = {"state": "not-eligible", "signals": signals, "reason": "Navigator found multiple consequential requirement or risk signals; Standard mode covers this depth without a Full official lifecycle transition."}
-    elif scope_signal:
+    elif effective_scope_signal:
         selected = official_aidlc_bridge.preflight(root, "standard", manifest)
         selected["selection"] = "scope-complexity-standard"
         selected["full_escalation"] = {"state": "not-eligible", "signals": signals, "reason": "Quantitative scope-complexity metrics exceeded the Standard escalation threshold; Standard mode covers this depth without a Full official lifecycle transition."}
+    elif declared == "complex":
+        # Tie-break escalation (safe direction only): the host declaration
+        # moves Lite one notch to Standard when no other signal fired. When
+        # evidence already escalated, this branch is unreachable and the
+        # declaration is recorded as agreement in calibration.
+        selected = official_aidlc_bridge.preflight(root, "standard", manifest)
+        selected["selection"] = "declared-complexity-escalation"
+        selected["full_escalation"] = {"state": "not-eligible", "signals": signals, "reason": "Host-declared complexity escalation: no quantitative or routing signal fired, but the host declared 'complex'; recorded tie-break moves Lite one notch to Standard."}
     elif hands_free:
         selected = official_aidlc_bridge.preflight(root, "standard", manifest)
         selected["selection"] = "hands-free-default"
@@ -1312,6 +1406,11 @@ def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, pl
         selected = official_aidlc_bridge.preflight(root, "lite", manifest)
         selected["selection"] = "default"
         selected["full_escalation"] = {"state": "not-eligible", "signals": signals, "reason": routing["reason"]}
+        if scope_signal_uncorroborated:
+            selected["selection"] = "scope-complexity-uncorroborated"
+            selected["full_escalation"] = {"state": "not-eligible", "signals": signals, "reason": "Scope-complexity file-count breadth fired without a corroborating signal; uncorroborated breadth stays Lite."}
+    if complexity_disagreement is not None:
+        selected["complexity_disagreement"] = complexity_disagreement
     selected["routing_evidence"] = routing
     selected["complexity_metrics"] = complexity
     return selected
@@ -2156,6 +2255,7 @@ def build_report(
     command_prefix: str,
     run_id: str | None = None,
     aidlc_mode: str = "",
+    declared_complexity: str | None = None,
     official_manifest: str | None = None,
     spec_kit_feature: str | None = None,
     workflow_override: str | None = None,
@@ -2736,7 +2836,7 @@ def build_report(
             else stage
             for stage in delivery.get("stages", [])
         ]
-    mode = aidlc_mode_selection(goal, aidlc_mode, root, plan, official_manifest)
+    mode = aidlc_mode_selection(goal, aidlc_mode, root, plan, official_manifest, declared_complexity)
     if mode["mode"] == "off":
         delivery["selected"] = [item for item in delivery["selected"] if item.get("name") != "AIDLC"]
         plan["selected_features"] = [item for item in plan.get("selected_features", []) if item.get("name") != "AIDLC"]
@@ -5693,6 +5793,7 @@ def main() -> int:
     parser.add_argument("--evidence-artifact", action="append", default=[], help="Read-only local CI, scan, or validation artifact. Repeat as needed.")
     parser.add_argument("--interactive", action="store_true", help="On interpretation failure, prompt for corrected draft files and revalidate locally instead of exiting. Never enabled implicitly.")
     parser.add_argument("--aidlc", choices=("lite", "standard", "medium", "full", "off"), default=None, help="Optional AIDLC override. Without it: normal Start uses Lite, 'using AIDLC' uses Standard, hands-free uses Standard with eligible Full escalation, and full/official wording requires Full.")
+    parser.add_argument("--complexity", choices=("simple", "complex"), default=None, help="Optional host-declared complexity input, recorded as tie-break evidence. 'complex' may escalate Lite one notch to Standard when no other signal fired; 'simple' can never de-escalate evidence or routing (disagreement is recorded instead). Never overrides an explicit --aidlc flag.")
     parser.add_argument("--official-aidlc-manifest", help="Optional in-root official AIDLC compatibility manifest used only with --aidlc full.")
     parser.add_argument("--official-intent-id", help="Optional official AIDLC intent identity to map to this TailTrail run in full mode.")
     parser.add_argument("--official-session-id", help="Optional official AIDLC host session identity to map to this TailTrail run in full mode.")
@@ -5872,6 +5973,7 @@ def main() -> int:
             root,
             {"risk_indicators": [], "requirement_sufficiency": {}},
             effective_official_manifest,
+            args.complexity,
         )
         # Agent hosts can consume the verified official rules and therefore
         # must establish AIDLC requirement authority before scope. A raw CLI
@@ -6158,6 +6260,7 @@ def main() -> int:
             args.command_prefix,
             args.run_id,
             resumed_aidlc_mode or args.aidlc or "",
+            args.complexity,
             effective_official_manifest,
             requested_spec_kit_feature,
             workflow_override,
@@ -6352,6 +6455,21 @@ def main() -> int:
                 scope_quality_blocking=bool(_scope_quality.get("blocking")) if isinstance(_scope_quality, dict) else False,
                 complexity_available=bool(_post_complexity.get("available")) if isinstance(_post_complexity, dict) else False,
             )
+            # Corroboration applies at the Phase 6 decision point too: an
+            # uncorroborated file-count-only suggestion is suppressed, not
+            # recorded, so the two decision points cannot drift apart. When
+            # thresholds are absent the suggestion is kept (uncertain input
+            # must not silently drop a warranted escalation).
+            if _re_eval_suggestion is not None and isinstance(_post_complexity, dict) and isinstance(_post_complexity.get("thresholds"), dict) and _post_complexity.get("thresholds"):
+                _post_corroborated, _post_fired = _corroborated_scope_signal(_post_complexity)
+                if not _post_corroborated:
+                    _re_eval_suggestion = None
+                    report["aidlc_mode"]["re_evaluation_note"] = (
+                        "Post-discovery scope-complexity breadth fired on file count only, "
+                        "without a corroborating signal; escalation suggestion suppressed, run stays Lite."
+                    )
+                else:
+                    _re_eval_suggestion["corroborated_by"] = _post_fired
             if _re_eval_suggestion is not None:
                 report["aidlc_mode"]["re_evaluation_suggestion"] = _re_eval_suggestion
 

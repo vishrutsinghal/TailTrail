@@ -2684,8 +2684,10 @@ class ScopeAnswerTests(unittest.TestCase):
                 None, {})
         # Tmp roots lack the official pack, so both fall back to lite mode;
         # the routing selection is what the breadth override changes.
+        # Corroboration (Path A): bare lexical breadth without a second
+        # witness stays Lite instead of escalating on file count alone.
         self.assertEqual(lite["selection"], "default")
-        self.assertEqual(lexical["selection"], "scope-complexity-standard")
+        self.assertEqual(lexical["selection"], "scope-complexity-uncorroborated")
         self.assertEqual(calibration["locked_scope_breadth"], {"editable_files": 1, "paths": ["src/widget.py"]})
 
     def test_from_run_flag_in_start_help(self) -> None:
