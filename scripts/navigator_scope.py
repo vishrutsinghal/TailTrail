@@ -638,6 +638,12 @@ def candidates_from_seeds(root: Path, seeds: Iterable[dict[str, Any] | ScopeSeed
                 size = 0
                 file_rejection = "file-read-failed"
             if size > LIMITS["max_file_bytes"]:
+                # Deliberately exclusion, not flag-and-continue: an oversized
+                # file can never be proposal-eligible, which bounds host-driven
+                # edit sprawl. Explicit host answers still reach it through the
+                # unavailable-route path (per-requirement mapping validates the
+                # answer without minting evidence), so the cap blocks silent
+                # selection, never an explicit host decision.
                 file_rejection = "oversized-file-rejected"
             elif size and safety_bytes + size <= LIMITS["max_total_read_bytes"]:
                 text, file_rejection, inspected_fingerprint = safe_text(root, path)
@@ -4205,13 +4211,16 @@ def resolve_unavailable_scope_answers(
 ) -> tuple[dict[str, Any] | None, list[str]]:
     """Answer SCOPE-QA by seeding exactly one bounded re-resolution.
 
-    Each answer must name an existing, non-sensitive repository file; answers
-    become host-diagnosis seeds merged with the packet candidates, then the
-    standard investigate/document path re-runs once inside existing limits.
-    Qualification still runs, so a wrong guess yields the next recorded
-    question instead of minted ownership. Passive graph capture stays off so
-    answer rounds are read-only. Returns (updated_document, []) or
-    (None, reason codes).
+    Answers map one repository file per requirement (``REQ-ID=path``; a bare
+    path is accepted only when the packet holds exactly one requirement).
+    Every packet requirement must be mapped (all-or-nothing per round).
+    Answers become host-diagnosis seeds merged with the packet candidates,
+    then the standard investigate/document path re-runs once inside existing
+    limits. After re-resolution each requirement keeps only its own answered
+    owner when that path qualified; an unqualified answer empties the row so
+    the quality gate asks the next recorded question instead of minting
+    ownership. Passive graph capture stays off so answer rounds are
+    read-only. Returns (updated_document, []) or (None, reason codes).
     """
     if answer_round > SCOPE_ANSWER_MAX_ROUNDS:
         return None, ["scope-answer-rounds-exhausted", f"round-{answer_round}-exceeds-max-{SCOPE_ANSWER_MAX_ROUNDS}", "restart-with-a-refined-goal"]
@@ -4233,11 +4242,24 @@ def resolve_unavailable_scope_answers(
     if not raw_answers:
         return None, ["answer-required"]
     errors: list[str] = []
-    seen: set[str] = set()
+    mapped: dict[str, str] = {}
     for value in raw_answers:
         reference, raw_path = parse_scope_answer(value)
-        if reference is not None and reference not in by_id and reference not in by_display:
+        requirement_id: str | None = None
+        if reference is None:
+            if len(packet_requirements) != 1:
+                errors.append(f"answer-needs-requirement:{raw_path}:provide-REQ-ID=path")
+                continue
+            requirement_id = str(packet_requirements[0].get("requirement_id", ""))
+        elif reference in by_id:
+            requirement_id = str(by_id[reference].get("requirement_id", ""))
+        elif reference in by_display:
+            requirement_id = str(by_display[reference].get("requirement_id", ""))
+        else:
             errors.append(f"unknown-requirement:{reference}")
+            continue
+        if requirement_id in mapped:
+            errors.append(f"duplicate-requirement-answer:{requirement_id}")
             continue
         normalized, rejection = normalize_repository_path(root, raw_path)
         if normalized is None:
@@ -4249,11 +4271,16 @@ def resolve_unavailable_scope_answers(
         if not (root.resolve() / normalized).is_file():
             errors.append(f"answer-path-missing:{normalized}")
             continue
-        seen.add(normalized)
+        mapped[requirement_id] = normalized
     if errors:
         return None, sorted(dict.fromkeys(errors))
-    if not seen:
-        return None, ["answer-required"]
+    missing = sorted({
+        str(row.get("requirement_id", ""))
+        for row in packet_requirements
+    } - set(mapped))
+    if missing:
+        return None, [f"answer-incomplete:unmapped-requirements:{','.join(missing)}"]
+    seen = set(mapped.values())
     seeds = [seed(path, "host-diagnosis", f"host-scope-answer-round-{answer_round}") for path in sorted(seen)]
     task_list = [str(value) for value in tasks]
     fresh = [_candidate_dict(row) for row in candidates_from_seeds(root, seeds, task_list)]
@@ -4270,10 +4297,78 @@ def resolve_unavailable_scope_answers(
         root, frames, merged, task_list,
         allow_git_inventory=True, allow_persistent_cache=True, allow_passive_capture=False,
     )
+    # Narrow the owner universe to host-selected paths before documenting:
+    # unanswered implementation owners stay as relationship context but lose
+    # owner status, so thin/shallow gates judge only what the host asserted.
+    # This mirrors the proposal path (one mapped owner per requirement) while
+    # keeping the single bounded investigation.
+    answered_paths = set(mapped.values())
+    for row in rows:
+        if (
+            isinstance(row, dict)
+            and row.get("status") == "included"
+            and row.get("role") == "implementation-owner"
+            and str(row.get("path", "")) not in answered_paths
+        ):
+            row["status"] = "excluded"
+            reasons = [str(value) for value in row.get("reason_codes", []) if str(value)]
+            if "not-host-selected" not in reasons:
+                reasons.append("not-host-selected")
+            row["reason_codes"] = reasons
     packet_edges = {str(row.get("edge_id", "")): _candidate_dict(row) for row in packet.get("edges", []) if isinstance(row, dict) and str(row.get("edge_id", ""))}
     for row in edges:
         item = _candidate_dict(row)
         if str(item.get("edge_id", "")):
             packet_edges[str(item.get("edge_id", ""))] = item
     document = evidence_document(root, goal, frames, [_candidate_dict(row) for row in rows], edges=list(packet_edges.values()), investigation=investigation)
+    # Per-requirement mapping: each requirement keeps only its own answered
+    # owner, and only when that path survived qualification. An unqualified
+    # answer empties the row so the quality gate records the next question
+    # instead of minting ownership. Smearing answers across requirements
+    # would manufacture multi-owner ambiguity the host never asserted.
+    qualified = set()
+    for row in document.get("requirements", []):
+        if isinstance(row, dict):
+            qualified.update(str(value) for value in row.get("implementation_owners", []) if str(value))
+    for row in document.get("requirements", []):
+        if not isinstance(row, dict):
+            continue
+        answered = mapped.get(str(row.get("requirement_id", "")))
+        if answered is None:
+            continue
+        if answered in qualified:
+            row["implementation_owners"] = [answered]
+        else:
+            row["implementation_owners"] = []
+            row["scope_state"] = "unresolved"
+    # Owner narrowing mutates the decided document; re-evaluate the
+    # thin/shallow gates per requirement (an unrelated requirement's thin
+    # owner must not veto a well-evidenced assertion) and rebind the
+    # decision hash so verification sees the asserted scope.
+    # Calibration: an explicit REQ-ID=path answer IS the host confirmation
+    # the thin gate asks for, so the 2-edge/2-kind/deep-grade thresholds are
+    # waived for the asserted path — but at least one strong relationship
+    # edge must touch it, otherwise the host could mint ownership over an
+    # unrelated file and the row empties instead.
+    candidate_rows = [_candidate_dict(row) for row in rows]
+    edge_rows = list(packet_edges.values())
+    all_confirmed = True
+    for row in document.get("requirements", []):
+        if not isinstance(row, dict):
+            continue
+        owners = [str(value) for value in row.get("implementation_owners", []) if str(value)]
+        if not owners:
+            all_confirmed = False
+            continue
+        for path in owners:
+            touching, _kinds = _owner_strong_support(candidate_rows, edge_rows, path)
+            if touching < 1:
+                all_confirmed = False
+    if all_confirmed:
+        document["state"] = "resolved"
+        for row in document.get("requirements", []):
+            if isinstance(row, dict) and row.get("implementation_owners"):
+                row["scope_state"] = "resolved"
+    resealed = {key: value for key, value in document.items() if key != "decision_fingerprint"}
+    document["decision_fingerprint"] = fingerprint(_fingerprintable_document(resealed))
     return document, []
