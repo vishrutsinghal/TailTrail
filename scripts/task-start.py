@@ -2950,6 +2950,9 @@ def apply_reresolved_evidence(report: dict[str, Any], root: Path, goal: str, qa_
     navigator["scope_candidates"] = qa_document.get("candidates", [])
     navigator["likely_impacted_files"] = navigator_scope.project_likely_impacted(
         qa_document.get("candidates", []))
+    # Matrix rows carry the pre-answer decision fingerprint; re-stamp them so
+    # official approval binds the same v2 decision the navigator now holds.
+    apply_requirement_scope_evidence(navigator)
     report["host_scope_proposal_decision"] = {
         "schema_version": "1", "type": "tailtrail-navigator-host-scope-decision",
         "status": "qa-reresolved", "reason_codes": ["host-scope-answer-reresolved"],
@@ -3435,18 +3438,32 @@ def attach_focused_validation_contracts(
     requirements: list[dict[str, Any]],
     rows: list[dict[str, Any]],
 ) -> None:
-    """Persist exact proof paths and commands in the approval/closure contract."""
+    """Persist exact proof paths and commands in the approval/closure contract.
+
+    Official answers OQ-01/OQ-02/OQ-03 (run start-20260928061008-82a1e3):
+    commands are runnable command strings; the contract is overwritten with
+    the recorded commands plus derived tiers (pre-existing tiers do not
+    linger); rows with no focused-validation items are left untouched.
+    """
     for requirement in requirements:
-        contract = requirement.get("validation_contract", {}) if isinstance(requirement, dict) else {}
-        if not isinstance(contract, dict):
+        if not isinstance(requirement, dict):
             continue
-        tiers = {str(value) for value in contract.get("tiers", [])}
+        existing = requirement.get("validation_contract", {})
+        if not isinstance(existing, dict):
+            continue
+        tiers = {str(value) for value in existing.get("tiers", [])}
         linked = [
             row for row in rows
             if tiers.intersection(
                 str(value) for value in row.get("tiers", [row.get("tier")]) if str(value)
             )
         ]
+        required_static = [
+            row for row in rows
+            if row.get("check_kind") == "static" and row.get("required") and str(row.get("command", ""))
+        ]
+        if not linked and not required_static:
+            continue
         paths = [
             str(row.get("candidate")) for row in linked
             if row.get("candidate_state") in {"existing", "proposed"}
@@ -3455,12 +3472,7 @@ def attach_focused_validation_contracts(
             str(row.get("candidate")) for row in linked
             if row.get("candidate_state") == "proposed"
         ]
-        required_static = [
-            row for row in rows
-            if row.get("check_kind") == "static" and row.get("required") and str(row.get("command", ""))
-        ]
-        contract["tiers"] = list(dict.fromkeys([
-            *[str(value) for value in contract.get("tiers", []) if str(value)],
+        derived_tiers = list(dict.fromkeys([
             *[
                 str(value)
                 for row in linked
@@ -3474,11 +3486,6 @@ def attach_focused_validation_contracts(
             for row in [*linked, *required_static]
             if str(row.get("command", ""))
         ]
-        existing = [str(value) for value in contract.get("candidate_paths", []) if str(value)]
-        contract["candidate_paths"] = list(dict.fromkeys([*existing, *paths]))
-        contract["proposed_paths"] = list(dict.fromkeys(proposed))
-        contract["editable_paths"] = list(dict.fromkeys(paths))
-        contract["commands"] = list(dict.fromkeys(commands))
         checks = []
         for proof in linked:
             command = str(proof.get("command", ""))
@@ -3497,7 +3504,23 @@ def attach_focused_validation_contracts(
                 "tiers": ["static"],
                 "candidate_paths": [],
             })
-        contract["checks"] = list({item["command"]: item for item in checks}.values())
+        # OQ-02 overwrite: recorded proof (tiers, commands, checks) replaces the
+        # whole proof content. Scope-derived path fields are unioned, never
+        # dropped: edit authority (editable_paths) and proof linkage
+        # (candidate_paths) come from scope evidence as well as focused
+        # validation, and dropping them would brick downstream authority.
+        # Only `state` (a planning input, not proof content) is preserved.
+        prior = existing
+        prior_paths = lambda key: [str(v) for v in prior.get(key, []) if str(v)]
+        requirement["validation_contract"] = {
+            "state": str(existing.get("state", "required")),
+            "tiers": derived_tiers,
+            "candidate_paths": list(dict.fromkeys([*prior_paths("candidate_paths"), *paths])),
+            "proposed_paths": list(dict.fromkeys([*prior_paths("proposed_paths"), *proposed])),
+            "editable_paths": list(dict.fromkeys([*prior_paths("editable_paths"), *paths])),
+            "commands": list(dict.fromkeys(commands)),
+            "checks": list({item["command"]: item for item in checks}.values()),
+        }
 
 
 def short_trigger(value: str) -> str:
@@ -6313,6 +6336,9 @@ def main() -> int:
                 )
                 updated_evidence = host_decision["scope_evidence"]
                 report["navigator"]["scope_evidence"] = updated_evidence
+                # Same re-stamp as the QA path: matrix rows must carry the
+                # decided fingerprint official approval validates against.
+                apply_requirement_scope_evidence(report["navigator"])
                 report["navigator"]["scope_host_packet"] = navigator_scope.host_reasoning_packet(
                     updated_evidence
                 )
