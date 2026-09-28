@@ -616,6 +616,66 @@ def enrich_start_report(root: Path, run_id: str, report: dict[str, Any]) -> dict
     return {"artifact": path.relative_to(root).as_posix(), "run_id": run_id}
 
 
+def _ensure_lite_anchor(root: Path, run_id: str) -> dict[str, Any]:
+    """Derive the canonical anchor for an approved Lite plan approval.
+
+    Lite approvals never visit the official workshop, so no anchor exists
+    when the lock flips. The certificate is derived from facts the approved
+    Start already holds: requirement rows (with recorded proof commands via
+    the focused-validation pipeline), scope fingerprints, and the explicit
+    approval record. Rows are stamped with a Lite source_reference so no
+    reader mistakes this for an official-workshop product. Official runs,
+    existing anchors, lean no-scope plans, and runs without a saved Start
+    report are left untouched so plain lock approval never breaks.
+    """
+    try:
+        report_path = active_start_report_path(root.resolve(), run_id)
+    except (OSError, ValueError):
+        return {"status": "not-applicable", "reason": "no saved Start report to derive from"}
+    if not report_path.is_file():
+        return {"status": "not-applicable", "reason": "no saved Start report to derive from"}
+    saved = _saved_start_report(root, run_id)
+    mode = str((saved.get("aidlc_mode", {}) or {}).get("mode", "")) if isinstance(saved, dict) else ""
+    if mode != "lite":
+        return {"status": "not-applicable", "reason": f"anchor derivation on approval applies to Lite runs, not `{mode or 'unknown'}`"}
+    approved_path = L.state_dir(root, run_id) / "anchors" / "approved-v1.json"
+    if approved_path.is_file():
+        return {"status": "existing", "artifact": approved_path.relative_to(root).as_posix()}
+    proposal = _proposal_from_start_report(root, run_id)
+    if proposal is None:
+        return {"status": "not-required", "reason": "lean Start runs do not create canonical requirement state"}
+    rows = copy.deepcopy(proposal.get("requirements", []))
+    for row in rows:
+        if isinstance(row, dict):
+            row["source_reference"] = {
+                "origin": "lite-plan-approval",
+                "approval": "explicit-plan-approval",
+                "run_id": run_id,
+            }
+    proposal = {
+        **proposal,
+        "requirements": rows,
+        "provenance": {
+            "origin": "lite-plan-approval",
+            "source": "approved Start report requirement rows, scope fingerprints, and explicit approval record",
+        },
+    }
+    proposal_path = L.state_dir(root, run_id) / "planning" / "anchor-proposal-v1.json"
+    L.atomic_json(proposal_path, proposal)
+    module = _anchor_module()
+    module.draft(root, run_id, proposal_path)
+    created = module.approve(root, run_id)
+    # Provenance rides in the proposal file and row source_references;
+    # the ledger's anchor_approved event (emitted by anchor.approve) stays
+    # the single canonical approval record.
+    return {
+        "status": "created",
+        "artifact": Path(created["path"]).relative_to(root).as_posix(),
+        "requirements": [row["requirement_uid"] for row in created["requirements"]],
+        "origin": "lite-plan-approval",
+    }
+
+
 def approve(root: Path, run_id: str, approved: bool, rationale: str | None = None, record_decision: bool = True) -> dict[str, Any]:
     if approved is not True:
         raise ValueError(f"planning approval requires --approved; run `tailtrail planning approve --root . --run-id {run_id} --approved`")
@@ -633,10 +693,13 @@ def approve(root: Path, run_id: str, approved: bool, rationale: str | None = Non
     payload.pop("artifact", None)
     L.atomic_json(path, payload)
     L.append_event(root, run_id, "planning_lock_approved", {"artifact": path.relative_to(L.state_dir(root, run_id)).as_posix(), "writes_allowed": True})
+    lite_anchor = _ensure_lite_anchor(root, run_id)
     if record_decision:
         _record_decision(root, run_id, "approve", "approved", rationale=rationale,
                          prior_state="awaiting-approval", resulting_state="approved")
-    return show(root, run_id)
+    result = show(root, run_id)
+    result["lite_anchor"] = lite_anchor
+    return result
 
 
 def approve_debug_plan(root: Path, run_id: str) -> dict[str, Any]:

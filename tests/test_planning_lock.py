@@ -551,5 +551,81 @@ class PlanningLockTests(unittest.TestCase):
                 lock.aidlc_cycle(root, "plan-aidlc-cycle-invalid", answers_json="[]", approved=True)
 
 
+class LiteAnchorDerivationTests(unittest.TestCase):
+    def _save_lite_report(self, root: Path, run_id: str, rows: list[dict]) -> None:
+        ledger.atomic_json(lock.start_report_path(root, run_id), {"report": {
+            "goal": "do lite work",
+            "aidlc_mode": {"mode": "lite"},
+            "guided_delivery": {"mode": "guided-delivery"},
+            "navigator": {
+                "requirement_matrix": rows,
+                "scope_evidence": {"schema_version": "2", "decision_fingerprint": "sha256:abc"},
+            },
+        }})
+
+    def _row(self, **overrides):
+        row = {
+            "requirement_uid": "req-1", "display_id": "REQ-01", "kind": "change",
+            "statement": "Do lite work.", "acceptance_criteria": ["Done."],
+            "preserve_rules": [], "likely_paths": ["src/work.py"],
+            "evidence_plan": ["Run unit proof."],
+            "validation_contract": {
+                "state": "required", "tiers": ["unit"],
+                "commands": ["python -m unittest tests.test_work -v"],
+            },
+        }
+        row.update(overrides)
+        return row
+
+    def test_lite_approve_derives_anchor_with_commands_and_provenance(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do lite work", "plan-lite-anchor")
+            self._save_lite_report(root, "plan-lite-anchor", [self._row()])
+            approved = lock.approve(root, "plan-lite-anchor", True)
+            self.assertEqual(approved["status"], "approved")
+            self.assertEqual(approved["lite_anchor"]["status"], "created")
+            self.assertEqual(approved["lite_anchor"]["origin"], "lite-plan-approval")
+            anchor = json.loads((root / approved["lite_anchor"]["artifact"]).read_text(encoding="utf-8"))
+            self.assertEqual(anchor["status"], "approved")
+            row = anchor["requirements"][0]
+            self.assertEqual(row["validation_contract"]["commands"], ["python -m unittest tests.test_work -v"])
+            self.assertEqual(row["source_reference"]["origin"], "lite-plan-approval")
+            self.assertEqual(row["status"], "approved")
+
+    def test_lite_approve_without_recorded_commands_mints_none(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do lite work", "plan-lite-nocommands")
+            row = self._row()
+            row["validation_contract"] = {"state": "required", "tiers": ["unit"]}
+            self._save_lite_report(root, "plan-lite-nocommands", [row])
+            approved = lock.approve(root, "plan-lite-nocommands", True)
+            anchor = json.loads((root / approved["lite_anchor"]["artifact"]).read_text(encoding="utf-8"))
+            self.assertNotIn("commands", anchor["requirements"][0]["validation_contract"])
+
+    def test_standard_approve_derives_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do standard work", "plan-standard-noanchor")
+            ledger.atomic_json(lock.start_report_path(root, "plan-standard-noanchor"), {"report": {
+                "goal": "do standard work",
+                "aidlc_mode": {"mode": "standard"},
+                "guided_delivery": {"mode": "guided-delivery"},
+                "navigator": {"requirement_matrix": [self._row()]},
+            }})
+            approved = lock.approve(root, "plan-standard-noanchor", True)
+            self.assertEqual(approved["lite_anchor"]["status"], "not-applicable")
+            self.assertFalse((root / ".tailtrail" / "runs" / "plan-standard-noanchor" / "anchors" / "approved-v1.json").exists())
+
+    def test_approve_without_saved_report_still_approves(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do work", "plan-no-report")
+            approved = lock.approve(root, "plan-no-report", True)
+            self.assertEqual(approved["status"], "approved")
+            self.assertEqual(approved["lite_anchor"]["status"], "not-applicable")
+
+
 if __name__ == "__main__":
     unittest.main()
