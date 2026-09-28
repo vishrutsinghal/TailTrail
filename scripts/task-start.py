@@ -1432,6 +1432,197 @@ def aidlc_mode_features(mode: str) -> dict[str, list[str]]:
     return {"included": [*common, "AIDLC lifecycle routing disabled for this run"], "not_included": ["Local AIDLC Requirements stage", "Official pack verification and bridge identity"]}
 
 
+# --- Layered task-type classification (official answers OQ-01/OQ-02/OQ-03,
+# run start-20260928123309-ad8053) -------------------------------------------
+#
+# Layer 1 (vocabulary) stays in navigator_core.task_types and is never
+# touched here: its verdict is a candidate, not a decision. This module owns
+# Layer 0 (explicit --task-type flag), Layer 2 (uncertainty gate), and
+# Layer 3 (bounded host dialogue via a blocking task-type question answered
+# by re-running Start with --task-type). Dialogue persistence is the recorded
+# decision in the Start report; the stop rule fails toward Standard.
+TASK_TYPE_OPTIONS: tuple[str, ...] = ("implementation", "qa", "infra", "doc")
+
+_TASK_TYPE_PRODUCTION_TERMS: tuple[str, ...] = (
+    "implement", "feature", "endpoint", "refactor", "production", "service",
+    "migration", "api",
+)
+_TASK_TYPE_INFRA_TERMS: tuple[str, ...] = (
+    "ci", "deploy", "docker", "pipeline", "infra", "kubernetes", "terraform",
+)
+_TASK_TYPE_DOC_TERMS: tuple[str, ...] = (
+    "doc", "docs", "readme", "changelog", "markdown",
+)
+
+_INFRA_PATH_PARTS: frozenset[str] = frozenset({
+    "ci", ".github", "workflows", "docker", "deploy", "infra", "k8s",
+    "terraform", ".circleci", ".gitlab-ci",
+})
+_INFRA_FILE_NAMES: frozenset[str] = frozenset({
+    "dockerfile", "docker-compose.yml", "docker-compose.yaml",
+})
+# Classifier vocabulary is richer than the four day-to-day buckets; map the
+# implementation family explicitly and pass anything else through untouched
+# (unmappable types keep status-quo behavior: no override, no question).
+_TASK_TYPE_FAMILY: dict[str, str] = {
+    "implementation": "implementation",
+    "feature": "implementation",
+    "bug": "implementation",
+    "refactor": "implementation",
+    "qa": "qa",
+    "documentation": "doc",
+}
+_TEST_PATH_PARTS: frozenset[str] = frozenset({"test", "tests"})
+_DOC_SUFFIXES: frozenset[str] = frozenset({".md", ".rst", ".txt"})
+
+
+def _task_type_path_kind(path: str) -> str:
+    """Classify one repository path as test, doc, infra, or src evidence."""
+    lowered = str(path).replace("\\", "/").lower()
+    parts = set(lowered.split("/")[:-1])
+    name = lowered.rsplit("/", 1)[-1]
+    if parts & _TEST_PATH_PARTS or "test_" in name or name.endswith("_test.py"):
+        return "test"
+    if parts & _INFRA_PATH_PARTS or name in _INFRA_FILE_NAMES or name.endswith(".tf"):
+        return "infra"
+    if name == "readme" or parts & {"doc", "docs", "documentation"}:
+        return "doc"
+    if any(name.endswith(suffix) for suffix in _DOC_SUFFIXES):
+        return "doc"
+    return "src"
+
+
+def assess_task_type(
+    goal: str,
+    task_types: list[str],
+    changed: list[str],
+    scope_owners: list[str],
+    proof_paths: list[str],
+    declared: str | None,
+) -> dict[str, Any]:
+    """Resolve the day-to-day work type across implementation/qa/infra/doc.
+
+    Returns a decision dict with ``status`` resolved/question/conflict:
+    resolved carries ``task_type``; question carries a blocking ``question``
+    answered by re-running Start with ``--task-type``; conflict means an
+    explicit declaration collides with strong contrary evidence and the
+    caller must fail toward Standard (OQ-01) instead of proceeding silently.
+    ``signals`` records the corroborating evidence per type for the report.
+    """
+    raw_tasks = sorted({str(item).lower() for item in task_types or []})
+    # Normalize the classifier's richer vocabulary into the four day-to-day
+    # buckets. Unmappable types (security, review, ci-sonar, ...) are
+    # classifier noise for this gate: filtered when mixed, passthrough when
+    # they are all that remains (status quo ante, no override, no question).
+    tasks = sorted({_TASK_TYPE_FAMILY.get(item, item) for item in raw_tasks})
+    mapped = sorted(set(tasks) & set(TASK_TYPE_OPTIONS))
+    if not mapped:
+        return {
+            "classifier_tasks": raw_tasks,
+            "normalized_tasks": tasks,
+            "signals": {},
+            "declared": declared,
+            "status": "resolved",
+            "task_type": tasks[0] if len(tasks) == 1 else None,
+            "resolution": "passthrough-unmapped-types",
+        }
+    tasks = mapped
+    lowered_goal = " ".join(str(goal).lower().split())
+    changed_kinds = [_task_type_path_kind(raw) for raw in changed if str(raw).strip()]
+    owner_kinds = [_task_type_path_kind(raw) for raw in scope_owners if str(raw).strip()]
+    proof_kinds = [_task_type_path_kind(raw) for raw in proof_paths if str(raw).strip()]
+    supports: dict[str, list[str]] = {option: [] for option in TASK_TYPE_OPTIONS}
+
+    def _add(option: str, signal: str) -> None:
+        if signal not in supports[option]:
+            supports[option].append(signal)
+
+    if "test" in changed_kinds:
+        _add("qa", "test-changed-paths")
+    if "test" in owner_kinds:
+        _add("qa", "test-scope-owners")
+    if "test" in proof_kinds:
+        _add("qa", "test-proof-paths")
+    if any(term in lowered_goal for term in ("test", "tests", "regression", "coverage")):
+        _add("qa", "test-goal-terms")
+    if "doc" in changed_kinds:
+        _add("doc", "doc-changed-paths")
+    if "doc" in owner_kinds:
+        _add("doc", "doc-scope-owners")
+    if any(term in lowered_goal for term in _TASK_TYPE_DOC_TERMS):
+        _add("doc", "doc-goal-terms")
+    if "infra" in changed_kinds:
+        _add("infra", "infra-changed-paths")
+    if "infra" in owner_kinds:
+        _add("infra", "infra-scope-owners")
+    if any(term in lowered_goal for term in _TASK_TYPE_INFRA_TERMS):
+        _add("infra", "infra-goal-terms")
+    if "src" in changed_kinds:
+        _add("implementation", "src-changed-paths")
+    if "src" in owner_kinds:
+        _add("implementation", "src-scope-owners")
+    if any(term in lowered_goal for term in _TASK_TYPE_PRODUCTION_TERMS):
+        _add("implementation", "production-goal-terms")
+    decision_base = {
+        "classifier_tasks": raw_tasks,
+        "normalized_tasks": tasks,
+        "signals": {key: sorted(set(values)) for key, values in supports.items()},
+        "declared": declared,
+    }
+    supported = sorted(option for option in TASK_TYPE_OPTIONS if supports[option])
+    question_options = [
+        {"id": option, "text": f"This work is {option} work"}
+        for option in TASK_TYPE_OPTIONS
+    ]
+
+    def _question(reason: str) -> dict[str, Any]:
+        return {
+            **decision_base,
+            "status": "question",
+            "task_type": None,
+            "question": {
+                "question_id": "TASK-Q1",
+                "question": (
+                    f"Classifier suggests {', '.join(tasks) or 'nothing'}; {reason} "
+                    "What kind of work is this?"
+                ),
+                "options": question_options,
+                "answer_format": "Re-run this exact Start with --task-type <implementation|qa|infra|doc>.",
+                "boundary": "This confirms the work type only; it does not approve implementation or create a Planning Lock.",
+            },
+        }
+
+    if declared is not None:
+        if declared in tasks or not tasks:
+            return {**decision_base, "status": "resolved", "task_type": declared, "resolution": "declared-agreement"}
+        strong_other = sorted(
+            option for option in tasks if option in supports and len(supports[option]) >= 2
+        )
+        if strong_other:
+            return {
+                **decision_base,
+                "status": "conflict",
+                "task_type": None,
+                "resolution": f"declared-{declared}-vs-evidenced-{strong_other[0]}",
+            }
+        return {**decision_base, "status": "resolved", "task_type": declared, "resolution": "declared-settles-uncertain"}
+    if tasks == ["implementation"]:
+        return {**decision_base, "status": "resolved", "task_type": "implementation", "resolution": "default-classification"}
+    if len(tasks) == 1:
+        only = tasks[0]
+        if only in supports and supports[only]:
+            return {**decision_base, "status": "resolved", "task_type": only, "resolution": "corroborated-singleton"}
+        return _question(f"a single {only} keyword with no corroborating evidence.")
+    supported_tasks = sorted(set(tasks) & set(supported))
+    if len(supported_tasks) == 1:
+        return {**decision_base, "status": "resolved", "task_type": supported_tasks[0], "resolution": "single-supported-type"}
+    if len(supported_tasks) > 1:
+        return _question(f"multiple supported types ({', '.join(supported_tasks)}).")
+    return _question(f"no corroborating evidence for {', '.join(tasks)}.")
+
+
+
+
 def guided_delivery(plan: dict[str, Any], goal: str, changed: list[str], root: Path, run_id: str | None = None) -> dict[str, Any]:
     """Choose the smallest delivery harness sequence after Navigator planning.
 
@@ -4479,6 +4670,24 @@ def quick_start_report(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def task_type_boundary_report(report: dict[str, Any], decision: dict[str, Any]) -> dict[str, Any]:
+    """Render a blocking TASK-Q1 boundary when classification is thin."""
+    question = decision.get("question", {}) if isinstance(decision.get("question"), dict) else {}
+    return {
+        "goal": report.get("goal", ""),
+        "root": report.get("root", ""),
+        "command_prefix": report.get("command_prefix", "tailtrail"),
+        "task_type_boundary": True,
+        "task_type_resolution": decision,
+        "task_type_question": question,
+        "requirements": (report.get("navigator", {}) or {}).get("requirement_matrix", []),
+        "boundary": (
+            "No Planning Lock, workflow, target receipt, learning receipt, graph-cache write, "
+            "or implementation authority was created."
+        ),
+    }
+
+
 def scope_quality_boundary_report(report: dict[str, Any]) -> dict[str, Any]:
     plan = report.get("navigator", {}) if isinstance(report, dict) else {}
     scope_evidence = plan.get("scope_evidence", {}) if isinstance(plan.get("scope_evidence"), dict) else {}
@@ -4534,6 +4743,38 @@ def scope_quality_boundary_report(report: dict[str, Any]) -> dict[str, Any]:
     if isinstance(report, dict) and report.get("visual_requirements"):
         boundary_report["visual_requirements"] = report["visual_requirements"]
     return boundary_report
+
+
+def render_task_type_boundary_report(report: dict[str, Any]) -> str:
+    """Render the blocking TASK-Q1 question for markdown output."""
+    decision = report.get("task_type_resolution", {}) if isinstance(report.get("task_type_resolution"), dict) else {}
+    question = report.get("task_type_question", {}) if isinstance(report.get("task_type_question"), dict) else {}
+    lines = [
+        "# TailTrail Task-Type Confirmation Required",
+        "",
+        f"**Goal:** {display_prose(report.get('goal', ''))}",
+        "",
+        "## Task-type gate",
+        "",
+        f"- Classifier tasks: `{', '.join(decision.get('classifier_tasks', [])) or 'none'}`.",
+        f"- Declared: `{decision.get('declared') or 'none'}`.",
+        f"- Corroborating signals: `{json.dumps(decision.get('signals', {}), sort_keys=True)}`.",
+        "",
+        "## Question",
+        "",
+        f"- **{question.get('question_id', 'TASK-Q1')}:** {display_prose(question.get('question', ''))}",
+    ]
+    for option in question.get("options", []):
+        if isinstance(option, dict):
+            lines.append(f"  - `{option.get('id')}`) {display_prose(option.get('text', ''))}")
+    lines.extend([
+        "",
+        f"- Answer format: {display_prose(question.get('answer_format', ''))}",
+        f"- {display_prose(question.get('boundary', ''))}",
+        "",
+        f"- {display_prose(report.get('boundary', ''))}",
+    ])
+    return "\n".join(lines) + "\n"
 
 
 def render_scope_quality_boundary_report(report: dict[str, Any], *, verbose: bool = False) -> str:
@@ -5242,6 +5483,8 @@ def render_markdown(report: dict[str, Any], verbose: bool = False, presentation_
             ),
             policy,
         )
+    if report.get("task_type_boundary"):
+        return annotate_presentation(render_task_type_boundary_report(report), policy)
     if report.get("debug_plan"):
         rendered = (
             compact_debug_start_report(report)
@@ -5817,6 +6060,7 @@ def main() -> int:
     parser.add_argument("--interactive", action="store_true", help="On interpretation failure, prompt for corrected draft files and revalidate locally instead of exiting. Never enabled implicitly.")
     parser.add_argument("--aidlc", choices=("lite", "standard", "medium", "full", "off"), default=None, help="Optional AIDLC override. Without it: normal Start uses Lite, 'using AIDLC' uses Standard, hands-free uses Standard with eligible Full escalation, and full/official wording requires Full.")
     parser.add_argument("--complexity", choices=("simple", "complex"), default=None, help="Optional host-declared complexity input, recorded as tie-break evidence. 'complex' may escalate Lite one notch to Standard when no other signal fired; 'simple' can never de-escalate evidence or routing (disagreement is recorded instead). Never overrides an explicit --aidlc flag.")
+    parser.add_argument("--task-type", choices=("implementation", "qa", "infra", "doc"), default=None, help="Optional host-declared day-to-day work type. Settles uncertain classifier verdicts; never overrides strong contrary evidence (a conflict fails toward Standard instead). Answer a TASK-Q1 question by re-running Start with this flag.")
     parser.add_argument("--official-aidlc-manifest", help="Optional in-root official AIDLC compatibility manifest used only with --aidlc full.")
     parser.add_argument("--official-intent-id", help="Optional official AIDLC intent identity to map to this TailTrail run in full mode.")
     parser.add_argument("--official-session-id", help="Optional official AIDLC host session identity to map to this TailTrail run in full mode.")
@@ -6411,6 +6655,71 @@ def main() -> int:
                 print(render_markdown(boundary, verbose=args.verbose, presentation_mode=args.presentation), end="")
             return 2
         navigator_plan = report.get("navigator", {}) if isinstance(report.get("navigator"), dict) else {}
+        # Layered task-type gate (Layer 0/2/3): vocabulary stays in
+        # navigator_core; the flag, uncertainty gate, and host dialogue live
+        # here, BEFORE the scope-quality block so a resolved type repairs the
+        # scope mode instead of dying behind it. The gate needs decided scope
+        # evidence (owners are corroborating witnesses); unresolved scope
+        # keeps the scope-first flow and skips this gate entirely. A thin
+        # verdict blocks with TASK-Q1; a declaration colliding with strong
+        # contrary evidence fails toward Standard (OQ-01).
+        task_evidence = navigator_plan.get("scope_evidence", {}) if isinstance(navigator_plan.get("scope_evidence"), dict) else {}
+        if isinstance(navigator_plan.get("scope_evidence"), dict):
+            task_decision = assess_task_type(
+                goal,
+                navigator_plan.get("task_types", []),
+                list(args.changed or []),
+                [str(value) for value in task_evidence.get("implementation_owners", []) if str(value)],
+                [str(value) for value in task_evidence.get("proof_paths", []) if str(value)],
+                args.task_type,
+            )
+            report["task_type_resolution"] = task_decision
+            if task_decision["status"] == "question" and not args.host:
+                task_decision["status"] = "deferred-no-host"
+                task_decision["boundary"] = (
+                    "No reasoning host is attached to this raw CLI Start, so the task-type "
+                    "question cannot be answered here; proceeding with the classifier guess "
+                    "and recording the uncertainty instead of blocking."
+                )
+            if task_decision["status"] == "question":
+                boundary = task_type_boundary_report(report, task_decision)
+                if args.format == "json":
+                    print(json.dumps(boundary, indent=2, sort_keys=True, default=str))
+                else:
+                    print(render_markdown(boundary, verbose=args.verbose, presentation_mode=args.presentation), end="")
+                return 2
+            if task_decision["status"] == "conflict":
+                current_mode = str((report.get("aidlc_mode", {}) or {}).get("mode", ""))
+                if current_mode == "lite":
+                    escalated = official_aidlc_bridge.preflight(root, "standard", effective_official_manifest)
+                    report["aidlc_mode"] = escalated
+                    report["aidlc_mode_features"] = aidlc_mode_features(escalated["mode"])
+                    report["task_type_resolution"]["escalated_mode"] = escalated.get("mode")
+                    report["task_type_resolution"]["escalation_reason"] = (
+                        "Declared task type collided with strong contrary evidence; "
+                        "failing toward Standard per the approved stop rule."
+                    )
+            if task_decision["status"] == "resolved" and task_decision.get("task_type"):
+                resolved_tasks = [str(task_decision["task_type"])]
+                classifier_tasks = sorted({str(item).lower() for item in navigator_plan.get("task_types", [])})
+                # Override only when qa/doc routing is at stake; cosmetic
+                # rewrites (feature→implementation) change no scope mode and
+                # only churn the saved task list.
+                raw_classifier = task_decision.get("classifier_tasks", classifier_tasks)
+                qa_doc_involved = (
+                    str(task_decision.get("task_type")) in ("qa", "doc")
+                    or "qa" in raw_classifier
+                    or "documentation" in raw_classifier
+                )
+                if resolved_tasks != classifier_tasks and qa_doc_involved and isinstance(task_evidence, dict) and task_evidence:
+                    navigator_plan["task_types"] = resolved_tasks
+                    recomputed = navigator_scope.assess_scope_quality(root, goal, resolved_tasks, task_evidence)
+                    if isinstance(recomputed, dict):
+                        previous = navigator_plan.get("scope_quality", {})
+                        if isinstance(previous, dict) and isinstance(previous.get("complexity_metrics"), dict):
+                            recomputed.setdefault("complexity_metrics", previous["complexity_metrics"])
+                        navigator_plan["scope_quality"] = recomputed
+                        report["task_type_resolution"]["scope_quality_reassessed"] = recomputed.get("status")
         scope_quality = navigator_plan.get("scope_quality", {})
         scope_gate_applies = isinstance(navigator_plan.get("scope_evidence"), dict) and not report.get("debug_plan")
         if scope_gate_applies and (not isinstance(scope_quality, dict) or scope_quality.get("blocking") is not False):
