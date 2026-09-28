@@ -1010,5 +1010,34 @@ class InterpretationErrorDetailTests(unittest.TestCase):
         self.assertIn("--scaffold", helped.stdout)
 
 
+class ScaffoldConjunctionTests(unittest.TestCase):
+    def test_and_action_splits_into_two_requirements(self):
+        draft_engine = load("draft_conjunction_test", "scripts/requirement-interpretation-draft.py")
+        draft = draft_engine.scaffold_draft(
+            "Record commands on requirement rows and save contracts into anchors", "codex", [],
+        )
+        self.assertEqual([row["display_id"] for row in draft["requirements"]], ["REQ-01", "REQ-02"])
+        envelope, errors = draft_engine.validate_draft(
+            "Record commands on requirement rows and save contracts into anchors", [], draft, "codex")
+        self.assertEqual(errors, [])
+
+    def test_then_action_splits(self):
+        draft_engine = load("draft_then_test", "scripts/requirement-interpretation-draft.py")
+        draft = draft_engine.scaffold_draft("Fix the widget then update the cache", "codex", [])
+        self.assertEqual(len(draft["requirements"]), 2)
+
+    def test_ordinary_prose_never_splits(self):
+        draft_engine = load("draft_prose_test", "scripts/requirement-interpretation-draft.py")
+        for goal in ("Implement bread and butter handling", "Fix the widget and the cache"):
+            with self.subTest(goal=goal):
+                draft = draft_engine.scaffold_draft(goal, "codex", [])
+                self.assertEqual(len(draft["requirements"]), 1)
+
+    def test_semicolon_and_conjunction_compose(self):
+        draft_engine = load("draft_compose_test", "scripts/requirement-interpretation-draft.py")
+        draft = draft_engine.scaffold_draft("Fix the widget and save the result; update the cache", "codex", [])
+        self.assertEqual(len(draft["requirements"]), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

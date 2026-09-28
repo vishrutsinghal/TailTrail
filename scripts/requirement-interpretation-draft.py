@@ -128,7 +128,18 @@ def _scaffold_clauses(goal: str, resolve_uncertain: bool = False) -> list[dict[s
     without_paths, scopes = discovery._extract_scope_paths(goal)
     clauses = [dict(row) for row in scopes]
     segments = [part.strip(" .") for part in re.split(r"\s*;\s*", without_paths) if part.strip(" .")]
-    for index, segment in enumerate(segments, start=1):
+    # Split and/then action conjunctions using discovery's own ACTION table
+    # (same constants as _predicate_parts: no drift). Only a trailing
+    # fragment starting with an ACTION verb splits, so ordinary prose
+    # ("bread and butter") never fractures.
+    conjunction = re.compile(
+        rf"\s+(?:and|then)\s+(?=(?:do\s+not\s+|must\s+|must\s+not\s+|should\s+)?(?:{discovery.ACTION})\b)",
+        flags=re.IGNORECASE,
+    )
+    expanded: list[str] = []
+    for segment in segments:
+        expanded.extend(part.strip(" .") for part in conjunction.split(segment) if part.strip(" ."))
+    for index, segment in enumerate(expanded, start=1):
         lowered = segment.casefold()
         if segment.endswith("?"):
             role = "question"
