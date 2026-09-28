@@ -483,7 +483,10 @@ def _finalize_v2_scope(root: Path, run_id: str, report: dict[str, Any], rows: li
     })
     evidence["investigation"] = investigation
     evidence.pop("decision_fingerprint", None)
-    evidence["decision_fingerprint"] = SCOPE.fingerprint(evidence)
+    # Mirror evidence_document/verify_decision_fingerprint: the decision hash
+    # covers the fingerprintable subset only. Hashing host_reasoning (set
+    # above) makes every revised packet fail verification on arrival.
+    evidence["decision_fingerprint"] = SCOPE.fingerprint(SCOPE._fingerprintable_document(evidence))
     for row in rows:
         row["scope_evidence"]["decision_fingerprint"] = evidence["decision_fingerprint"]
     navigator = report.setdefault("navigator", {})

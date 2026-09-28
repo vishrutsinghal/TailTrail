@@ -1,10 +1,10 @@
 {
   "schema_version": "1",
-  "created_at": "2026-09-28T14:06:24.697776+00:00",
-  "updated_at": "2026-09-28T14:06:24.697792+00:00",
+  "created_at": "2026-09-28T16:25:19.643540+00:00",
+  "updated_at": "2026-09-28T16:25:19.643554+00:00",
   "tailtrail_version": "local",
   "root": "D:/PD/tailr-main/tailtrail",
-  "cache_key": "12780bdfd35e836c028fc962d945fad816df33fb2f6d28f55d35206eaea0493f",
+  "cache_key": "3ba902b3a399bee8c7dcf72199c5be7aad3f9d5651890d9dad0f75a658297ff7",
   "graph_mode": "navigator-start",
   "scope": [
     "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
@@ -53,6 +53,7 @@
     "scripts/official-aidlc-sanitize.py",
     "scripts/official-aidlc-state.py",
     "scripts/planning-discussion.py",
+    "scripts/planning-feature-controls.py",
     "scripts/planning-investigation.py",
     "scripts/planning-revision.py",
     "scripts/planning_lock.py",
@@ -136,7 +137,7 @@
   "language_profiles": {
     "python": {
       "level": 2,
-      "files": 122
+      "files": 123
     }
   },
   "source_files": {
@@ -266,9 +267,9 @@
       "size": 2157
     },
     "scripts/execution-evidence.py": {
-      "sha256": "e38ad36c7df6d7aff6612f2068265fd9e7e7ec29f64b459ce095161dde298d9e",
-      "mtime": 1789984771,
-      "size": 17336
+      "sha256": "f0a0f882c1f737a2a5e5a5b2b2d94001798c567b273bc383d3c8d9faf99dc8d6",
+      "mtime": 1790605764,
+      "size": 20082
     },
     "scripts/expand-intent.py": {
       "sha256": "23cc525e90aa3f2b82bee498f91114ca9548717dc40d986e485c0007484d2655",
@@ -370,15 +371,20 @@
       "mtime": 1789546515,
       "size": 41963
     },
+    "scripts/planning-feature-controls.py": {
+      "sha256": "f3ada6a56f09c4b0ed3b4f8d712f9328ca8efae93f1863ff636e8a9884ff9faa",
+      "mtime": 1790306332,
+      "size": 14217
+    },
     "scripts/planning-investigation.py": {
       "sha256": "1e5450386bf242885ad96fdeaa86fb1dd43bbd7622194111c5a42d59bffb6636",
       "mtime": 1790332125,
       "size": 15941
     },
     "scripts/planning-revision.py": {
-      "sha256": "a601a75283844933b0437cf272db282b2ca5bfffc77ebb5d21ea511f47a58842",
-      "mtime": 1790306332,
-      "size": 61663
+      "sha256": "57d156ebb2d272a9c4cfd765c0dd8fce44dfb32b36ef62d92d2a02ad470a0c96",
+      "mtime": 1790605764,
+      "size": 61911
     },
     "scripts/planning_lock.py": {
       "sha256": "66d3ee50be448cc4076a1cd6800d05bd9b93fa806f4c31bfb51b02e69973ece4",
@@ -825,8 +831,8 @@
   "scanner_evidence": {},
   "inventory": {
     "algorithm": "path-size-mtime-ns-v1",
-    "file_count": 1194,
-    "fingerprint": "sha256:eeb56c24855d52126f638d518fbd5526946fe3c52d9d2ef3d407e08423b882ad"
+    "file_count": 1195,
+    "fingerprint": "sha256:45836bf7d02c918c88ce694a6169d29e2b2502664a1dc6898ba22462c193898c"
   },
   "graph": {
     "changed_files": [
@@ -876,6 +882,7 @@
       "scripts/official-aidlc-sanitize.py",
       "scripts/official-aidlc-state.py",
       "scripts/planning-discussion.py",
+      "scripts/planning-feature-controls.py",
       "scripts/planning-investigation.py",
       "scripts/planning-revision.py",
       "scripts/planning_lock.py",
@@ -4371,7 +4378,7 @@
       },
       {
         "kind": "function",
-        "name": "run_command",
+        "name": "_approved_revision_overlay",
         "language": "python",
         "file": "scripts/execution-evidence.py",
         "line": 98,
@@ -4379,10 +4386,18 @@
       },
       {
         "kind": "function",
+        "name": "run_command",
+        "language": "python",
+        "file": "scripts/execution-evidence.py",
+        "line": 146,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
         "name": "append",
         "language": "python",
         "file": "scripts/execution-evidence.py",
-        "line": 235,
+        "line": 293,
         "confidence": "python_ast"
       },
       {
@@ -4390,7 +4405,7 @@
         "name": "show",
         "language": "python",
         "file": "scripts/execution-evidence.py",
-        "line": 251,
+        "line": 309,
         "confidence": "python_ast"
       },
       {
@@ -4398,7 +4413,7 @@
         "name": "main",
         "language": "python",
         "file": "scripts/execution-evidence.py",
-        "line": 257,
+        "line": 315,
         "confidence": "python_ast"
       },
       {
@@ -7343,14 +7358,6 @@
         "language": "python",
         "file": "scripts/navigator.py",
         "line": 2138,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "main",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 2141,
         "confidence": "python_ast"
       }
     ],
@@ -10675,6 +10682,69 @@
       },
       {
         "target": "__future__",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 3,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "argparse",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 5,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "copy",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 6,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "hashlib",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 7,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "importlib.util",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 8,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "json",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 9,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "datetime",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 10,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "pathlib",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 11,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "typing",
+        "referring_file": "scripts/planning-feature-controls.py",
+        "line": 12,
+        "reference_type": "import",
+        "confidence": "static-text"
+      },
+      {
+        "target": "__future__",
         "referring_file": "scripts/planning-investigation.py",
         "line": 3,
         "reference_type": "import",
@@ -10851,7 +10921,7 @@
       {
         "target": "base64",
         "referring_file": "scripts/planning-revision.py",
-        "line": 1009,
+        "line": 1029,
         "reference_type": "import",
         "confidence": "static-text"
       },
@@ -12889,69 +12959,6 @@
         "target": "tempfile",
         "referring_file": "tests/test_behaviour_planning.py",
         "line": 6,
-        "reference_type": "import",
-        "confidence": "static-text"
-      },
-      {
-        "target": "unittest",
-        "referring_file": "tests/test_behaviour_planning.py",
-        "line": 7,
-        "reference_type": "import",
-        "confidence": "static-text"
-      },
-      {
-        "target": "pathlib",
-        "referring_file": "tests/test_behaviour_planning.py",
-        "line": 8,
-        "reference_type": "import",
-        "confidence": "static-text"
-      },
-      {
-        "target": "scripts/behaviour_planning.py",
-        "referring_file": "tests/test_behaviour_planning.py",
-        "line": 24,
-        "reference_type": "loader",
-        "confidence": "static-text"
-      },
-      {
-        "target": "scripts/architecture_planning.py",
-        "referring_file": "tests/test_behaviour_planning.py",
-        "line": 25,
-        "reference_type": "loader",
-        "confidence": "static-text"
-      },
-      {
-        "target": "scripts/task-start.py",
-        "referring_file": "tests/test_behaviour_planning.py",
-        "line": 26,
-        "reference_type": "loader",
-        "confidence": "static-text"
-      },
-      {
-        "target": "scripts/behavior-harness.py",
-        "referring_file": "tests/test_behaviour_planning.py",
-        "line": 27,
-        "reference_type": "loader",
-        "confidence": "static-text"
-      },
-      {
-        "target": "__future__",
-        "referring_file": "tests/test_change_intent_anchor.py",
-        "line": 1,
-        "reference_type": "import",
-        "confidence": "static-text"
-      },
-      {
-        "target": "importlib.util",
-        "referring_file": "tests/test_change_intent_anchor.py",
-        "line": 3,
-        "reference_type": "import",
-        "confidence": "static-text"
-      },
-      {
-        "target": "json",
-        "referring_file": "tests/test_change_intent_anchor.py",
-        "line": 4,
         "reference_type": "import",
         "confidence": "static-text"
       }
@@ -20744,9 +20751,9 @@
       },
       {
         "partition": "tests",
-        "files": 230,
+        "files": 231,
         "languages": {
-          "python": 206
+          "python": 207
         },
         "manifests": [],
         "tests": [
@@ -22193,6 +22200,7 @@
       "scripts/official-aidlc-sanitize.py",
       "scripts/official-aidlc-state.py",
       "scripts/planning-discussion.py",
+      "scripts/planning-feature-controls.py",
       "scripts/planning-investigation.py",
       "scripts/planning-revision.py",
       "scripts/planning_lock.py",
@@ -22265,137 +22273,15 @@
       "tests/test_workflow_adapters.py",
       "tests/test_workflow_approvals.py",
       "tests/test_workflow_ci_continuation.py",
-      "tests/test_workflow_compiler.py",
-      "tests/test_workflow_contracts.py"
+      "tests/test_workflow_compiler.py"
     ]
   },
   "freshness": {
     "status": "fresh",
-    "checked_at": "2026-09-28T14:06:30.411540+00:00",
+    "checked_at": "2026-09-28T16:25:26.553220+00:00",
     "reasons": []
   },
   "navigator_lifecycle_history": [
-    {
-      "action": "refresh",
-      "at": "2026-09-27T14:13:12.736934+00:00",
-      "attempt_id": "start-20260927141247-73edc2",
-      "phase": "start",
-      "reason_codes": [
-        "bounded-goal-discovery",
-        "requested-scope-outside-cache"
-      ],
-      "target_paths": [
-        "scripts/closure-close.py",
-        "scripts/closure-recorder.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_learning_use_receipt.py"
-      ],
-      "effective_scope": [
-        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
-        "navigator.legacy.py",
-        "scripts/aidlc-official-bridge.py",
-        "scripts/behavior-harness.py",
-        "scripts/behaviour_planning.py",
-        "scripts/capture_hooks.py",
-        "scripts/change-intent-anchor.py",
-        "scripts/closure-close.py",
-        "scripts/closure-finalizer.py",
-        "scripts/closure-recorder.py",
-        "scripts/code-graph-mapper.py",
-        "scripts/code_graph_cache.py",
-        "scripts/code_graph_inventory.py",
-        "scripts/commit_prompt.py",
-        "scripts/completion-report.py",
-        "scripts/debug-host-diagnosis.py",
-        "scripts/debug-intake.py",
-        "scripts/debug-orientation.py",
-        "scripts/debug-preflight.py",
-        "scripts/enterprise-target-policy.py",
-        "scripts/graph_builder.py",
-        "scripts/host-adapter-conformance.py",
-        "scripts/host-workspace-adapter.py",
-        "scripts/install-copilot.py",
-        "scripts/mcp-server.py",
-        "scripts/navigator-scope-calibration.py",
-        "scripts/navigator-scope-release.py",
-        "scripts/navigator.py",
-        "scripts/navigator_graph_lifecycle.py",
-        "scripts/navigator_scope.py",
-        "scripts/official-aidlc-requirements.py",
-        "scripts/official-aidlc-sanitize.py",
-        "scripts/planning-discussion.py",
-        "scripts/planning-investigation.py",
-        "scripts/planning-revision.py",
-        "scripts/planning_lock.py",
-        "scripts/requirement-interpretation-draft.py",
-        "scripts/requirement_discovery.py",
-        "scripts/requirement_evidence.py",
-        "scripts/requirement_intake.py",
-        "scripts/run-ledger.py",
-        "scripts/session-control.py",
-        "scripts/session_control.py",
-        "scripts/spec-kit-bridge.py",
-        "scripts/tailtrail.py",
-        "scripts/target_workspace.py",
-        "scripts/task-start.py",
-        "scripts/workflow_runtime/compiler.py",
-        "scripts/workflow_runtime/evidence.py",
-        "scripts/workflow_runtime/ownership.py",
-        "scripts/workflow_runtime/release.py",
-        "scripts/workflow_runtime/stage_results.py",
-        "scripts/workflow_runtime/start_integration.py",
-        "scripts/workflow_runtime/vertical.py",
-        "tests/test_aidlc_official_bridge.py",
-        "tests/test_behavior_harness.py",
-        "tests/test_behaviour_planning.py",
-        "tests/test_change_intent_anchor.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_code_graph_cache.py",
-        "tests/test_debug_correction_integration.py",
-        "tests/test_debug_preflight.py",
-        "tests/test_debug_start_planning.py",
-        "tests/test_failure_classification.py",
-        "tests/test_graph_builder.py",
-        "tests/test_host_adapter_conformance.py",
-        "tests/test_install_profiles.py",
-        "tests/test_learning_use_receipt.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_debug_routing.py",
-        "tests/test_navigator_graph_lifecycle.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py",
-        "tests/test_plan_render.py",
-        "tests/test_planning_investigation.py",
-        "tests/test_planning_lock.py",
-        "tests/test_planning_revision.py",
-        "tests/test_repository_enforcement.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py",
-        "tests/test_review_scope.py",
-        "tests/test_scope_capture_wiring.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_session_control.py",
-        "tests/test_target_workspace.py",
-        "tests/test_threat_model_stride.py",
-        "tests/test_transactional_installer.py",
-        "tests/test_ui_consistency.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_ci_continuation.py",
-        "tests/test_workflow_compiler.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_ownership.py"
-      ]
-    },
     {
       "action": "refresh",
       "at": "2026-09-27T15:03:24.554177+00:00",
@@ -24990,6 +24876,150 @@
         "scripts/official-aidlc-sanitize.py",
         "scripts/official-aidlc-state.py",
         "scripts/planning-discussion.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "scripts/question-orchestrator.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement_evidence.py",
+        "scripts/requirement_intake.py",
+        "scripts/run-ledger.py",
+        "scripts/session-control.py",
+        "scripts/session_control.py",
+        "scripts/spec-kit-bridge.py",
+        "scripts/spec-kit-detect.py",
+        "scripts/spec-kit-evidence.py",
+        "scripts/spec-kit-policy.py",
+        "scripts/spec-kit-slices.py",
+        "scripts/tailtrail.py",
+        "scripts/target_workspace.py",
+        "scripts/task-start.py",
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/evidence.py",
+        "scripts/workflow_runtime/ownership.py",
+        "scripts/workflow_runtime/release.py",
+        "scripts/workflow_runtime/stage_results.py",
+        "scripts/workflow_runtime/start_integration.py",
+        "scripts/workflow_runtime/vertical.py",
+        "tests/test_advanced_runtime.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_behavior_harness.py",
+        "tests/test_behaviour_planning.py",
+        "tests/test_change_intent_anchor.py",
+        "tests/test_closure_close.py",
+        "tests/test_closure_contract.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_closure_learning.py",
+        "tests/test_closure_recorder.py",
+        "tests/test_code_graph_cache.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_preflight.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_failure_classification.py",
+        "tests/test_focused_validation_contracts.py",
+        "tests/test_graph_builder.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_install_profiles.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_mcp_server.py",
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_navigator_graph_lifecycle.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_plan_render.py",
+        "tests/test_planning_investigation.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py",
+        "tests/test_repository_enforcement.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_requirement_routing_phase0.py",
+        "tests/test_review_scope.py",
+        "tests/test_scope_capture_wiring.py",
+        "tests/test_self_contained_package.py",
+        "tests/test_session_control.py",
+        "tests/test_target_workspace.py",
+        "tests/test_threat_model_stride.py",
+        "tests/test_transactional_installer.py",
+        "tests/test_ui_consistency.py",
+        "tests/test_workflow_adapters.py",
+        "tests/test_workflow_approvals.py",
+        "tests/test_workflow_ci_continuation.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_ownership.py"
+      ]
+    },
+    {
+      "action": "refresh",
+      "at": "2026-09-28T16:25:26.560071+00:00",
+      "attempt_id": "start-20260928162506-87f069",
+      "phase": "start",
+      "reason_codes": [
+        "bounded-goal-discovery",
+        "persistent-graph-stale"
+      ],
+      "target_paths": [
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py"
+      ],
+      "effective_scope": [
+        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
+        "navigator.legacy.py",
+        "scripts/aidlc-official-bridge.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/behavior-harness.py",
+        "scripts/behaviour_planning.py",
+        "scripts/capture_hooks.py",
+        "scripts/change-intent-anchor.py",
+        "scripts/closure-close.py",
+        "scripts/closure-contract.py",
+        "scripts/closure-finalizer.py",
+        "scripts/closure-recorder.py",
+        "scripts/code-graph-mapper.py",
+        "scripts/code_graph_cache.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/commit_prompt.py",
+        "scripts/completion-report.py",
+        "scripts/debug-host-diagnosis.py",
+        "scripts/debug-intake.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-reproduction.py",
+        "scripts/enterprise-target-policy.py",
+        "scripts/evidence-tiers.py",
+        "scripts/execution-evidence.py",
+        "scripts/expand-intent.py",
+        "scripts/graph_builder.py",
+        "scripts/host-adapter-conformance.py",
+        "scripts/host-decision.py",
+        "scripts/host-workspace-adapter.py",
+        "scripts/install-copilot.py",
+        "scripts/maintainability-harness.py",
+        "scripts/mcp-server.py",
+        "scripts/metrics_extractor.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
         "scripts/planning-investigation.py",
         "scripts/planning-revision.py",
         "scripts/planning_lock.py",
