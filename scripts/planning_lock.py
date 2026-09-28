@@ -1371,6 +1371,22 @@ def _bind_official_scope_mapping(root: Path, run_id: str, revision: dict[str, An
             proof = sorted({str(path) for path in scope.get("proof_paths", []) if str(path).strip()})
             editable = {str(path) for path in contract.get("editable_paths", []) if str(path).strip()}
             contract["editable_paths"] = sorted(editable | set(proof))
+            # Carry recorded proof content from the Start matrix row so the
+            # frozen anchor authorizes managed execution (run 1b completes the
+            # 1a carry). Tiers/state stay authority-owned; commands, checks,
+            # and proof paths are proof content that binding must not drop.
+            source_contract = source.get("validation_contract", {})
+            if isinstance(source_contract, dict):
+                recorded_commands = [str(value) for value in source_contract.get("commands", []) if str(value).strip()]
+                if recorded_commands:
+                    contract["commands"] = list(dict.fromkeys(recorded_commands))
+                recorded_checks = [item for item in source_contract.get("checks", []) if isinstance(item, dict) and str(item.get("command", "")).strip()]
+                if recorded_checks:
+                    contract["checks"] = list({str(item["command"]): dict(item) for item in recorded_checks}.values())
+                for key in ("candidate_paths", "proposed_paths"):
+                    recorded_paths = sorted({str(value) for value in source_contract.get(key, []) if str(value).strip()})
+                    if recorded_paths:
+                        contract[key] = sorted({str(value) for value in contract.get(key, []) if str(value).strip()} | set(recorded_paths))
     return revision
 
 

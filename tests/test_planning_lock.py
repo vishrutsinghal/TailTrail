@@ -96,6 +96,66 @@ class PlanningLockTests(unittest.TestCase):
                     "requirement_uid": "req-1", "display_id": "REQ-01", "statement": "Notify.",
                 }]})
 
+    def test_official_revision_carries_recorded_proof_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "notify on status change", "plan-official-commands")
+            scope = {
+                "decision_fingerprint": "sha256:abc",
+                "implementation_owners": ["src/notify.py"],
+                "inspection_paths": [],
+                "proof_paths": ["tests/test_notify.py"],
+            }
+            ledger.atomic_json(lock.start_report_path(root, "plan-official-commands"), {"report": {
+                "goal": "notify on status change",
+                "navigator": {"requirement_matrix": [{
+                    "requirement_uid": "req-1", "display_id": "REQ-01",
+                    "statement": "Notify on status change.",
+                    "likely_paths": ["src/notify.py"], "scope_evidence": scope,
+                    "validation_contract": {
+                        "state": "required", "tiers": ["unit"],
+                        "commands": ["python -m unittest tests.test_notify -v"],
+                        "checks": [{"kind": "proof", "command": "python -m unittest tests.test_notify -v",
+                                    "tiers": ["unit"], "candidate_paths": ["tests/test_notify.py"]}],
+                        "candidate_paths": ["tests/test_notify.py"],
+                    },
+                }], "scope_evidence": {"schema_version": "2", "decision_fingerprint": "sha256:abc"}},
+            }})
+            revision = {"requirements": [{"requirement_uid": "req-1", "display_id": "REQ-01", "statement": "Notify on status change.", "validation_contract": {"state": "required", "tiers": ["unit"]}}]}
+            bound = lock._bind_official_scope_mapping(root, "plan-official-commands", revision)
+        row = bound["requirements"][0]
+        contract = row["validation_contract"]
+        self.assertEqual(contract["commands"], ["python -m unittest tests.test_notify -v"])
+        self.assertEqual(contract["checks"], [{"kind": "proof", "command": "python -m unittest tests.test_notify -v",
+                                               "tiers": ["unit"], "candidate_paths": ["tests/test_notify.py"]}])
+        self.assertEqual(contract["candidate_paths"], ["tests/test_notify.py"])
+        # Authority-owned tiers/state survive the carry.
+        self.assertEqual(contract["tiers"], ["unit"])
+        self.assertEqual(contract["state"], "required")
+
+    def test_official_revision_without_recorded_commands_mints_none(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "notify on status change", "plan-official-nocommands")
+            scope = {
+                "decision_fingerprint": "sha256:abc",
+                "implementation_owners": ["src/notify.py"],
+                "inspection_paths": [],
+                "proof_paths": [],
+            }
+            ledger.atomic_json(lock.start_report_path(root, "plan-official-nocommands"), {"report": {
+                "goal": "notify on status change",
+                "navigator": {"requirement_matrix": [{
+                    "requirement_uid": "req-1", "display_id": "REQ-01",
+                    "statement": "Notify on status change.",
+                    "likely_paths": ["src/notify.py"], "scope_evidence": scope,
+                    "validation_contract": {"state": "required", "tiers": ["unit"]},
+                }], "scope_evidence": {"schema_version": "2", "decision_fingerprint": "sha256:abc"}},
+            }})
+            revision = {"requirements": [{"requirement_uid": "req-1", "display_id": "REQ-01", "statement": "Notify on status change.", "validation_contract": {"state": "required", "tiers": ["unit"]}}]}
+            bound = lock._bind_official_scope_mapping(root, "plan-official-nocommands", revision)
+        self.assertNotIn("commands", bound["requirements"][0]["validation_contract"])
+
     def test_fail_closed_errors_carry_corrective_commands(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
