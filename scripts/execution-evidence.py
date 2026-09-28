@@ -40,7 +40,7 @@ def validate(root: Path, run_id: str, event: Any) -> dict[str, Any]:
         "command_label", "command", "outcome", "environment", "asserted_behavior",
         "artifact", "evidence_label", "classification", "collector", "evidence_quality",
         "exit_code", "started_at", "finished_at", "duration_ms", "stdout_artifact",
-        "stderr_artifact", "stdout_sha256", "stderr_sha256",
+        "stderr_artifact", "stdout_sha256", "stderr_sha256", "revision_overlay_uids",
     }
     unknown = set(event) - allowed
     if unknown: raise ValueError(f"execution evidence has unsupported fields: {', '.join(sorted(unknown))}; record it with `tailtrail execution-evidence record --root . --run-id <run-id> --event '<json>' --approved`")
@@ -95,6 +95,54 @@ def _anchor_requirements(root: Path, run_id: str) -> dict[str, dict[str, Any]]:
     }
 
 
+def _approved_revision_overlay(root: Path, run_id: str) -> dict[str, dict[str, list[str]]]:
+    """Union approved-revision proof content over the frozen anchor.
+
+    The anchor is immutable, so post-approval proof amendments (Shape A:
+    proof-update commands recorded through an approved plan revision) would
+    otherwise never reach managed execution. This overlay reads the ACTIVE
+    revision snapshot only — pending proposals grant nothing — and unions
+    its per-requirement commands/tiers over the anchor's. Missing state,
+    missing snapshots, or malformed rows yield no overlay (never a failure):
+    the anchor alone still authorizes everything it always did.
+    """
+    try:
+        state = LOCK.revision_state(root.resolve(), run_id)
+    except (OSError, ValueError):
+        return {}
+    try:
+        active = int(state.get("active_revision", 1))
+    except (TypeError, ValueError):
+        return {}
+    if active <= 1:
+        return {}
+    relative = state.get("active_report")
+    if not isinstance(relative, str) or not relative:
+        return {}
+    snapshot_path = root.resolve() / relative
+    if not snapshot_path.is_file():
+        return {}
+    try:
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {}
+    navigator = (snapshot.get("report", {}) or {}).get("navigator", {})
+    rows = navigator.get("requirement_matrix", []) if isinstance(navigator, dict) else []
+    overlay: dict[str, dict[str, list[str]]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        uid = str(row.get("requirement_uid", ""))
+        contract = row.get("validation_contract", {})
+        if not uid or not isinstance(contract, dict):
+            continue
+        commands = sorted({str(value).strip() for value in contract.get("commands", []) if str(value).strip()})
+        tiers = sorted({str(value).strip() for value in contract.get("tiers", []) if str(value).strip()})
+        if commands or tiers:
+            overlay[uid] = {"commands": commands, "tiers": tiers}
+    return overlay
+
+
 def run_command(
     root: Path,
     run_id: str,
@@ -112,13 +160,22 @@ def run_command(
     root = root.resolve()
     LOCK.assert_write_allowed(root, run_id)
     requirements = _anchor_requirements(root, run_id)
+    overlay = _approved_revision_overlay(root, run_id)
     selected = []
+    revision_overlaid: list[str] = []
     for uid in sorted(set(requirement_uids)):
         row = requirements.get(uid)
         if row is None:
             raise ValueError(f"managed execution references unknown approved requirement `{uid}`; use a UID from the approved anchor (check `tailtrail planning show --root . --run-id {run_id}`)")
         contract = row.get("validation_contract", {}) if isinstance(row.get("validation_contract"), dict) else {}
         approved_commands = {str(value) for value in contract.get("commands", []) if str(value)}
+        approved_tiers = {str(value) for value in contract.get("tiers", []) if str(value)}
+        revision_commands = set(overlay.get(uid, {}).get("commands", []))
+        revision_tiers = set(overlay.get(uid, {}).get("tiers", []))
+        if revision_commands or revision_tiers:
+            revision_overlaid.append(uid)
+        approved_commands |= revision_commands
+        approved_tiers |= revision_tiers
         checks = [value for value in contract.get("checks", []) if isinstance(value, dict)]
         matching_checks = [value for value in checks if str(value.get("command", "")) == command]
         approved_tiers = {
@@ -126,7 +183,7 @@ def run_command(
             for check in matching_checks
             for value in check.get("tiers", [])
             if str(value)
-        } or {str(value) for value in contract.get("tiers", []) if str(value)}
+        } or ({str(value) for value in contract.get("tiers", []) if str(value)} | revision_tiers)
         if command not in approved_commands:
             raise ValueError(f"command is not approved for requirement `{uid}`; revise the plan with `tailtrail planning revise --root . --run-id {run_id} --changes '<json>' --approved-proposal` before execution")
         if not set(tiers) or set(tiers) - approved_tiers:
@@ -200,6 +257,7 @@ def run_command(
         "command_label": command_label,
         "command": command,
         "outcome": outcome,
+        "revision_overlay_uids": sorted(revision_overlaid),
         "environment": f"{platform.system()} {platform.machine()} Python {platform.python_version()}",
         "asserted_behavior": asserted,
         "artifact": relative_result,

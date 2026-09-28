@@ -550,6 +550,26 @@ def _apply_change(root: Path, report: dict[str, Any], rows: list[dict[str, Any]]
     elif kind == "proof-update":
         row = _requirement(rows, change.get("requirement_uid"))
         row["evidence_plan"] = _list_of_text(change.get("evidence_plan"), "evidence_plan")
+        # Shape A (overlay mechanism): a host may attach runnable proof
+        # commands (and tiers) to the validation contract post-approval.
+        # Additive union only — a revision never silently drops already
+        # approved proof. Omitted keys leave the contract untouched (no
+        # minting); empty-string entries are rejected by _list_of_text via
+        # _safe_text.
+        if "commands" in change or "tiers" in change:
+            contract = row.setdefault("validation_contract", {"state": "required", "tiers": ["unit"]})
+            if not isinstance(contract, dict):
+                raise ValueError("revision change `validation_contract` must be an object")
+            if "commands" in change:
+                recorded = _list_of_text(change.get("commands"), "commands")
+                contract["commands"] = list(dict.fromkeys(
+                    [str(value) for value in contract.get("commands", []) if str(value).strip()] + recorded
+                ))
+            if "tiers" in change:
+                recorded_tiers = _list_of_text(change.get("tiers"), "tiers")
+                contract["tiers"] = list(dict.fromkeys(
+                    [str(value) for value in contract.get("tiers", []) if str(value).strip()] + recorded_tiers
+                ))
         normalized.update({"requirement_uid": row["requirement_uid"], "display_id": row["display_id"], "evidence_plan": row["evidence_plan"]})
     elif kind == "requirement-add":
         statement = _safe_text(change.get("statement"), "statement")
