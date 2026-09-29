@@ -726,6 +726,86 @@ def project_likely_impacted(candidates: Iterable[dict[str, Any]]) -> list[dict[s
     return rows
 
 
+# --- Task-type role contract -------------------------------------------------
+#
+# A classified task type restricts which path kinds stay editable: qa runs
+# edit test paths, doc runs edit documentation paths, everything else
+# demotes to inspection (read-only). Implementation/infra stay broad by
+# nature; multi-type runs union their allowances. Proof paths are untouched
+# here — they are always proof-only downstream.
+_TASK_TYPE_EDIT_KINDS: dict[str, frozenset[str] | None] = {
+    "qa": frozenset({"test"}),
+    "doc": frozenset({"documentation"}),
+    "implementation": None,
+    "infra": None,
+}
+
+# Classifier vocabulary is richer than the four day-to-day buckets; the
+# implementation family maps explicitly, anything else passes through and
+# imposes no restriction downstream.
+_TASK_TYPE_FAMILY: dict[str, str] = {
+    "implementation": "implementation",
+    "feature": "implementation",
+    "bug": "implementation",
+    "refactor": "implementation",
+    "qa": "qa",
+    "documentation": "doc",
+}
+
+
+def _scope_path_kind(path: str) -> str:
+    """Classify one repository path as test, documentation, or other (pure)."""
+    pure = PurePosixPath(str(path).replace("\\", "/"))
+    if _is_test_path(pure):
+        return "test"
+    parts = {part.lower() for part in pure.parts[:-1]}
+    name = pure.name.lower()
+    if parts & DOCUMENT_PARTS or pure.suffix.lower() in DOCUMENT_SUFFIXES or name == "readme":
+        return "documentation"
+    return "other"
+
+
+def editable_paths_for_task_types(paths: list[str], task_types: list[str]) -> dict[str, Any]:
+    """Split candidate owners into editable vs inspection by task-type contract.
+
+    Returns {"editable": [...], "inspection": [...], "contract": {...}} where
+    contract records the normalized types and allowed kinds. Unmappable types
+    (security, review, ...) impose no restriction — status quo ante.
+    """
+    normalized = sorted({_TASK_TYPE_FAMILY.get(str(item).lower(), str(item).lower()) for item in task_types or []})
+    allowed: set[str] | None = set()
+    restricted = False
+    for task in normalized:
+        kinds = _TASK_TYPE_EDIT_KINDS.get(task, "unknown")
+        if kinds is None:
+            return {
+                "editable": sorted({str(path) for path in paths if str(path).strip()}),
+                "inspection": [],
+                "contract": {"task_types": normalized, "restricted": False, "reason": f"{task}-stays-broad"},
+            }
+        if kinds == "unknown":
+            continue
+        restricted = True
+        allowed |= set(kinds)
+    if not restricted:
+        return {
+            "editable": sorted({str(path) for path in paths if str(path).strip()}),
+            "inspection": [],
+            "contract": {"task_types": normalized, "restricted": False, "reason": "no-restricting-type"},
+        }
+    editable: list[str] = []
+    inspection: list[str] = []
+    for path in paths:
+        if not str(path).strip():
+            continue
+        (editable if _scope_path_kind(path) in allowed else inspection).append(str(path))
+    return {
+        "editable": sorted(set(editable)),
+        "inspection": sorted(set(inspection)),
+        "contract": {"task_types": normalized, "restricted": True, "allowed_kinds": sorted(allowed)},
+    }
+
+
 def role_projection(document: dict[str, Any], *, include_excluded: bool = False) -> dict[str, Any]:
     """Return one canonical, source-body-free projection for every renderer.
 

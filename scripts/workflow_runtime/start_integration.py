@@ -42,6 +42,18 @@ def scope_binding(report: dict[str, Any]) -> dict[str, Any] | None:
     implementation_paths = sorted({
         str(path) for row in mappings for path in row.get("implementation_owners", []) if str(path)
     })
+    # Task-type role contract: qa runs edit test paths, doc runs edit
+    # documentation paths, everything else demotes to inspection. The
+    # resolved task_type_resolution verdict wins over the raw classifier
+    # guess when present. Proof and validation paths are untouched.
+    resolution = report.get("task_type_resolution", {}) if isinstance(report.get("task_type_resolution"), dict) else {}
+    if resolution.get("status") == "resolved" and resolution.get("task_type"):
+        contract_types: list[str] = [str(resolution["task_type"])]
+    else:
+        contract_types = [str(item) for item in (navigator.get("task_types", []) or []) if str(item).strip()]
+    contract = navigator_scope.editable_paths_for_task_types(implementation_paths, contract_types)
+    implementation_paths = contract["editable"]
+    contract_inspection = contract["inspection"]
     proposed_proof_paths = sorted({
         str(path)
         for row in navigator.get("requirement_matrix", [])
@@ -72,8 +84,9 @@ def scope_binding(report: dict[str, Any]) -> dict[str, Any] | None:
         "implementation_paths": implementation_paths,
         "inspection_paths": sorted({
             str(path) for row in mappings for path in row.get("inspection_paths", []) if str(path)
-        }),
+        } | set(contract_inspection)),
         "proof_paths": proof_paths,
+        "task_type_contract": contract["contract"],
         "proposed_proof_paths": proposed_proof_paths,
         "validation_edit_paths": validation_edit_paths,
         "boundary": "DWR consumes the saved Navigator decision by fingerprint. Proven implementation owners are editable for source work; requirement-linked validation paths named by the approved validation contract are editable only for proof assertions; inspection-only paths remain read-only.",
