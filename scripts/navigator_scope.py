@@ -492,6 +492,20 @@ def safe_text(
     return text, None, "sha256:" + hashlib.sha256(body).hexdigest()
 
 
+# Compatibility shims re-export behavior implemented elsewhere; they match
+# nearly every query lexically and touch everything structurally, so they
+# qualify as owners everywhere and own nothing. They stay readable as
+# inspection-only context but can never be offered, answered into ownership,
+# or bound as editable. Membership is an explicit allowlist — never a name
+# pattern — so real modules are never caught by accident.
+LEGACY_SHIM_PATHS: frozenset[str] = frozenset({"navigator.legacy.py"})
+
+
+def _is_legacy_shim(path: str) -> bool:
+    """Check whether a repository path is a known compatibility shim."""
+    return str(path).replace("\\", "/") in LEGACY_SHIM_PATHS
+
+
 def _is_test_path(path: PurePosixPath) -> bool:
     parts = {part.lower() for part in path.parts[:-1]}
     lowered = path.name.lower()
@@ -655,6 +669,8 @@ def candidates_from_seeds(root: Path, seeds: Iterable[dict[str, Any] | ScopeSeed
         role, role_reasons = classify_repository_role(root, path)
         unsafe = sensitive or (file_rejection if file_rejection not in {None, "not-a-file"} else None)
         status, confidence, status_reason = _candidate_status(role, sources, task_set, bool(unsafe))
+        if _is_legacy_shim(path) and status not in {"excluded", "rejected", "proof-only"}:
+            status, status_reason = "inspection-only", "legacy-shim-inspection-only"
         reasons = _stable_strings((*seed_reasons, *role_reasons, status_reason, *(tuple([unsafe]) if unsafe else ())))
         candidate_key = {"path": path, "role": role, "sources": sources, "reasons": reasons}
         rows.append(
@@ -2543,6 +2559,11 @@ def investigate(
     for path, row in by_path.items():
         reasons = set(row["reason_codes"])
         row["evidence_edge_ids"] = sorted(set(edge_ids[path]))
+        if _is_legacy_shim(path):
+            row["status"] = "inspection-only"
+            reasons.add("legacy-shim-inspection-only")
+            row["reason_codes"] = sorted(reasons)
+            continue
         presentation_owner = path in behavior_owner_paths or path in ui_renderer_paths
         repository_role = classify_repository_role(root, path)[0]
         test_only_task = (

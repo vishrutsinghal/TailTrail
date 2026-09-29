@@ -3105,5 +3105,51 @@ class ScopeQuestionRankingTests(unittest.TestCase):
         self.assertEqual(validation["state"], "validated")
 
 
+class LegacyShimDemotionTests(unittest.TestCase):
+    def test_seed_demotes_legacy_to_inspection_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "navigator.legacy.py").write_text("# shim\n", encoding="utf-8")
+            (root / "src").mkdir(exist_ok=True)
+            (root / "src" / "work.py").write_text("X = 1\n", encoding="utf-8")
+            rows = navigator_scope.candidates_from_seeds(root, [
+                {"path": "navigator.legacy.py", "seed_sources": ["lexical-path"], "reason_codes": ["lexical-path-match"]},
+                {"path": "src/work.py", "seed_sources": ["lexical-path"], "reason_codes": ["lexical-path-match"]},
+            ], ["implementation"])
+            by_path = {row["path"]: row for row in rows}
+        self.assertEqual(by_path["navigator.legacy.py"]["status"], "inspection-only")
+        self.assertIn("legacy-shim-inspection-only", by_path["navigator.legacy.py"]["reason_codes"])
+        self.assertNotIn("legacy-shim-inspection-only", by_path["src/work.py"]["reason_codes"])
+
+    def test_legacy_never_offered_as_question_option(self):
+        candidates = [{
+            "path": "navigator.legacy.py", "candidate_id": "cand-legacy",
+            "role": "implementation-owner", "status": "inspection-only",
+            "confidence": "high",
+            "reason_codes": ["bounded-static-owner-evidence", "legacy-shim-inspection-only"],
+            "evidence_edge_ids": ["e1"], "content_fingerprint": "sha256:" + "c" * 64,
+            "seed_sources": ["lexical-path"],
+        }, {
+            "path": "src/work.py", "candidate_id": "cand-work",
+            "role": "implementation-owner", "status": "included",
+            "confidence": "high",
+            "reason_codes": ["bounded-static-owner-evidence",
+                             "owner-qualified-by-definition-with-edges"],
+            "evidence_edge_ids": ["e2"], "content_fingerprint": "sha256:" + "d" * 64,
+            "seed_sources": ["lexical-path"],
+        }]
+        edges = [
+            {"edge_id": "e1", "strength": "strong", "kind": "defines symbol",
+             "from_candidate_id": "cand-legacy", "to_candidate_id": "cand-legacy"},
+            {"edge_id": "e2", "strength": "strong", "kind": "defines symbol",
+             "from_candidate_id": "cand-work", "to_candidate_id": "cand-work"},
+        ]
+        options, _, validation = navigator_scope._validated_scope_question_options(
+            {"candidates": candidates, "edges": edges,
+             "limits": {"scope_question_options": 3}}, 3)
+        self.assertEqual(options, ["src/work.py"])
+        self.assertEqual(validation["state"], "validated")
+
+
 if __name__ == "__main__":
     unittest.main()
