@@ -123,5 +123,48 @@ class ArchitecturePlanningTests(unittest.TestCase):
         )
 
 
+class PaymentGatingTests(unittest.TestCase):
+    def _requirements(self, *statements):
+        return [
+            {"display_id": f"REQ-{index:02d}", "statement": statement, "kind": "change"}
+            for index, statement in enumerate(statements, start=1)
+        ]
+
+    def _texts(self, plan):
+        return " ".join(
+            str(item.get(field, ""))
+            for item in plan.get("invariants", [])
+            for field in ("invariant", "implementation_guidance", "planned_proof")
+        ).lower()
+
+    def test_retry_without_payment_emits_no_payment_text(self):
+        plan = architecture.build(
+            "Implement retry logic",
+            [],
+            self._requirements("Implement retry logic for failed uploads"),
+            True,
+        )
+        self.assertNotIn("payment", self._texts(plan))
+        self.assertIn("repeated execution", self._texts(plan))
+
+    def test_retry_with_payment_keeps_payment_invariants(self):
+        plan = architecture.build(
+            "Fix retry for failed payments",
+            [],
+            self._requirements("Fix retry for failed payments"),
+            True,
+        )
+        self.assertIn("payment", self._texts(plan))
+
+    def test_adapter_without_payment_stays_neutral(self):
+        plan = architecture.build(
+            "Extend the existing adapter",
+            [],
+            self._requirements("Extend the existing adapter for new endpoints"),
+            True,
+        )
+        self.assertNotIn("payment", self._texts(plan))
+
+
 if __name__ == "__main__":
     unittest.main()

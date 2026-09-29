@@ -39,6 +39,13 @@ DOMAIN_TERMS = {
     "refund", "retry", "shipment",
 }
 
+# Payment-domain invariant text may only be emitted when the goal itself
+# carries payment evidence. Templates matching bare mechanics words (retry,
+# adapter) must stay domain-neutral: emitting "payment" without a payment
+# signal poisons the plan and trips the relevance gate on the template's own
+# contamination (observed: a generic retry goal rejected for "payment").
+PAYMENT_DOMAIN_TERMS = ("payment", "order", "checkout", "billing", "refund")
+
 
 def tokens(value: str) -> set[str]:
     return {
@@ -173,12 +180,19 @@ def _invariants(requirements: list[dict[str, Any]]) -> list[dict[str, Any]]:
         })
 
     joined = " ".join(str(row.get("statement", "")) for row in requirements).lower()
+    payment_context = any(term in joined for term in PAYMENT_DOMAIN_TERMS)
     if "retry" in joined:
-        add("idempotent retry payment", "Retries must not duplicate payment or order-submission side effects.", "Keep retry/idempotency coordination at the existing service/payment boundary; do not create caller-specific retry logic.", "Focused idempotency unit evidence plus order-submission integration evidence.")
+        if payment_context:
+            add("idempotent retry payment", "Retries must not duplicate payment or order-submission side effects.", "Keep retry/idempotency coordination at the existing service/payment boundary; do not create caller-specific retry logic.", "Focused idempotency unit evidence plus order-submission integration evidence.")
+        else:
+            add("idempotent retry", "Repeated execution must not duplicate approved side effects.", "Keep retry/idempotency coordination at the confirmed authoritative boundary; do not create caller-specific retry logic.", "Focused repeated-execution evidence plus integration proof for the affected side effects.")
     elif "idempotent" in joined:
         add("idempotent", "Repeated execution must not duplicate approved side effects.", "Keep idempotency at the confirmed authoritative boundary rather than adding caller-specific duplicate handling.", "Focused repeated-execution evidence plus integration proof for the affected side effects.")
     if "existing" in joined and "adapter" in joined:
-        add("existing adapter", "The existing adapter remains the authoritative external-payment boundary.", "Extend or reuse that adapter and its established call path; do not bypass it from the API or service.", "Changed-symbol/import review and caller-path integration evidence.")
+        if payment_context:
+            add("existing adapter", "The existing adapter remains the authoritative external-payment boundary.", "Extend or reuse that adapter and its established call path; do not bypass it from the API or service.", "Changed-symbol/import review and caller-path integration evidence.")
+        else:
+            add("existing adapter", "The existing adapter remains the authoritative boundary.", "Extend or reuse that adapter and its established call path; do not bypass it.", "Changed-symbol/import review and caller-path integration evidence.")
     if "caller" in joined or "map every" in joined:
         add("caller service api", "Every material service and API caller must be assessed before the implementation boundary is finalized.", "Treat caller paths as inspection candidates, not automatic edit targets; update only callers whose approved contract requires change.", "Requirement-linked Code Graph receipt plus changed-scope reconciliation.")
     if "preserve" in joined or "unchanged" in joined:
@@ -186,7 +200,10 @@ def _invariants(requirements: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if "dependency" in joined and ("do not" in joined or "without" in joined or "no new" in joined):
         add("dependency", "Dependency manifests and lock files remain unchanged.", "Use the standard library and installed project capabilities; route any unavoidable dependency through a new approved plan.", "Changed-path dependency-manifest check.")
     if "second" in joined and ("abstraction" in joined or "adapter" in joined or "client" in joined):
-        add("second abstraction adapter", "No parallel payment adapter, client, or orchestration boundary is introduced.", "Modify the existing boundary instead of creating a V2/new/retry-specific payment abstraction.", "Changed-symbol/path review and Maintainability/Architecture assessment.")
+        if payment_context:
+            add("second abstraction adapter", "No parallel payment adapter, client, or orchestration boundary is introduced.", "Modify the existing boundary instead of creating a V2/new/retry-specific payment abstraction.", "Changed-symbol/path review and Maintainability/Architecture assessment.")
+        else:
+            add("second abstraction adapter", "No parallel adapter, client, or orchestration boundary is introduced.", "Modify the existing boundary instead of creating a V2/new parallel abstraction.", "Changed-symbol/path review and Maintainability/Architecture assessment.")
     if not result:
         add("architecture", "The implementation must follow the existing repository boundaries discovered after approval.", "Confirm layer ownership and callers before editing; keep actual changed scope within the approved impact map.", "Changed-scope comparison plus the repository's focused tests.")
     return result
