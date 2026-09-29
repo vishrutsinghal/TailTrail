@@ -3035,5 +3035,75 @@ class UnavailableRouteAnswerTests(unittest.TestCase):
             self.assertIn("scope_evidence_fingerprint", navigator["scope_host_packet"])
 
 
+class ScopeQuestionRankingTests(unittest.TestCase):
+    def _document(self, candidates, edges):
+        return {
+            "candidates": candidates,
+            "edges": edges,
+            "limits": {"scope_question_options": 3},
+        }
+
+    def _candidate(self, path, candidate_id, edge_ids):
+        return {
+            "path": path, "candidate_id": candidate_id,
+            "role": "implementation-owner", "status": "included",
+            "confidence": "high",
+            "reason_codes": ["bounded-static-owner-evidence",
+                             "owner-qualified-by-definition-with-edges"],
+            "evidence_edge_ids": list(edge_ids),
+            "content_fingerprint": "sha256:" + "a" * 64,
+            "seed_sources": ["lexical-path"],
+        }
+
+    def _edge(self, edge_id, candidate_id, kind="defines symbol"):
+        return {
+            "edge_id": edge_id, "strength": "strong", "kind": kind,
+            "from_candidate_id": candidate_id, "to_candidate_id": candidate_id,
+        }
+
+    def test_deeper_candidate_outranks_alphabetical(self):
+        candidates = [
+            self._candidate("aaa-thin.py", "cand-aaa", ["e1"]),
+            self._candidate("zzz-deep.py", "cand-zzz", ["e2", "e3", "e4"]),
+        ]
+        edges = [
+            self._edge("e1", "cand-aaa", "defines symbol"),
+            self._edge("e2", "cand-zzz", "defines symbol"),
+            self._edge("e3", "cand-zzz", "calls function"),
+            self._edge("e4", "cand-zzz", "proves behavior"),
+        ]
+        options, evidence, validation = navigator_scope._validated_scope_question_options(
+            self._document(candidates, edges), 3)
+        self.assertEqual(options[0], "zzz-deep.py")
+        self.assertEqual(validation["state"], "validated")
+
+    def test_slice_summaries_attached_with_root(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "helper.py").write_text("def help():\n    return 1\n", encoding="utf-8")
+            (root / "main.py").write_text("from helper import help\nprint(help())\n", encoding="utf-8")
+            candidates = [
+                self._candidate("helper.py", "cand-h", ["e1"]),
+                self._candidate("main.py", "cand-m", ["e2"]),
+            ]
+            edges = [
+                self._edge("e1", "cand-h", "defines symbol"),
+                self._edge("e2", "cand-m", "defines symbol"),
+            ]
+            options, evidence, validation = navigator_scope._validated_scope_question_options(
+                self._document(candidates, edges), 3, root)
+            by_path = {row["path"]: row for row in evidence}
+            self.assertIn("slice_summary", by_path["helper.py"])
+            self.assertIn("main.py", by_path["helper.py"]["slice_summary"]["callers"])
+
+    def test_expansion_failure_falls_back_to_edge_ranking(self):
+        candidates = [self._candidate("a.py", "cand-a", ["e1"])]
+        edges = [self._edge("e1", "cand-a", "defines symbol")]
+        options, evidence, validation = navigator_scope._validated_scope_question_options(
+            self._document(candidates, edges), 3, Path("nonexistent-root"))
+        self.assertEqual(options, ["a.py"])
+        self.assertEqual(validation["state"], "validated")
+
+
 if __name__ == "__main__":
     unittest.main()

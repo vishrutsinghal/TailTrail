@@ -3068,15 +3068,40 @@ def requested_scope_mode(goal: str, task_types: Iterable[str]) -> str:
     return "code-change"
 
 
+def _expand_finalist_slices(root: Path, paths: list[str]) -> dict[str, dict[str, Any]]:
+    """Expand bounded evidence slices via the code-graph mapper (lazy import).
+
+    The mapper module filename contains hyphens, so it loads by path here
+    instead of at module top. Any load or expansion failure raises to the
+    caller, which treats slices as advisory and falls back cleanly.
+    """
+    import importlib.util
+
+    module_path = Path(__file__).resolve().parent / "code-graph-mapper.py"
+    spec = importlib.util.spec_from_file_location("tailtrail_scope_slice_mapper", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("code-graph-mapper.py is unavailable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.expand_finalist_slices(Path(root), [str(item) for item in paths])
+
+
 def _validated_scope_question_options(
     document: dict[str, Any],
     maximum: int,
+    root: Path | None = None,
 ) -> tuple[list[str], list[dict[str, Any]], dict[str, Any]]:
-    """Return only strong, role-correct owner alternatives.
+    """Return only strong, role-correct owner alternatives, ranked by depth.
 
     Read hints, callers, emitters, proof paths, and lexical-only candidates can
     never become question options. Every offered path must cite a strong edge
-    from the same evidence document and an owner-qualification rule.
+    from the same evidence document and an owner-qualification rule. Options
+    rank by evidence depth (distinct relation kinds, then edge counts) so the
+    cap keeps the best candidates instead of the first discovered. When
+    ``root`` is given, bounded graph slices expand per finalist (cache-first,
+    best-effort: any expansion failure falls back to packet-edge ranking
+    without breaking the question) and ride along as per-option summaries
+    so the host picks from meaning instead of names.
     """
     edges = {
         str(row.get("edge_id")): row
@@ -3124,7 +3149,34 @@ def _validated_scope_question_options(
             "missing_discriminator": "which runtime path reproduces the requested behavior",
             "evidence_edge_ids": supporting_edges,
         })
-    eligible = sorted(eligible, key=lambda row: row["path"])
+    summaries: dict[str, dict[str, Any]] = {}
+    if root is not None and eligible:
+        try:
+            summaries = _expand_finalist_slices(
+                root, [row["path"] for row in eligible],
+            )
+        except Exception:  # noqa: BLE001 — expansion is advisory; the question must survive it
+            summaries = {}
+
+    def _score(row: dict[str, Any]) -> tuple[int, int, str]:
+        kinds = {
+            str(edges[edge_id].get("kind", "unknown"))
+            for edge_id in row["evidence_edge_ids"]
+            if edge_id in edges
+        }
+        summary = summaries.get(row["path"], {})
+        kinds |= {str(value) for value in summary.get("relations", []) if str(value).strip()}
+        count = len(row["evidence_edge_ids"]) + len(summary.get("callers", [])) + len(summary.get("tests", []))
+        if summary:
+            row["slice_summary"] = {
+                "status": str(summary.get("status", "unknown")),
+                "callers": list(summary.get("callers", [])),
+                "tests": list(summary.get("tests", [])),
+                "relations": sorted(kinds),
+            }
+        return (-len(kinds), -count, row["path"])
+
+    eligible = sorted(eligible, key=_score)
     offered = eligible[:max(1, min(maximum, SCOPE_QUESTION_OPTION_CAP))]
     validation = {
         "state": "validated" if offered else "no-supported-options",
@@ -3261,7 +3313,7 @@ def assess_scope_quality(
     if status == "blocked" and mode == "code-change":
         question_limit = int(document.get("limits", {}).get("scope_question_options", 3))
         options, option_evidence, question_validation = _validated_scope_question_options(
-            document, question_limit
+            document, question_limit, root
         )
         if evidence_state in {"ambiguous", "conflicting"} and options:
             question = {
