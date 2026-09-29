@@ -1432,6 +1432,72 @@ def aidlc_mode_features(mode: str) -> dict[str, list[str]]:
     return {"included": [*common, "AIDLC lifecycle routing disabled for this run"], "not_included": ["Local AIDLC Requirements stage", "Official pack verification and bridge identity"]}
 
 
+def post_answer_deescalation(
+    report: dict[str, Any],
+    root: Path,
+    official_manifest: str | None,
+    *,
+    official_authority_present: bool = False,
+) -> str | None:
+    """Step auto-selected Standard back to Lite on clean narrowed scope.
+
+    Mode selection runs on pre-answer evidence, so lexical breadth can
+    escalate a run whose decided scope is tiny. De-escalation fires only
+    when ALL hold: current mode is auto-selected Standard (never explicit),
+    no official stage started, no debug plan, scope evidence resolved, the
+    locked owner count fits the Lite floor, and the owners rest on thin
+    evidence by the thin gate's own 2-edge/2-kind calibration. Anything
+    else (explicit flags, official runs, deep small scopes) keeps Standard.
+    Mutates the report on success; returns the new mode or None.
+    """
+    current = report.get("aidlc_mode", {}) if isinstance(report.get("aidlc_mode"), dict) else {}
+    if str(current.get("mode", "")) != "standard":
+        return None
+    if official_authority_present or report.get("debug_plan"):
+        return None
+    if str(current.get("selection", "")) not in {"scope-complexity-standard", "navigator-risk-routing"}:
+        return None
+    navigator_block = report.get("navigator", {}) if isinstance(report.get("navigator"), dict) else {}
+    decided = navigator_block.get("scope_evidence", {}) if isinstance(navigator_block.get("scope_evidence"), dict) else {}
+    locked = navigator_scope.resolved_scope_breadth(decided)
+    if not isinstance(locked, dict):
+        return None
+    lite_floor = 5
+    metrics = navigator_block.get("scope_quality", {}) or {}
+    thresholds = (metrics.get("complexity_metrics", {}) or {}).get("thresholds", {})
+    if isinstance(thresholds, dict):
+        try:
+            lite_floor = int(thresholds.get("affected_files_lite_floor", 5))
+        except (TypeError, ValueError):
+            lite_floor = 5
+    try:
+        editable_files = int(locked.get("editable_files", 9999))
+    except (TypeError, ValueError):
+        return None
+    if editable_files > lite_floor:
+        return None
+    owners = [str(path) for path in locked.get("paths", []) if str(path).strip()]
+    candidates = [row for row in decided.get("candidates", []) if isinstance(row, dict)]
+    edges = [row for row in decided.get("edges", []) if isinstance(row, dict)]
+    touching = 0
+    kinds: set[str] = set()
+    for path in owners:
+        count, path_kinds = navigator_scope._owner_strong_support(candidates, edges, path)
+        touching += count
+        kinds.update(path_kinds)
+    if touching >= navigator_scope.RESOLVED_OWNER_MIN_STRONG_EDGES and len(kinds) >= navigator_scope.RESOLVED_OWNER_MIN_EDGE_KINDS:
+        return None
+    deescalated = official_aidlc_bridge.preflight(root, "lite", official_manifest)
+    deescalated["selection"] = "post-answer-de-escalation"
+    deescalated["full_escalation"] = {
+        "state": "not-eligible",
+        "reason": "Post-answer scope resolved to a tiny owner set resting on thin evidence; auto-selected Standard stepped back to Lite.",
+    }
+    report["aidlc_mode"] = deescalated
+    report["aidlc_mode_features"] = aidlc_mode_features(deescalated["mode"])
+    return str(deescalated.get("mode", "")) or None
+
+
 # --- Layered task-type classification (official answers OQ-01/OQ-02/OQ-03,
 # run start-20260928123309-ad8053) -------------------------------------------
 #
@@ -6807,6 +6873,16 @@ def main() -> int:
                     _re_eval_suggestion["corroborated_by"] = _post_fired
             if _re_eval_suggestion is not None:
                 report["aidlc_mode"]["re_evaluation_suggestion"] = _re_eval_suggestion
+
+        # Post-answer de-escalation (mirror of Phase 6): mode selection runs
+        # on pre-answer evidence, so lexical breadth can escalate a run whose
+        # decided scope is tiny. See post_answer_deescalation().
+        _deescalated_mode = post_answer_deescalation(
+            report, root, effective_official_manifest,
+            official_authority_present=required_official_authority is not None,
+        )
+        if _deescalated_mode is not None:
+            effective_aidlc_mode = _deescalated_mode
 
         if not args.no_planning_lock:
             created_run_id: str | None = None

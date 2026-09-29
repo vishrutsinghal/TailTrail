@@ -126,5 +126,99 @@ class AssessTaskTypeTests(unittest.TestCase):
         self.assertEqual(decision["resolution"], "passthrough-unmapped-types")
 
 
+class PostAnswerDeescalationTests(unittest.TestCase):
+    def _report(self, owners, selection="scope-complexity-standard", mode="standard",
+                edge_specs=None, state="resolved"):
+        candidates = []
+        edges = []
+        for index, owner in enumerate(owners):
+            candidate_id = f"cand-{index}"
+            edge_ids = []
+            for edge_index, (kind, strength) in enumerate(edge_specs or []):
+                edge_id = f"e-{index}-{edge_index}"
+                edge_ids.append(edge_id)
+                edges.append({
+                    "edge_id": edge_id, "strength": strength, "kind": kind,
+                    "from_candidate_id": candidate_id, "to_candidate_id": candidate_id,
+                })
+            candidates.append({
+                "path": owner, "candidate_id": candidate_id,
+                "role": "implementation-owner", "status": "included",
+                "confidence": "high", "reason_codes": [], "evidence_edge_ids": edge_ids,
+            })
+        return {
+            "navigator": {
+                "scope_evidence": {
+                    "state": state,
+                    "requirements": [{
+                        "requirement_id": "req-1", "display_id": "REQ-01",
+                        "scope_state": state, "implementation_owners": list(owners),
+                        "inspection_paths": [], "proof_paths": [],
+                    }],
+                    "candidates": candidates,
+                    "edges": edges,
+                },
+                "scope_quality": {},
+            },
+            "aidlc_mode": {"mode": mode, "selection": selection},
+        }
+
+    def test_thin_narrowed_scope_deescalates(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            report = self._report(
+                ["scripts/a.py", "scripts/b.py"],
+                edge_specs=[("defines symbol", "strong")],
+            )
+            mode = task_start.post_answer_deescalation(
+                report, Path(temp), None)
+        self.assertEqual(mode, "lite")
+        self.assertEqual(report["aidlc_mode"]["selection"], "post-answer-de-escalation")
+
+    def test_deep_narrowed_scope_keeps_standard(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            report = self._report(
+                ["scripts/a.py", "scripts/b.py"],
+                edge_specs=[("defines symbol", "strong"), ("calls function", "strong")],
+            )
+            mode = task_start.post_answer_deescalation(
+                report, Path(temp), None)
+        self.assertIsNone(mode)
+        self.assertEqual(report["aidlc_mode"]["mode"], "standard")
+
+    def test_explicit_selection_never_deescalates(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            report = self._report(["scripts/a.py"], selection="explicit-flag")
+            mode = task_start.post_answer_deescalation(
+                report, Path(temp), None)
+        self.assertIsNone(mode)
+
+    def test_official_authority_blocks_deescalation(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            report = self._report(["scripts/a.py"])
+            mode = task_start.post_answer_deescalation(
+                report, Path(temp), None, official_authority_present=True)
+        self.assertIsNone(mode)
+
+    def test_unresolved_evidence_never_deescalates(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            report = self._report(["scripts/a.py"], state="ambiguous")
+            mode = task_start.post_answer_deescalation(
+                report, Path(temp), None)
+        self.assertIsNone(mode)
+
+    def test_nonstandard_mode_untouched(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            report = self._report(["scripts/a.py"], mode="lite")
+            mode = task_start.post_answer_deescalation(
+                report, Path(temp), None)
+        self.assertIsNone(mode)
+
+
 if __name__ == "__main__":
     unittest.main()
