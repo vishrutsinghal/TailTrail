@@ -569,6 +569,7 @@ class LiteAnchorDerivationTests(unittest.TestCase):
             "statement": "Do lite work.", "acceptance_criteria": ["Done."],
             "preserve_rules": [], "likely_paths": ["src/work.py"],
             "evidence_plan": ["Run unit proof."],
+            "scope_evidence": {"decision_fingerprint": "sha256:abc"},
             "validation_contract": {
                 "state": "required", "tiers": ["unit"],
                 "commands": ["python -m unittest tests.test_work -v"],
@@ -577,10 +578,16 @@ class LiteAnchorDerivationTests(unittest.TestCase):
         row.update(overrides)
         return row
 
+    def _create_scoped(self, root: Path, run_id: str, goal: str = "do lite work"):
+        return lock.create(root, goal, run_id, scope_decision={
+            "decision_fingerprint": "sha256:abc",
+            "target_identity_fingerprint": "sha256:def",
+        })
+
     def test_lite_approve_derives_anchor_with_commands_and_provenance(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            lock.create(root, "do lite work", "plan-lite-anchor")
+            self._create_scoped(root, "plan-lite-anchor")
             self._save_lite_report(root, "plan-lite-anchor", [self._row()])
             approved = lock.approve(root, "plan-lite-anchor", True)
             self.assertEqual(approved["status"], "approved")
@@ -596,7 +603,7 @@ class LiteAnchorDerivationTests(unittest.TestCase):
     def test_lite_approve_without_recorded_commands_mints_none(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            lock.create(root, "do lite work", "plan-lite-nocommands")
+            self._create_scoped(root, "plan-lite-nocommands")
             row = self._row()
             row["validation_contract"] = {"state": "required", "tiers": ["unit"]}
             self._save_lite_report(root, "plan-lite-nocommands", [row])
@@ -614,8 +621,10 @@ class LiteAnchorDerivationTests(unittest.TestCase):
                 "guided_delivery": {"mode": "guided-delivery"},
                 "navigator": {"requirement_matrix": [self._row()]},
             }})
-            approved = lock.approve(root, "plan-standard-noanchor", True)
-            self.assertEqual(approved["lite_anchor"]["status"], "not-applicable")
+            # Standard has no Lite derivation; without an official anchor the
+            # plain approval path refuses instead of bypassing the workshop.
+            with self.assertRaisesRegex(ValueError, "no approved requirement anchor"):
+                lock.approve(root, "plan-standard-noanchor", True)
             self.assertFalse((root / ".tailtrail" / "runs" / "plan-standard-noanchor" / "anchors" / "approved-v1.json").exists())
 
     def test_approve_without_saved_report_still_approves(self) -> None:
@@ -625,6 +634,104 @@ class LiteAnchorDerivationTests(unittest.TestCase):
             approved = lock.approve(root, "plan-no-report", True)
             self.assertEqual(approved["status"], "approved")
             self.assertEqual(approved["lite_anchor"]["status"], "not-applicable")
+
+
+class ApprovalScopeGuardTests(unittest.TestCase):
+    def _report(self, **overrides):
+        report: dict = {
+            "goal": "do the thing",
+            "aidlc_mode": {"mode": "lite"},
+            "guided_delivery": {"mode": "guided-delivery"},
+            "navigator": {"requirement_matrix": [{
+                "requirement_uid": "req-1", "display_id": "REQ-01",
+                "statement": "Do the thing.",
+                "scope_evidence": {"decision_fingerprint": "sha256:abc"},
+                "validation_contract": {"state": "required", "tiers": ["unit"]},
+            }]},
+        }
+        report.update(overrides)
+        return report
+
+    def _create_scoped(self, root: Path, run_id: str, goal: str = "do the thing"):
+        return lock.create(root, goal, run_id, scope_decision={
+            "decision_fingerprint": "sha256:abc",
+            "target_identity_fingerprint": "sha256:def",
+        })
+
+    def test_scopeless_build_approval_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do standard work", "plan-scopeless", scope_decision=None)
+            ledger.atomic_json(lock.start_report_path(root, "plan-scopeless"), {"report": {
+                "goal": "do standard work",
+                "aidlc_mode": {"mode": "standard"},
+                "guided_delivery": {"mode": "guided-delivery"},
+                "navigator": {"requirement_matrix": [{
+                    "requirement_uid": "req-1", "display_id": "REQ-01",
+                    "statement": "Do standard work.",
+                    "validation_contract": {"state": "required", "tiers": ["unit"]},
+                }]},
+            }})
+            with self.assertRaisesRegex(ValueError, "no approved requirement anchor"):
+                lock.approve(root, "plan-scopeless", True)
+
+    def test_preanchored_standard_approval_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do standard work", "plan-preanchored")
+            ledger.atomic_json(lock.start_report_path(root, "plan-preanchored"), {"report": {
+                "goal": "do standard work",
+                "aidlc_mode": {"mode": "standard"},
+                "guided_delivery": {"mode": "guided-delivery"},
+                "navigator": {"requirement_matrix": []},
+            }})
+            anchors = root / ".tailtrail" / "runs" / "plan-preanchored" / "anchors"
+            anchors.mkdir(parents=True, exist_ok=True)
+            (anchors / "approved-v1.json").write_text("{}", encoding="utf-8")
+            approved = lock.approve(root, "plan-preanchored", True)
+            self.assertEqual(approved["status"], "approved")
+
+    def test_lite_scopeless_approval_derives_anchor(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do the thing", "plan-lite-scopeless")
+            ledger.atomic_json(lock.start_report_path(root, "plan-lite-scopeless"),
+                               {"report": self._report()})
+            approved = lock.approve(root, "plan-lite-scopeless", True)
+            self.assertEqual(approved["status"], "approved")
+            self.assertEqual(approved["lite_anchor"]["status"], "created")
+
+    def test_scoped_build_approval_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "do the thing", "plan-scoped", scope_decision={
+                "decision_fingerprint": "sha256:abc",
+                "target_identity_fingerprint": "sha256:def",
+            })
+            ledger.atomic_json(lock.start_report_path(root, "plan-scoped"),
+                               {"report": self._report()})
+            approved = lock.approve(root, "plan-scoped", True)
+            self.assertEqual(approved["status"], "approved")
+
+    def test_debug_orientation_exempt(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "fix the crash", "plan-debug")
+            report = self._report()
+            report["debug_plan"] = {"reproduction_contract": {}}
+            ledger.atomic_json(lock.start_report_path(root, "plan-debug"), {"report": report})
+            approved = lock.approve(root, "plan-debug", True)
+            self.assertEqual(approved["status"], "approved")
+
+    def test_lean_mode_exempt(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lock.create(root, "tiny fix", "plan-lean")
+            report = self._report()
+            report["guided_delivery"] = {"mode": "lean"}
+            ledger.atomic_json(lock.start_report_path(root, "plan-lean"), {"report": report})
+            approved = lock.approve(root, "plan-lean", True)
+            self.assertEqual(approved["status"], "approved")
 
 
 if __name__ == "__main__":

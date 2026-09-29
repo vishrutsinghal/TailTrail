@@ -676,6 +676,40 @@ def _ensure_lite_anchor(root: Path, run_id: str) -> dict[str, Any]:
     }
 
 
+def _require_anchor_for_approval(root: Path, run_id: str) -> None:
+    """Refuse approval when no approved requirement anchor exists (fail closed).
+
+    An approved lock grants managed writes; approving a build lock with no
+    anchor at all mints unbounded authority (observed: Lite locks activating
+    silently with neither anchor nor scope). Anchor derivation (Lite) and
+    creation (activate, official flows) run before this check, so a missing
+    anchor here means no boundary was ever established. Debug orientation,
+    lean no-anchor plans, and report-less legacy approvals are exempt.
+    Raises ValueError routing to activation.
+    """
+    try:
+        report_path = active_start_report_path(root.resolve(), run_id)
+    except (OSError, ValueError):
+        return
+    if not report_path.is_file():
+        return
+    saved = _saved_start_report(root, run_id)
+    if not isinstance(saved, dict):
+        return
+    if isinstance(saved.get("debug_plan"), dict):
+        return
+    if str((saved.get("guided_delivery", {}) or {}).get("mode", "")) == "lean":
+        return
+    approved_path = L.state_dir(root.resolve(), run_id) / "anchors" / "approved-v1.json"
+    if approved_path.is_file():
+        return
+    raise ValueError(
+        f"Planning Lock for run `{run_id}` has no approved requirement anchor; approval would grant "
+        "unmanaged write authority. Derive it with `tailtrail planning activate --root . --run-id "
+        f"{run_id} --approved`, or resolve scope first, then approve."
+    )
+
+
 def approve(root: Path, run_id: str, approved: bool, rationale: str | None = None, record_decision: bool = True) -> dict[str, Any]:
     if approved is not True:
         raise ValueError(f"planning approval requires --approved; run `tailtrail planning approve --root . --run-id {run_id} --approved`")
@@ -691,9 +725,10 @@ def approve(root: Path, run_id: str, approved: bool, rationale: str | None = Non
     payload["writes_allowed"] = True
     payload["approval"] = {"kind": "explicit-command", "run_id": run_id}
     payload.pop("artifact", None)
+    lite_anchor = _ensure_lite_anchor(root, run_id)
+    _require_anchor_for_approval(root, run_id)
     L.atomic_json(path, payload)
     L.append_event(root, run_id, "planning_lock_approved", {"artifact": path.relative_to(L.state_dir(root, run_id)).as_posix(), "writes_allowed": True})
-    lite_anchor = _ensure_lite_anchor(root, run_id)
     if record_decision:
         _record_decision(root, run_id, "approve", "approved", rationale=rationale,
                          prior_state="awaiting-approval", resulting_state="approved")
