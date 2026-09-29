@@ -1,10 +1,10 @@
 {
   "schema_version": "1",
-  "created_at": "2026-09-29T13:57:42.961633+00:00",
-  "updated_at": "2026-09-29T13:58:15.951483+00:00",
+  "created_at": "2026-09-29T15:44:24.663071+00:00",
+  "updated_at": "2026-09-29T15:44:24.663084+00:00",
   "tailtrail_version": "local",
   "root": "D:/PD/tailr-main/tailtrail",
-  "cache_key": "90247b6e30d8f868b61cd3cbb4f38a5a52252dad3545abc5de86e73400fca19b",
+  "cache_key": "d9121009c365c9bbf3ad184c10f68927be0890817bb9e9ec568bae421cf07488",
   "graph_mode": "navigator-start",
   "scope": [
     ".github/workflows/platform-supply-chain.yml",
@@ -37,6 +37,7 @@
     "scripts/evidence-tiers.py",
     "scripts/execution-evidence.py",
     "scripts/expand-intent.py",
+    "scripts/export-release.py",
     "scripts/graph_builder.py",
     "scripts/host-adapter-conformance.py",
     "scripts/host-decision.py",
@@ -63,6 +64,8 @@
     "scripts/planning-revision.py",
     "scripts/planning_lock.py",
     "scripts/question-orchestrator.py",
+    "scripts/release-confidence.py",
+    "scripts/release-publication.py",
     "scripts/requirement-interpretation-draft.py",
     "scripts/requirement-interpretation-scaffold.py",
     "scripts/requirement_discovery.py",
@@ -79,6 +82,7 @@
     "scripts/spec-kit-slices.py",
     "scripts/tailtrail.py",
     "scripts/target_workspace.py",
+    "scripts/task-next.py",
     "scripts/task-start.py",
     "scripts/update-copilot.py",
     "scripts/update-tailtrail.py",
@@ -111,6 +115,7 @@
     "tests/test_debug_harness.py",
     "tests/test_debug_preflight.py",
     "tests/test_debug_start_planning.py",
+    "tests/test_drift_analysis.py",
     "tests/test_evidence_aware_testing_v2_v5.py",
     "tests/test_evidence_tiers.py",
     "tests/test_failure_classification.py",
@@ -151,6 +156,9 @@
     "tests/test_spec_kit_amendment.py",
     "tests/test_spec_kit_evidence.py",
     "tests/test_target_workspace.py",
+    "tests/test_task_recovery.py",
+    "tests/test_task_type_contract.py",
+    "tests/test_task_type_gate.py",
     "tests/test_threat_model_stride.py",
     "tests/test_transactional_installer.py",
     "tests/test_ui_consistency.py",
@@ -164,10 +172,7 @@
     "tests/test_workflow_mcp.py",
     "tests/test_workflow_ownership.py",
     "tests/test_workflow_template_execution.py",
-    "tests/test_workflow_transitions.py",
-    "scripts/export-release.py",
-    "scripts/release-confidence.py",
-    "scripts/release-publication.py"
+    "tests/test_workflow_transitions.py"
   ],
   "build_limit": 40,
   "task_tags": [
@@ -177,7 +182,7 @@
   "language_profiles": {
     "python": {
       "level": 2,
-      "files": 158
+      "files": 166
     }
   },
   "source_files": {
@@ -331,6 +336,11 @@
       "mtime": 1789912218,
       "size": 54777
     },
+    "scripts/export-release.py": {
+      "sha256": "9562e47f814740e32bd38637890106065653821901ead751dbb68825c27e111d",
+      "mtime": 1787846337,
+      "size": 4438
+    },
     "scripts/graph_builder.py": {
       "sha256": "f6a968d60fb356e25a7c6ee35cf30ba66126abf1b0648fdc9f2ec086d231ad85",
       "mtime": 1790266029,
@@ -407,9 +417,9 @@
       "size": 34140
     },
     "scripts/navigator_scope.py": {
-      "sha256": "2e1c3779a3ddedbd1847ec5378252d43d0d30eb9fbd0ce6cf381bd6da1942b34",
-      "mtime": 1790670426,
-      "size": 214325
+      "sha256": "c67a82e228109dfc3270d85d2f728f7960bd791ecbdfb9d36ba28740ea4050a8",
+      "mtime": 1790696635,
+      "size": 217489
     },
     "scripts/official-aidlc-requirements.py": {
       "sha256": "da60528f8f08bf8dd8cccc4201f8b1ba6cb252f7b1f85177c77b737d22a54c4a",
@@ -460,6 +470,16 @@
       "sha256": "95dac9cea9b2e2fa134f192a951bb7cc244026a3534a36446ce41aac3355c524",
       "mtime": 1787915051,
       "size": 14144
+    },
+    "scripts/release-confidence.py": {
+      "sha256": "ee90785dcfea6ebd891302bd38f6088edd19edc3458558c2584414854cb01398",
+      "mtime": 1788005358,
+      "size": 3769
+    },
+    "scripts/release-publication.py": {
+      "sha256": "31fc9412cf31157671048b8c205ba74fea97c2ac995e6f46b57b567f16092b6f",
+      "mtime": 1788263194,
+      "size": 3295
     },
     "scripts/requirement-interpretation-draft.py": {
       "sha256": "3cdb40778acea966bc9a4ff2c2a5026b461761fef832fac3a62589184f610b76",
@@ -540,6 +560,11 @@
       "sha256": "a740f83bf82bdb8711ddcf0c7136249f83c6f81d9d87c50f44fd43b8d58b3e29",
       "mtime": 1790387785,
       "size": 37410
+    },
+    "scripts/task-next.py": {
+      "sha256": "faa04c66e18acf4e31d8f881cfc69a87488144eb545ca2616ed3b152d9c132e5",
+      "mtime": 1789899334,
+      "size": 13752
     },
     "scripts/task-start.py": {
       "sha256": "a2854894b326e261159bd1869cb965892f16925365e4b644b8418ab55dae88d6",
@@ -701,6 +726,11 @@
       "mtime": 1789987366,
       "size": 63677
     },
+    "tests/test_drift_analysis.py": {
+      "sha256": "7d1fe43b1313014f990b5a8159269230ee5ab8e59eb42ff323dc6d057df78b7d",
+      "mtime": 1789403736,
+      "size": 9688
+    },
     "tests/test_evidence_aware_testing_v2_v5.py": {
       "sha256": "afc67a3e843af59e2fce18841875b3fd1de568b6a85dcc49c6e5a46ee5327ba2",
       "mtime": 1785508092,
@@ -782,9 +812,9 @@
       "size": 25241
     },
     "tests/test_navigator_scope.py": {
-      "sha256": "9e601f4d3bd05ea1f2a0a8b400251b1f1048a9b1f987dc4ea31cd9dd203414ea",
-      "mtime": 1790670457,
-      "size": 164093
+      "sha256": "ad63c6c7f6a8c9f5a3da40342ad1d5b833f820b564d910f85515672361f395df",
+      "mtime": 1790695517,
+      "size": 166426
     },
     "tests/test_navigator_scope_calibration.py": {
       "sha256": "4618321325ff984b9e94b65548c0c64d6947cb6e1785c1f51cb5f864cb2522a7",
@@ -900,6 +930,21 @@
       "sha256": "5fc79b304b8e941950972eadea8df6772cffa919cf294dccde11aa66a39d8a54",
       "mtime": 1790387785,
       "size": 20774
+    },
+    "tests/test_task_recovery.py": {
+      "sha256": "5338910592087531e7fbe317b6847153a654bdf4dbbb96a20112c06b4a7e0408",
+      "mtime": 1785501815,
+      "size": 6575
+    },
+    "tests/test_task_type_contract.py": {
+      "sha256": "5e696da92ce764bb3f6785553bfcaface1888d0ada6f8fe23e0f2703d8e04e6d",
+      "mtime": 1790663548,
+      "size": 5396
+    },
+    "tests/test_task_type_gate.py": {
+      "sha256": "b16a9c411aab9b7703a4430f9ac3bcd6441daf38c13ffccc517141cfeae35351",
+      "mtime": 1790679784,
+      "size": 9705
     },
     "tests/test_threat_model_stride.py": {
       "sha256": "2d3c400fda490d8034d7856c24847faa833b04425021903cd2e76dd0b5178050",
@@ -1020,21 +1065,6 @@
       "sha256": "819d4c3b35fb433908af718d8a518f24515fcb3d67776ceb2a6207ae2a863553",
       "mtime": 1789616119,
       "size": 2984
-    },
-    "scripts/export-release.py": {
-      "sha256": "9562e47f814740e32bd38637890106065653821901ead751dbb68825c27e111d",
-      "mtime": 1787846337,
-      "size": 4438
-    },
-    "scripts/release-confidence.py": {
-      "sha256": "ee90785dcfea6ebd891302bd38f6088edd19edc3458558c2584414854cb01398",
-      "mtime": 1788005358,
-      "size": 3769
-    },
-    "scripts/release-publication.py": {
-      "sha256": "31fc9412cf31157671048b8c205ba74fea97c2ac995e6f46b57b567f16092b6f",
-      "mtime": 1788263194,
-      "size": 3295
     }
   },
   "watch_files": {
@@ -1067,7 +1097,7 @@
   "inventory": {
     "algorithm": "path-size-mtime-ns-v1",
     "file_count": 1198,
-    "fingerprint": "sha256:935251c250c87ab61214e40cb597d07362e844a6f9f327ae7d7afab3568831c3"
+    "fingerprint": "sha256:a06a09c6a4374372759c26bdfc23e8c7f86c3bd4f50540b9c1ba5045c50b9ca8"
   },
   "graph": {
     "changed_files": [
@@ -1101,6 +1131,7 @@
       "scripts/evidence-tiers.py",
       "scripts/execution-evidence.py",
       "scripts/expand-intent.py",
+      "scripts/export-release.py",
       "scripts/graph_builder.py",
       "scripts/host-adapter-conformance.py",
       "scripts/host-decision.py",
@@ -1127,6 +1158,8 @@
       "scripts/planning-revision.py",
       "scripts/planning_lock.py",
       "scripts/question-orchestrator.py",
+      "scripts/release-confidence.py",
+      "scripts/release-publication.py",
       "scripts/requirement-interpretation-draft.py",
       "scripts/requirement-interpretation-scaffold.py",
       "scripts/requirement_discovery.py",
@@ -1143,6 +1176,7 @@
       "scripts/spec-kit-slices.py",
       "scripts/tailtrail.py",
       "scripts/target_workspace.py",
+      "scripts/task-next.py",
       "scripts/task-start.py",
       "scripts/update-copilot.py",
       "scripts/update-tailtrail.py",
@@ -1175,6 +1209,7 @@
       "tests/test_debug_harness.py",
       "tests/test_debug_preflight.py",
       "tests/test_debug_start_planning.py",
+      "tests/test_drift_analysis.py",
       "tests/test_evidence_aware_testing_v2_v5.py",
       "tests/test_evidence_tiers.py",
       "tests/test_failure_classification.py",
@@ -1215,6 +1250,9 @@
       "tests/test_spec_kit_amendment.py",
       "tests/test_spec_kit_evidence.py",
       "tests/test_target_workspace.py",
+      "tests/test_task_recovery.py",
+      "tests/test_task_type_contract.py",
+      "tests/test_task_type_gate.py",
       "tests/test_threat_model_stride.py",
       "tests/test_transactional_installer.py",
       "tests/test_ui_consistency.py",
@@ -4985,6 +5023,62 @@
       },
       {
         "kind": "function",
+        "name": "git_files",
+        "language": "python",
+        "file": "scripts/export-release.py",
+        "line": 26,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
+        "name": "should_include",
+        "language": "python",
+        "file": "scripts/export-release.py",
+        "line": 30,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
+        "name": "copy_file",
+        "language": "python",
+        "file": "scripts/export-release.py",
+        "line": 45,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
+        "name": "write_internal_manifest",
+        "language": "python",
+        "file": "scripts/export-release.py",
+        "line": 52,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
+        "name": "write_marker",
+        "language": "python",
+        "file": "scripts/export-release.py",
+        "line": 62,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
+        "name": "export",
+        "language": "python",
+        "file": "scripts/export-release.py",
+        "line": 67,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
+        "name": "main",
+        "language": "python",
+        "file": "scripts/export-release.py",
+        "line": 89,
+        "confidence": "python_ast"
+      },
+      {
+        "kind": "function",
         "name": "_mapper",
         "language": "python",
         "file": "scripts/graph_builder.py",
@@ -7573,174 +7667,6 @@
         "language": "python",
         "file": "scripts/navigator.py",
         "line": 140,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "goal_discovery_terms",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 144,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "goal_discovered_paths",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 148,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "repository_discovered_paths",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 158,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "is_actionable_changed_path",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 162,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "bounded_review_graph_paths",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 166,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "existing_state",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 170,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "run_review_graph",
-        "language": "python",
-        "file": "scripts/navigator.py",
-        "line": 183,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "git_files",
-        "language": "python",
-        "file": "scripts/export-release.py",
-        "line": 26,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "should_include",
-        "language": "python",
-        "file": "scripts/export-release.py",
-        "line": 30,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "copy_file",
-        "language": "python",
-        "file": "scripts/export-release.py",
-        "line": 45,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "write_internal_manifest",
-        "language": "python",
-        "file": "scripts/export-release.py",
-        "line": 52,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "write_marker",
-        "language": "python",
-        "file": "scripts/export-release.py",
-        "line": 62,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "export",
-        "language": "python",
-        "file": "scripts/export-release.py",
-        "line": 67,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "main",
-        "language": "python",
-        "file": "scripts/export-release.py",
-        "line": 89,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "evidence_tiers",
-        "language": "python",
-        "file": "scripts/release-confidence.py",
-        "line": 15,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "ledger",
-        "language": "python",
-        "file": "scripts/release-confidence.py",
-        "line": 24,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "assess",
-        "language": "python",
-        "file": "scripts/release-confidence.py",
-        "line": 32,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "main",
-        "language": "python",
-        "file": "scripts/release-confidence.py",
-        "line": 50,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "digest",
-        "language": "python",
-        "file": "scripts/release-publication.py",
-        "line": 17,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "observe",
-        "language": "python",
-        "file": "scripts/release-publication.py",
-        "line": 21,
-        "confidence": "python_ast"
-      },
-      {
-        "kind": "function",
-        "name": "main",
-        "language": "python",
-        "file": "scripts/release-publication.py",
-        "line": 57,
         "confidence": "python_ast"
       }
     ],
@@ -12090,6 +12016,96 @@
       },
       {
         "target": "__future__",
+        "referring_file": "scripts/export-release.py",
+        "line": 3,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "argparse",
+        "referring_file": "scripts/export-release.py",
+        "line": 5,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "json",
+        "referring_file": "scripts/export-release.py",
+        "line": 6,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "shutil",
+        "referring_file": "scripts/export-release.py",
+        "line": 7,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "pathlib",
+        "referring_file": "scripts/export-release.py",
+        "line": 8,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "release_manifest",
+        "referring_file": "scripts/export-release.py",
+        "line": 10,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "__future__",
         "referring_file": "scripts/graph_builder.py",
         "line": 22,
         "reference_type": "import",
@@ -14614,276 +14630,6 @@
       },
       {
         "target": "__future__",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 11,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "copy",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 13,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "hashlib",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 14,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "json",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 15,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "os",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 16,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "re",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 17,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "subprocess",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 18,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "unicodedata",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 19,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "dataclasses",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 20,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "pathlib",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 21,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "typing",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 22,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "capture_hooks",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 24,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "code_relationships",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 25,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "requirement_discovery",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 26,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "code_graph_inventory",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 27,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "module_resolution",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 28,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "importlib.util",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 3099,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "metrics_extractor",
-        "referring_file": "scripts/navigator_scope.py",
-        "line": 3228,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "__future__",
         "referring_file": "scripts/official-aidlc-requirements.py",
         "line": 9,
         "reference_type": "import",
@@ -16525,6 +16271,231 @@
         "target": "typing",
         "referring_file": "scripts/question-orchestrator.py",
         "line": 16,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "__future__",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 3,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "argparse",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 5,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "importlib.util",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 6,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "json",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 7,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "pathlib",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 8,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "typing",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 9,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "scripts/evidence-tiers.py",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 16,
+        "reference_type": "loader",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "relative-module-reference-unresolved"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "scripts/run-ledger.py",
+        "referring_file": "scripts/release-confidence.py",
+        "line": 25,
+        "reference_type": "loader",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "relative-module-reference-unresolved"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "__future__",
+        "referring_file": "scripts/release-publication.py",
+        "line": 4,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "argparse",
+        "referring_file": "scripts/release-publication.py",
+        "line": 6,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "hashlib",
+        "referring_file": "scripts/release-publication.py",
+        "line": 7,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "json",
+        "referring_file": "scripts/release-publication.py",
+        "line": 8,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "os",
+        "referring_file": "scripts/release-publication.py",
+        "line": 9,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "subprocess",
+        "referring_file": "scripts/release-publication.py",
+        "line": 10,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "pathlib",
+        "referring_file": "scripts/release-publication.py",
+        "line": 11,
         "reference_type": "import",
         "confidence": "static-text",
         "module_resolution": {
@@ -18593,6 +18564,141 @@
       },
       {
         "target": "__future__",
+        "referring_file": "scripts/task-next.py",
+        "line": 3,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "argparse",
+        "referring_file": "scripts/task-next.py",
+        "line": 5,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "json",
+        "referring_file": "scripts/task-next.py",
+        "line": 6,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "re",
+        "referring_file": "scripts/task-next.py",
+        "line": 7,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "subprocess",
+        "referring_file": "scripts/task-next.py",
+        "line": 8,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "sys",
+        "referring_file": "scripts/task-next.py",
+        "line": 9,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "time",
+        "referring_file": "scripts/task-next.py",
+        "line": 10,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "pathlib",
+        "referring_file": "scripts/task-next.py",
+        "line": 11,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "typing",
+        "referring_file": "scripts/task-next.py",
+        "line": 12,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "__future__",
         "referring_file": "scripts/task-start.py",
         "line": 3,
         "reference_type": "import",
@@ -19402,293 +19508,8 @@
         }
       },
       {
-        "target": "sys",
-        "referring_file": "scripts/update-tailtrail.py",
-        "line": 7,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "pathlib",
-        "referring_file": "scripts/update-tailtrail.py",
-        "line": 8,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "tailtrail.install.cli",
-        "referring_file": "scripts/update-tailtrail.py",
-        "line": 34,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
         "target": "__future__",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 2,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "hashlib",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 4,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "json",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 5,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "pathlib",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 6,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "typing",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 7,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "workflow_runtime",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 9,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "workflow_runtime",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 181,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "workflow_runtime",
-        "referring_file": "scripts/workflow_runtime/compiler.py",
-        "line": 263,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "__future__",
-        "referring_file": "scripts/workflow_runtime/contracts.py",
-        "line": 2,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "json",
-        "referring_file": "scripts/workflow_runtime/contracts.py",
-        "line": 4,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "re",
-        "referring_file": "scripts/workflow_runtime/contracts.py",
-        "line": 5,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "pathlib",
-        "referring_file": "scripts/workflow_runtime/contracts.py",
-        "line": 6,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "typing",
-        "referring_file": "scripts/workflow_runtime/contracts.py",
-        "line": 7,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "workflow_runtime",
-        "referring_file": "scripts/workflow_runtime/contracts.py",
-        "line": 9,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "__future__",
-        "referring_file": "scripts/workflow_runtime/evidence.py",
-        "line": 8,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "hashlib",
-        "referring_file": "scripts/workflow_runtime/evidence.py",
-        "line": 10,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "importlib.util",
-        "referring_file": "scripts/workflow_runtime/evidence.py",
+        "referring_file": "scripts/navigator_scope.py",
         "line": 11,
         "reference_type": "import",
         "confidence": "static-text",
@@ -19702,23 +19523,8 @@
         }
       },
       {
-        "target": "json",
-        "referring_file": "scripts/workflow_runtime/evidence.py",
-        "line": 12,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "pathlib",
-        "referring_file": "scripts/workflow_runtime/evidence.py",
+        "target": "copy",
+        "referring_file": "scripts/navigator_scope.py",
         "line": 13,
         "reference_type": "import",
         "confidence": "static-text",
@@ -19732,8 +19538,8 @@
         }
       },
       {
-        "target": "typing",
-        "referring_file": "scripts/workflow_runtime/evidence.py",
+        "target": "hashlib",
+        "referring_file": "scripts/navigator_scope.py",
         "line": 14,
         "reference_type": "import",
         "confidence": "static-text",
@@ -19747,8 +19553,23 @@
         }
       },
       {
-        "target": "workflow_runtime",
-        "referring_file": "scripts/workflow_runtime/evidence.py",
+        "target": "json",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 15,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "os",
+        "referring_file": "scripts/navigator_scope.py",
         "line": 16,
         "reference_type": "import",
         "confidence": "static-text",
@@ -19762,54 +19583,54 @@
         }
       },
       {
-        "target": "__future__",
-        "referring_file": "scripts/workflow_runtime/freshness.py",
-        "line": 2,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "hashlib",
-        "referring_file": "scripts/workflow_runtime/freshness.py",
-        "line": 4,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "json",
-        "referring_file": "scripts/workflow_runtime/freshness.py",
-        "line": 5,
-        "reference_type": "import",
-        "confidence": "static-text",
-        "module_resolution": {
-          "state": "unresolved",
-          "resolved_targets": [],
-          "reason_codes": [
-            "module-alias-config-missing"
-          ],
-          "config_paths": []
-        }
-      },
-      {
         "target": "re",
-        "referring_file": "scripts/workflow_runtime/freshness.py",
-        "line": 6,
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 17,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "subprocess",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 18,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "unicodedata",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 19,
+        "reference_type": "import",
+        "confidence": "static-text",
+        "module_resolution": {
+          "state": "unresolved",
+          "resolved_targets": [],
+          "reason_codes": [
+            "module-alias-config-missing"
+          ],
+          "config_paths": []
+        }
+      },
+      {
+        "target": "dataclasses",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 20,
         "reference_type": "import",
         "confidence": "static-text",
         "module_resolution": {
@@ -19823,8 +19644,8 @@
       },
       {
         "target": "pathlib",
-        "referring_file": "scripts/workflow_runtime/freshness.py",
-        "line": 7,
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 21,
         "reference_type": "import",
         "confidence": "static-text",
         "module_resolution": {
@@ -19838,8 +19659,8 @@
       },
       {
         "target": "typing",
-        "referring_file": "scripts/workflow_runtime/freshness.py",
-        "line": 8,
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 22,
         "reference_type": "import",
         "confidence": "static-text",
         "module_resolution": {
@@ -19852,449 +19673,106 @@
         }
       },
       {
-        "target": "scripts/export-release.py",
-        "referring_file": "benchmarks/enterprise-conformance/v1.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
+        "target": "capture_hooks",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 24,
+        "reference_type": "import",
+        "confidence": "static-text",
         "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
+          "state": "unresolved",
+          "resolved_targets": [],
           "reason_codes": [
-            "finalist-slice-expansion"
+            "module-alias-config-missing"
           ],
           "config_paths": []
         }
       },
       {
-        "target": "scripts/export-release.py",
-        "referring_file": "demo-project-layout/tailtrail-demo-workspace/tailtrail/scripts/tailtrail.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
+        "target": "code_relationships",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 25,
+        "reference_type": "import",
+        "confidence": "static-text",
         "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
+          "state": "unresolved",
+          "resolved_targets": [],
           "reason_codes": [
-            "finalist-slice-expansion"
+            "module-alias-config-missing"
           ],
           "config_paths": []
         }
       },
       {
-        "target": "scripts/export-release.py",
-        "referring_file": "enterprise-closure-registry.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
+        "target": "requirement_discovery",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 26,
+        "reference_type": "import",
+        "confidence": "static-text",
         "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
+          "state": "unresolved",
+          "resolved_targets": [],
           "reason_codes": [
-            "finalist-slice-expansion"
+            "module-alias-config-missing"
           ],
           "config_paths": []
         }
       },
       {
-        "target": "scripts/export-release.py",
-        "referring_file": "release-manifest.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
+        "target": "code_graph_inventory",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 27,
+        "reference_type": "import",
+        "confidence": "static-text",
         "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
+          "state": "unresolved",
+          "resolved_targets": [],
           "reason_codes": [
-            "finalist-slice-expansion"
+            "module-alias-config-missing"
           ],
           "config_paths": []
         }
       },
       {
-        "target": "scripts/export-release.py",
-        "referring_file": "scripts/check-tailtrail.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
+        "target": "module_resolution",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 28,
+        "reference_type": "import",
+        "confidence": "static-text",
         "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
+          "state": "unresolved",
+          "resolved_targets": [],
           "reason_codes": [
-            "finalist-slice-expansion"
+            "module-alias-config-missing"
           ],
           "config_paths": []
         }
       },
       {
-        "target": "scripts/export-release.py",
-        "referring_file": "scripts/install-copilot.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
+        "target": "importlib.util",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 3118,
+        "reference_type": "import",
+        "confidence": "static-text",
         "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
+          "state": "unresolved",
+          "resolved_targets": [],
           "reason_codes": [
-            "finalist-slice-expansion"
+            "module-alias-config-missing"
           ],
           "config_paths": []
         }
       },
       {
-        "target": "scripts/export-release.py",
-        "referring_file": "scripts/tailtrail.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
+        "target": "metrics_extractor",
+        "referring_file": "scripts/navigator_scope.py",
+        "line": 3257,
+        "reference_type": "import",
+        "confidence": "static-text",
         "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
+          "state": "unresolved",
+          "resolved_targets": [],
           "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/export-release.py",
-        "referring_file": "tailtrail-buildweek-demo/tailtrail/scripts/check-tailtrail.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/export-release.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "benchmarks/evaluation/real-portfolio/v1.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "benchmarks/evaluation/scenarios/higher-tier-release-confidence/expected.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "benchmarks/evaluation/scenarios/higher-tier-release-confidence/scenario.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "schemas/run-event.schema.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "scripts/check-tailtrail.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "scripts/install-copilot.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "scripts/install_surfaces.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "scripts/mcp-server.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "scripts/spec-kit-observability.py",
-        "reference_type": "test-link",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "tests/test_evaluation_harness_scenarios.py",
-        "reference_type": "test-link",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-confidence.py",
-        "referring_file": "tests/test_higher_tier_testing.py",
-        "reference_type": "test-link",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-confidence.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": ".github/workflows/platform-supply-chain.yml",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "enterprise-closure-registry.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "package-manifest.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "release-manifest.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "schemas/release-publication-receipt.schema.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "scripts/install-copilot.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "scripts/installation-qualification.py",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "tailtrail-registry.json",
-        "reference_type": "caller",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
-          ],
-          "config_paths": []
-        }
-      },
-      {
-        "target": "scripts/release-publication.py",
-        "referring_file": "tests/test_installation_experience.py",
-        "reference_type": "test-link",
-        "confidence": "heuristic",
-        "module_resolution": {
-          "state": "resolved",
-          "resolved_targets": [
-            "scripts/release-publication.py"
-          ],
-          "reason_codes": [
-            "finalist-slice-expansion"
+            "module-alias-config-missing"
           ],
           "config_paths": []
         }
@@ -26936,6 +26414,14 @@
         "confidence": "python_ast"
       },
       {
+        "type": "TestDriftAnalysis",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_drift_analysis.py",
+        "line": 56,
+        "confidence": "python_ast"
+      },
+      {
         "type": "EvidenceAwareTestingV2V5Tests",
         "inherits": "TestCase",
         "language": "python",
@@ -27240,6 +26726,14 @@
         "confidence": "python_ast"
       },
       {
+        "type": "InfraConfigurationOwnershipTests",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_navigator_scope.py",
+        "line": 3154,
+        "confidence": "python_ast"
+      },
+      {
         "type": "NavigatorScopeCalibrationTests",
         "inherits": "TestCase",
         "language": "python",
@@ -27469,6 +26963,54 @@
         "language": "python",
         "file": "tests/test_target_workspace.py",
         "line": 17,
+        "confidence": "python_ast"
+      },
+      {
+        "type": "TaskRecoveryTests",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_task_recovery.py",
+        "line": 35,
+        "confidence": "python_ast"
+      },
+      {
+        "type": "EditablePathsForTaskTypesTests",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_task_type_contract.py",
+        "line": 25,
+        "confidence": "python_ast"
+      },
+      {
+        "type": "ScopeBindingContractTests",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_task_type_contract.py",
+        "line": 105,
+        "confidence": "python_ast"
+      },
+      {
+        "type": "PathKindTests",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_task_type_gate.py",
+        "line": 25,
+        "confidence": "python_ast"
+      },
+      {
+        "type": "AssessTaskTypeTests",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_task_type_gate.py",
+        "line": 38,
+        "confidence": "python_ast"
+      },
+      {
+        "type": "PostAnswerDeescalationTests",
+        "inherits": "TestCase",
+        "language": "python",
+        "file": "tests/test_task_type_gate.py",
+        "line": 129,
         "confidence": "python_ast"
       },
       {
@@ -29006,6 +28548,14 @@
         "confidence": "heuristic"
       },
       {
+        "source_file": "scripts/release-publication.py",
+        "line": 51,
+        "target": "github.com",
+        "path_hint": "/{REPOSITORY}/actions/runs/{run_id}",
+        "edge_type": "http-url",
+        "confidence": "heuristic"
+      },
+      {
         "source_file": "scripts/requirement_intake.py",
         "line": 104,
         "target": "intake_identity.get",
@@ -30324,6 +29874,29 @@
           "confidence": "heuristic"
         },
         {
+          "file": "scripts/export-release.py",
+          "partition": "scripts",
+          "owners": [],
+          "likely_tests": [
+            "scripts/flaky-test-tracker.py",
+            "scripts/higher-tier-testing.py",
+            "scripts/run-tests.py",
+            "scripts/smoke-test.py",
+            "scripts/spec-kit-amendment.py",
+            "scripts/spec-kit-ci-gate.py",
+            "scripts/spec-kit-converge.py",
+            "scripts/spec-kit-import.py",
+            "scripts/spec-kit-integration.py",
+            "scripts/spec-kit-observability.py",
+            "scripts/test-precision.py",
+            "scripts/test-tier-selector.py",
+            "scripts/test_scope.py",
+            "scripts/testing-profile.py"
+          ],
+          "release_paths": [],
+          "confidence": "heuristic"
+        },
+        {
           "file": "scripts/graph_builder.py",
           "partition": "scripts",
           "owners": [],
@@ -30529,29 +30102,6 @@
           ],
           "release_paths": [],
           "confidence": "heuristic"
-        },
-        {
-          "file": "scripts/navigator-scope-calibration.py",
-          "partition": "scripts",
-          "owners": [],
-          "likely_tests": [
-            "scripts/flaky-test-tracker.py",
-            "scripts/higher-tier-testing.py",
-            "scripts/run-tests.py",
-            "scripts/smoke-test.py",
-            "scripts/spec-kit-amendment.py",
-            "scripts/spec-kit-ci-gate.py",
-            "scripts/spec-kit-converge.py",
-            "scripts/spec-kit-import.py",
-            "scripts/spec-kit-integration.py",
-            "scripts/spec-kit-observability.py",
-            "scripts/test-precision.py",
-            "scripts/test-tier-selector.py",
-            "scripts/test_scope.py",
-            "scripts/testing-profile.py"
-          ],
-          "release_paths": [],
-          "confidence": "heuristic"
         }
       ],
       "release_paths": [
@@ -30689,6 +30239,7 @@
       "scripts/evidence-tiers.py",
       "scripts/execution-evidence.py",
       "scripts/expand-intent.py",
+      "scripts/export-release.py",
       "scripts/graph_builder.py",
       "scripts/host-adapter-conformance.py",
       "scripts/host-decision.py",
@@ -30715,6 +30266,8 @@
       "scripts/planning-revision.py",
       "scripts/planning_lock.py",
       "scripts/question-orchestrator.py",
+      "scripts/release-confidence.py",
+      "scripts/release-publication.py",
       "scripts/requirement-interpretation-draft.py",
       "scripts/requirement-interpretation-scaffold.py",
       "scripts/requirement_discovery.py",
@@ -30731,6 +30284,7 @@
       "scripts/spec-kit-slices.py",
       "scripts/tailtrail.py",
       "scripts/target_workspace.py",
+      "scripts/task-next.py",
       "scripts/task-start.py",
       "scripts/update-copilot.py",
       "scripts/update-tailtrail.py",
@@ -30763,6 +30317,7 @@
       "tests/test_debug_harness.py",
       "tests/test_debug_preflight.py",
       "tests/test_debug_start_planning.py",
+      "tests/test_drift_analysis.py",
       "tests/test_evidence_aware_testing_v2_v5.py",
       "tests/test_evidence_tiers.py",
       "tests/test_failure_classification.py",
@@ -30773,959 +30328,15 @@
       "tests/test_host_adapter_conformance.py",
       "tests/test_install_profiles.py",
       "tests/test_learning_governance.py",
-      "tests/test_learning_use_receipt.py",
-      "tests/test_mcp_server.py",
-      "tests/test_metrics_extractor.py",
-      "tests/test_navigator_core.py",
-      "tests/test_navigator_debug_routing.py",
-      "tests/test_navigator_graph_lifecycle.py"
+      "tests/test_learning_use_receipt.py"
     ]
   },
   "freshness": {
     "status": "fresh",
-    "checked_at": "2026-09-29T13:57:56.249641+00:00",
+    "checked_at": "2026-09-29T15:44:30.573707+00:00",
     "reasons": []
   },
   "navigator_lifecycle_history": [
-    {
-      "action": "refresh",
-      "at": "2026-09-29T05:30:18.149905+00:00",
-      "attempt_id": "start-20260929052950-6801ea",
-      "phase": "start",
-      "reason_codes": [
-        "bounded-goal-discovery",
-        "requested-scope-outside-cache"
-      ],
-      "target_paths": [
-        "scripts/update-copilot.py",
-        "scripts/update-tailtrail.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_newcomer_support_journey.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_workflow_documentation.py"
-      ],
-      "effective_scope": [
-        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
-        "navigator.legacy.py",
-        "scripts/aidlc-official-bridge.py",
-        "scripts/aidlc-requirements.py",
-        "scripts/behavior-harness.py",
-        "scripts/behaviour_planning.py",
-        "scripts/capture_hooks.py",
-        "scripts/change-intent-anchor.py",
-        "scripts/closure-close.py",
-        "scripts/closure-contract.py",
-        "scripts/closure-finalizer.py",
-        "scripts/closure-recorder.py",
-        "scripts/code-graph-mapper.py",
-        "scripts/code_graph_cache.py",
-        "scripts/code_graph_inventory.py",
-        "scripts/commit_prompt.py",
-        "scripts/completion-report.py",
-        "scripts/debug-host-diagnosis.py",
-        "scripts/debug-intake.py",
-        "scripts/debug-orientation.py",
-        "scripts/debug-preflight.py",
-        "scripts/debug-privacy.py",
-        "scripts/debug-reproduction.py",
-        "scripts/enterprise-target-policy.py",
-        "scripts/evidence-tiers.py",
-        "scripts/execution-evidence.py",
-        "scripts/expand-intent.py",
-        "scripts/graph_builder.py",
-        "scripts/host-adapter-conformance.py",
-        "scripts/host-decision.py",
-        "scripts/host-workspace-adapter.py",
-        "scripts/install-copilot.py",
-        "scripts/maintainability-harness.py",
-        "scripts/mcp-server.py",
-        "scripts/metrics_extractor.py",
-        "scripts/navigator-scope-calibration.py",
-        "scripts/navigator-scope-release.py",
-        "scripts/navigator.py",
-        "scripts/navigator_core.py",
-        "scripts/navigator_graph_lifecycle.py",
-        "scripts/navigator_render.py",
-        "scripts/navigator_scope.py",
-        "scripts/official-aidlc-requirements.py",
-        "scripts/official-aidlc-sanitize.py",
-        "scripts/official-aidlc-state.py",
-        "scripts/planning-discussion.py",
-        "scripts/planning-feature-controls.py",
-        "scripts/planning-investigation.py",
-        "scripts/planning-revision.py",
-        "scripts/planning_lock.py",
-        "scripts/question-orchestrator.py",
-        "scripts/requirement-interpretation-draft.py",
-        "scripts/requirement-interpretation-scaffold.py",
-        "scripts/requirement_discovery.py",
-        "scripts/requirement_evidence.py",
-        "scripts/requirement_intake.py",
-        "scripts/run-ledger.py",
-        "scripts/session-control.py",
-        "scripts/session_control.py",
-        "scripts/spec-kit-bridge.py",
-        "scripts/spec-kit-detect.py",
-        "scripts/spec-kit-evidence.py",
-        "scripts/spec-kit-policy.py",
-        "scripts/spec-kit-slices.py",
-        "scripts/tailtrail.py",
-        "scripts/target_workspace.py",
-        "scripts/task-start.py",
-        "scripts/update-copilot.py",
-        "scripts/update-tailtrail.py",
-        "scripts/workflow_runtime/compiler.py",
-        "scripts/workflow_runtime/contracts.py",
-        "scripts/workflow_runtime/evidence.py",
-        "scripts/workflow_runtime/freshness.py",
-        "scripts/workflow_runtime/ownership.py",
-        "scripts/workflow_runtime/release.py",
-        "scripts/workflow_runtime/stage_results.py",
-        "scripts/workflow_runtime/start_integration.py",
-        "scripts/workflow_runtime/vertical.py",
-        "tests/test_advanced_runtime.py",
-        "tests/test_aidlc_official_bridge.py",
-        "tests/test_architecture_planning.py",
-        "tests/test_behavior_harness.py",
-        "tests/test_behaviour_planning.py",
-        "tests/test_change_intent_anchor.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_code_graph_cache.py",
-        "tests/test_debug_correction_integration.py",
-        "tests/test_debug_preflight.py",
-        "tests/test_debug_start_planning.py",
-        "tests/test_failure_classification.py",
-        "tests/test_focused_validation_contracts.py",
-        "tests/test_graph_builder.py",
-        "tests/test_host_adapter_conformance.py",
-        "tests/test_install_profiles.py",
-        "tests/test_learning_use_receipt.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_debug_routing.py",
-        "tests/test_navigator_graph_lifecycle.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py",
-        "tests/test_newcomer_support_journey.py",
-        "tests/test_plan_render.py",
-        "tests/test_planning_investigation.py",
-        "tests/test_planning_lock.py",
-        "tests/test_planning_revision.py",
-        "tests/test_repository_enforcement.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py",
-        "tests/test_review_scope.py",
-        "tests/test_scope_capture_wiring.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_session_control.py",
-        "tests/test_target_workspace.py",
-        "tests/test_threat_model_stride.py",
-        "tests/test_transactional_installer.py",
-        "tests/test_ui_consistency.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_approvals.py",
-        "tests/test_workflow_ci_continuation.py",
-        "tests/test_workflow_compiler.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_documentation.py",
-        "tests/test_workflow_ownership.py"
-      ]
-    },
-    {
-      "action": "refresh",
-      "at": "2026-09-29T05:31:48.883218+00:00",
-      "attempt_id": "start-20260929053122-41d793",
-      "phase": "start",
-      "reason_codes": [
-        "bounded-goal-discovery",
-        "requested-scope-outside-cache"
-      ],
-      "target_paths": [
-        "tests/test_debug_start_planning.py",
-        "tests/test_planning_discussion.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_approvals.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_mcp.py",
-        "tests/test_workflow_template_execution.py",
-        "tests/test_workflow_transitions.py"
-      ],
-      "effective_scope": [
-        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
-        "navigator.legacy.py",
-        "scripts/aidlc-official-bridge.py",
-        "scripts/aidlc-requirements.py",
-        "scripts/behavior-harness.py",
-        "scripts/behaviour_planning.py",
-        "scripts/capture_hooks.py",
-        "scripts/change-intent-anchor.py",
-        "scripts/closure-close.py",
-        "scripts/closure-contract.py",
-        "scripts/closure-finalizer.py",
-        "scripts/closure-recorder.py",
-        "scripts/code-graph-mapper.py",
-        "scripts/code_graph_cache.py",
-        "scripts/code_graph_inventory.py",
-        "scripts/commit_prompt.py",
-        "scripts/completion-report.py",
-        "scripts/debug-host-diagnosis.py",
-        "scripts/debug-intake.py",
-        "scripts/debug-orientation.py",
-        "scripts/debug-preflight.py",
-        "scripts/debug-privacy.py",
-        "scripts/debug-reproduction.py",
-        "scripts/enterprise-target-policy.py",
-        "scripts/evidence-tiers.py",
-        "scripts/execution-evidence.py",
-        "scripts/expand-intent.py",
-        "scripts/graph_builder.py",
-        "scripts/host-adapter-conformance.py",
-        "scripts/host-decision.py",
-        "scripts/host-workspace-adapter.py",
-        "scripts/install-copilot.py",
-        "scripts/maintainability-harness.py",
-        "scripts/mcp-server.py",
-        "scripts/metrics_extractor.py",
-        "scripts/navigator-scope-calibration.py",
-        "scripts/navigator-scope-release.py",
-        "scripts/navigator.py",
-        "scripts/navigator_core.py",
-        "scripts/navigator_graph_lifecycle.py",
-        "scripts/navigator_render.py",
-        "scripts/navigator_scope.py",
-        "scripts/official-aidlc-requirements.py",
-        "scripts/official-aidlc-sanitize.py",
-        "scripts/official-aidlc-state.py",
-        "scripts/planning-discussion.py",
-        "scripts/planning-feature-controls.py",
-        "scripts/planning-investigation.py",
-        "scripts/planning-revision.py",
-        "scripts/planning_lock.py",
-        "scripts/question-orchestrator.py",
-        "scripts/requirement-interpretation-draft.py",
-        "scripts/requirement-interpretation-scaffold.py",
-        "scripts/requirement_discovery.py",
-        "scripts/requirement_evidence.py",
-        "scripts/requirement_intake.py",
-        "scripts/run-ledger.py",
-        "scripts/session-control.py",
-        "scripts/session_control.py",
-        "scripts/spec-kit-bridge.py",
-        "scripts/spec-kit-detect.py",
-        "scripts/spec-kit-evidence.py",
-        "scripts/spec-kit-policy.py",
-        "scripts/spec-kit-slices.py",
-        "scripts/tailtrail.py",
-        "scripts/target_workspace.py",
-        "scripts/task-start.py",
-        "scripts/update-copilot.py",
-        "scripts/update-tailtrail.py",
-        "scripts/workflow_runtime/compiler.py",
-        "scripts/workflow_runtime/contracts.py",
-        "scripts/workflow_runtime/evidence.py",
-        "scripts/workflow_runtime/freshness.py",
-        "scripts/workflow_runtime/ownership.py",
-        "scripts/workflow_runtime/release.py",
-        "scripts/workflow_runtime/stage_results.py",
-        "scripts/workflow_runtime/start_integration.py",
-        "scripts/workflow_runtime/vertical.py",
-        "tests/test_advanced_runtime.py",
-        "tests/test_aidlc_official_bridge.py",
-        "tests/test_architecture_planning.py",
-        "tests/test_behavior_harness.py",
-        "tests/test_behaviour_planning.py",
-        "tests/test_change_intent_anchor.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_code_graph_cache.py",
-        "tests/test_debug_correction_integration.py",
-        "tests/test_debug_preflight.py",
-        "tests/test_debug_start_planning.py",
-        "tests/test_failure_classification.py",
-        "tests/test_focused_validation_contracts.py",
-        "tests/test_graph_builder.py",
-        "tests/test_host_adapter_conformance.py",
-        "tests/test_install_profiles.py",
-        "tests/test_learning_use_receipt.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_debug_routing.py",
-        "tests/test_navigator_graph_lifecycle.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py",
-        "tests/test_newcomer_support_journey.py",
-        "tests/test_plan_render.py",
-        "tests/test_planning_discussion.py",
-        "tests/test_planning_investigation.py",
-        "tests/test_planning_lock.py",
-        "tests/test_planning_revision.py",
-        "tests/test_repository_enforcement.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py",
-        "tests/test_review_scope.py",
-        "tests/test_scope_capture_wiring.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_session_control.py",
-        "tests/test_target_workspace.py",
-        "tests/test_threat_model_stride.py",
-        "tests/test_transactional_installer.py",
-        "tests/test_ui_consistency.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_approvals.py",
-        "tests/test_workflow_ci_continuation.py",
-        "tests/test_workflow_compiler.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_documentation.py",
-        "tests/test_workflow_mcp.py",
-        "tests/test_workflow_ownership.py",
-        "tests/test_workflow_template_execution.py",
-        "tests/test_workflow_transitions.py"
-      ]
-    },
-    {
-      "action": "refresh",
-      "at": "2026-09-29T05:32:33.871525+00:00",
-      "attempt_id": "start-20260929053207-d283fd",
-      "phase": "start",
-      "reason_codes": [
-        "bounded-goal-discovery",
-        "requested-scope-outside-cache"
-      ],
-      "target_paths": [
-        "tests/test_aidlc_complexity_corroboration.py",
-        "tests/test_evidence_aware_testing_v2_v5.py",
-        "tests/test_evidence_tiers.py",
-        "tests/test_higher_tier_testing.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py"
-      ],
-      "effective_scope": [
-        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
-        "navigator.legacy.py",
-        "scripts/aidlc-official-bridge.py",
-        "scripts/aidlc-requirements.py",
-        "scripts/behavior-harness.py",
-        "scripts/behaviour_planning.py",
-        "scripts/capture_hooks.py",
-        "scripts/change-intent-anchor.py",
-        "scripts/closure-close.py",
-        "scripts/closure-contract.py",
-        "scripts/closure-finalizer.py",
-        "scripts/closure-recorder.py",
-        "scripts/code-graph-mapper.py",
-        "scripts/code_graph_cache.py",
-        "scripts/code_graph_inventory.py",
-        "scripts/commit_prompt.py",
-        "scripts/completion-report.py",
-        "scripts/debug-host-diagnosis.py",
-        "scripts/debug-intake.py",
-        "scripts/debug-orientation.py",
-        "scripts/debug-preflight.py",
-        "scripts/debug-privacy.py",
-        "scripts/debug-reproduction.py",
-        "scripts/enterprise-target-policy.py",
-        "scripts/evidence-tiers.py",
-        "scripts/execution-evidence.py",
-        "scripts/expand-intent.py",
-        "scripts/graph_builder.py",
-        "scripts/host-adapter-conformance.py",
-        "scripts/host-decision.py",
-        "scripts/host-workspace-adapter.py",
-        "scripts/install-copilot.py",
-        "scripts/maintainability-harness.py",
-        "scripts/mcp-server.py",
-        "scripts/metrics_extractor.py",
-        "scripts/navigator-scope-calibration.py",
-        "scripts/navigator-scope-release.py",
-        "scripts/navigator.py",
-        "scripts/navigator_core.py",
-        "scripts/navigator_graph_lifecycle.py",
-        "scripts/navigator_render.py",
-        "scripts/navigator_scope.py",
-        "scripts/official-aidlc-requirements.py",
-        "scripts/official-aidlc-sanitize.py",
-        "scripts/official-aidlc-state.py",
-        "scripts/planning-discussion.py",
-        "scripts/planning-feature-controls.py",
-        "scripts/planning-investigation.py",
-        "scripts/planning-revision.py",
-        "scripts/planning_lock.py",
-        "scripts/question-orchestrator.py",
-        "scripts/requirement-interpretation-draft.py",
-        "scripts/requirement-interpretation-scaffold.py",
-        "scripts/requirement_discovery.py",
-        "scripts/requirement_evidence.py",
-        "scripts/requirement_intake.py",
-        "scripts/run-ledger.py",
-        "scripts/session-control.py",
-        "scripts/session_control.py",
-        "scripts/spec-kit-bridge.py",
-        "scripts/spec-kit-detect.py",
-        "scripts/spec-kit-evidence.py",
-        "scripts/spec-kit-policy.py",
-        "scripts/spec-kit-slices.py",
-        "scripts/tailtrail.py",
-        "scripts/target_workspace.py",
-        "scripts/task-start.py",
-        "scripts/update-copilot.py",
-        "scripts/update-tailtrail.py",
-        "scripts/workflow_runtime/compiler.py",
-        "scripts/workflow_runtime/contracts.py",
-        "scripts/workflow_runtime/evidence.py",
-        "scripts/workflow_runtime/freshness.py",
-        "scripts/workflow_runtime/ownership.py",
-        "scripts/workflow_runtime/release.py",
-        "scripts/workflow_runtime/stage_results.py",
-        "scripts/workflow_runtime/start_integration.py",
-        "scripts/workflow_runtime/vertical.py",
-        "tests/test_advanced_runtime.py",
-        "tests/test_aidlc_complexity_corroboration.py",
-        "tests/test_aidlc_official_bridge.py",
-        "tests/test_architecture_planning.py",
-        "tests/test_behavior_harness.py",
-        "tests/test_behaviour_planning.py",
-        "tests/test_change_intent_anchor.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_code_graph_cache.py",
-        "tests/test_debug_correction_integration.py",
-        "tests/test_debug_preflight.py",
-        "tests/test_debug_start_planning.py",
-        "tests/test_evidence_aware_testing_v2_v5.py",
-        "tests/test_evidence_tiers.py",
-        "tests/test_failure_classification.py",
-        "tests/test_focused_validation_contracts.py",
-        "tests/test_graph_builder.py",
-        "tests/test_higher_tier_testing.py",
-        "tests/test_host_adapter_conformance.py",
-        "tests/test_install_profiles.py",
-        "tests/test_learning_use_receipt.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_debug_routing.py",
-        "tests/test_navigator_graph_lifecycle.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py",
-        "tests/test_newcomer_support_journey.py",
-        "tests/test_plan_render.py",
-        "tests/test_planning_discussion.py",
-        "tests/test_planning_investigation.py",
-        "tests/test_planning_lock.py",
-        "tests/test_planning_revision.py",
-        "tests/test_repository_enforcement.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py",
-        "tests/test_review_scope.py",
-        "tests/test_scope_capture_wiring.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_session_control.py",
-        "tests/test_target_workspace.py",
-        "tests/test_threat_model_stride.py",
-        "tests/test_transactional_installer.py",
-        "tests/test_ui_consistency.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_approvals.py",
-        "tests/test_workflow_ci_continuation.py",
-        "tests/test_workflow_compiler.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_documentation.py",
-        "tests/test_workflow_mcp.py",
-        "tests/test_workflow_ownership.py",
-        "tests/test_workflow_template_execution.py",
-        "tests/test_workflow_transitions.py"
-      ]
-    },
-    {
-      "action": "refresh",
-      "at": "2026-09-29T06:21:30.611890+00:00",
-      "attempt_id": "start-20260929062115-1feee9",
-      "phase": "start",
-      "reason_codes": [
-        "bounded-goal-discovery",
-        "requested-scope-outside-cache"
-      ],
-      "target_paths": [
-        "scripts/navigator_scope.py",
-        "scripts/workflow_runtime/task_scope.py",
-        "tests/test_focused_validation_contracts.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_workflow_contracts.py"
-      ],
-      "effective_scope": [
-        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
-        "navigator.legacy.py",
-        "scripts/aidlc-official-bridge.py",
-        "scripts/aidlc-requirements.py",
-        "scripts/behavior-harness.py",
-        "scripts/behaviour_planning.py",
-        "scripts/capture_hooks.py",
-        "scripts/change-intent-anchor.py",
-        "scripts/closure-close.py",
-        "scripts/closure-contract.py",
-        "scripts/closure-finalizer.py",
-        "scripts/closure-recorder.py",
-        "scripts/code-graph-mapper.py",
-        "scripts/code_graph_cache.py",
-        "scripts/code_graph_inventory.py",
-        "scripts/commit_prompt.py",
-        "scripts/completion-report.py",
-        "scripts/debug-host-diagnosis.py",
-        "scripts/debug-intake.py",
-        "scripts/debug-orientation.py",
-        "scripts/debug-preflight.py",
-        "scripts/debug-privacy.py",
-        "scripts/debug-reproduction.py",
-        "scripts/enterprise-target-policy.py",
-        "scripts/evidence-tiers.py",
-        "scripts/execution-evidence.py",
-        "scripts/expand-intent.py",
-        "scripts/graph_builder.py",
-        "scripts/host-adapter-conformance.py",
-        "scripts/host-decision.py",
-        "scripts/host-workspace-adapter.py",
-        "scripts/install-copilot.py",
-        "scripts/maintainability-harness.py",
-        "scripts/mcp-server.py",
-        "scripts/metrics_extractor.py",
-        "scripts/navigator-scope-calibration.py",
-        "scripts/navigator-scope-release.py",
-        "scripts/navigator.py",
-        "scripts/navigator_core.py",
-        "scripts/navigator_graph_lifecycle.py",
-        "scripts/navigator_render.py",
-        "scripts/navigator_scope.py",
-        "scripts/official-aidlc-requirements.py",
-        "scripts/official-aidlc-sanitize.py",
-        "scripts/official-aidlc-state.py",
-        "scripts/planning-discussion.py",
-        "scripts/planning-feature-controls.py",
-        "scripts/planning-investigation.py",
-        "scripts/planning-revision.py",
-        "scripts/planning_lock.py",
-        "scripts/question-orchestrator.py",
-        "scripts/requirement-interpretation-draft.py",
-        "scripts/requirement-interpretation-scaffold.py",
-        "scripts/requirement_discovery.py",
-        "scripts/requirement_evidence.py",
-        "scripts/requirement_intake.py",
-        "scripts/run-ledger.py",
-        "scripts/session-control.py",
-        "scripts/session_control.py",
-        "scripts/spec-kit-bridge.py",
-        "scripts/spec-kit-detect.py",
-        "scripts/spec-kit-evidence.py",
-        "scripts/spec-kit-policy.py",
-        "scripts/spec-kit-slices.py",
-        "scripts/tailtrail.py",
-        "scripts/target_workspace.py",
-        "scripts/task-start.py",
-        "scripts/update-copilot.py",
-        "scripts/update-tailtrail.py",
-        "scripts/workflow_runtime/compiler.py",
-        "scripts/workflow_runtime/contracts.py",
-        "scripts/workflow_runtime/evidence.py",
-        "scripts/workflow_runtime/freshness.py",
-        "scripts/workflow_runtime/ownership.py",
-        "scripts/workflow_runtime/release.py",
-        "scripts/workflow_runtime/stage_results.py",
-        "scripts/workflow_runtime/start_integration.py",
-        "scripts/workflow_runtime/task_scope.py",
-        "scripts/workflow_runtime/vertical.py",
-        "tests/test_advanced_runtime.py",
-        "tests/test_aidlc_complexity_corroboration.py",
-        "tests/test_aidlc_official_bridge.py",
-        "tests/test_architecture_planning.py",
-        "tests/test_behavior_harness.py",
-        "tests/test_behaviour_planning.py",
-        "tests/test_change_intent_anchor.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_code_graph_cache.py",
-        "tests/test_debug_correction_integration.py",
-        "tests/test_debug_preflight.py",
-        "tests/test_debug_start_planning.py",
-        "tests/test_evidence_aware_testing_v2_v5.py",
-        "tests/test_evidence_tiers.py",
-        "tests/test_failure_classification.py",
-        "tests/test_focused_validation_contracts.py",
-        "tests/test_graph_builder.py",
-        "tests/test_higher_tier_testing.py",
-        "tests/test_host_adapter_conformance.py",
-        "tests/test_install_profiles.py",
-        "tests/test_learning_use_receipt.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_debug_routing.py",
-        "tests/test_navigator_graph_lifecycle.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py",
-        "tests/test_newcomer_support_journey.py",
-        "tests/test_plan_render.py",
-        "tests/test_planning_discussion.py",
-        "tests/test_planning_investigation.py",
-        "tests/test_planning_lock.py",
-        "tests/test_planning_revision.py",
-        "tests/test_repository_enforcement.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py",
-        "tests/test_review_scope.py",
-        "tests/test_scope_capture_wiring.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_session_control.py",
-        "tests/test_target_workspace.py",
-        "tests/test_threat_model_stride.py",
-        "tests/test_transactional_installer.py",
-        "tests/test_ui_consistency.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_approvals.py",
-        "tests/test_workflow_ci_continuation.py",
-        "tests/test_workflow_compiler.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_documentation.py",
-        "tests/test_workflow_mcp.py",
-        "tests/test_workflow_ownership.py",
-        "tests/test_workflow_template_execution.py",
-        "tests/test_workflow_transitions.py"
-      ]
-    },
-    {
-      "action": "refresh",
-      "at": "2026-09-29T06:34:35.207102+00:00",
-      "attempt_id": "start-20260929063419-d06701",
-      "phase": "start",
-      "reason_codes": [
-        "1 anchor paths present in cached scope",
-        "1 anchor-connected cached files",
-        "anchor-slice-bounded-targets",
-        "explicit-scope-paths",
-        "persistent-graph-stale"
-      ],
-      "target_paths": [
-        "tests/test_architecture_planning.py"
-      ],
-      "effective_scope": [
-        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
-        "navigator.legacy.py",
-        "scripts/aidlc-official-bridge.py",
-        "scripts/aidlc-requirements.py",
-        "scripts/behavior-harness.py",
-        "scripts/behaviour_planning.py",
-        "scripts/capture_hooks.py",
-        "scripts/change-intent-anchor.py",
-        "scripts/closure-close.py",
-        "scripts/closure-contract.py",
-        "scripts/closure-finalizer.py",
-        "scripts/closure-recorder.py",
-        "scripts/code-graph-mapper.py",
-        "scripts/code_graph_cache.py",
-        "scripts/code_graph_inventory.py",
-        "scripts/commit_prompt.py",
-        "scripts/completion-report.py",
-        "scripts/debug-host-diagnosis.py",
-        "scripts/debug-intake.py",
-        "scripts/debug-orientation.py",
-        "scripts/debug-preflight.py",
-        "scripts/debug-privacy.py",
-        "scripts/debug-reproduction.py",
-        "scripts/enterprise-target-policy.py",
-        "scripts/evidence-tiers.py",
-        "scripts/execution-evidence.py",
-        "scripts/expand-intent.py",
-        "scripts/graph_builder.py",
-        "scripts/host-adapter-conformance.py",
-        "scripts/host-decision.py",
-        "scripts/host-workspace-adapter.py",
-        "scripts/install-copilot.py",
-        "scripts/maintainability-harness.py",
-        "scripts/mcp-server.py",
-        "scripts/metrics_extractor.py",
-        "scripts/navigator-scope-calibration.py",
-        "scripts/navigator-scope-release.py",
-        "scripts/navigator.py",
-        "scripts/navigator_core.py",
-        "scripts/navigator_graph_lifecycle.py",
-        "scripts/navigator_render.py",
-        "scripts/navigator_scope.py",
-        "scripts/official-aidlc-requirements.py",
-        "scripts/official-aidlc-sanitize.py",
-        "scripts/official-aidlc-state.py",
-        "scripts/planning-discussion.py",
-        "scripts/planning-feature-controls.py",
-        "scripts/planning-investigation.py",
-        "scripts/planning-revision.py",
-        "scripts/planning_lock.py",
-        "scripts/question-orchestrator.py",
-        "scripts/requirement-interpretation-draft.py",
-        "scripts/requirement-interpretation-scaffold.py",
-        "scripts/requirement_discovery.py",
-        "scripts/requirement_evidence.py",
-        "scripts/requirement_intake.py",
-        "scripts/run-ledger.py",
-        "scripts/session-control.py",
-        "scripts/session_control.py",
-        "scripts/spec-kit-bridge.py",
-        "scripts/spec-kit-detect.py",
-        "scripts/spec-kit-evidence.py",
-        "scripts/spec-kit-policy.py",
-        "scripts/spec-kit-slices.py",
-        "scripts/tailtrail.py",
-        "scripts/target_workspace.py",
-        "scripts/task-start.py",
-        "scripts/update-copilot.py",
-        "scripts/update-tailtrail.py",
-        "scripts/workflow_runtime/compiler.py",
-        "scripts/workflow_runtime/contracts.py",
-        "scripts/workflow_runtime/evidence.py",
-        "scripts/workflow_runtime/freshness.py",
-        "scripts/workflow_runtime/ownership.py",
-        "scripts/workflow_runtime/release.py",
-        "scripts/workflow_runtime/stage_results.py",
-        "scripts/workflow_runtime/start_integration.py",
-        "scripts/workflow_runtime/task_scope.py",
-        "scripts/workflow_runtime/vertical.py",
-        "tests/test_advanced_runtime.py",
-        "tests/test_aidlc_complexity_corroboration.py",
-        "tests/test_aidlc_official_bridge.py",
-        "tests/test_architecture_planning.py",
-        "tests/test_behavior_harness.py",
-        "tests/test_behaviour_planning.py",
-        "tests/test_change_intent_anchor.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_code_graph_cache.py",
-        "tests/test_debug_correction_integration.py",
-        "tests/test_debug_preflight.py",
-        "tests/test_debug_start_planning.py",
-        "tests/test_evidence_aware_testing_v2_v5.py",
-        "tests/test_evidence_tiers.py",
-        "tests/test_failure_classification.py",
-        "tests/test_focused_validation_contracts.py",
-        "tests/test_graph_builder.py",
-        "tests/test_higher_tier_testing.py",
-        "tests/test_host_adapter_conformance.py",
-        "tests/test_install_profiles.py",
-        "tests/test_learning_use_receipt.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_debug_routing.py",
-        "tests/test_navigator_graph_lifecycle.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py",
-        "tests/test_newcomer_support_journey.py",
-        "tests/test_plan_render.py",
-        "tests/test_planning_discussion.py",
-        "tests/test_planning_investigation.py",
-        "tests/test_planning_lock.py",
-        "tests/test_planning_revision.py",
-        "tests/test_repository_enforcement.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py",
-        "tests/test_review_scope.py",
-        "tests/test_scope_capture_wiring.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_session_control.py",
-        "tests/test_target_workspace.py",
-        "tests/test_threat_model_stride.py",
-        "tests/test_transactional_installer.py",
-        "tests/test_ui_consistency.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_approvals.py",
-        "tests/test_workflow_ci_continuation.py",
-        "tests/test_workflow_compiler.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_documentation.py",
-        "tests/test_workflow_mcp.py",
-        "tests/test_workflow_ownership.py",
-        "tests/test_workflow_template_execution.py",
-        "tests/test_workflow_transitions.py"
-      ]
-    },
-    {
-      "action": "refresh",
-      "at": "2026-09-29T07:43:12.330595+00:00",
-      "attempt_id": "start-20260929074251-f864d2",
-      "phase": "start",
-      "reason_codes": [
-        "bounded-goal-discovery",
-        "persistent-graph-stale"
-      ],
-      "target_paths": [
-        "scripts/code-graph-mapper.py",
-        "scripts/expand-intent.py",
-        "scripts/mcp-server.py",
-        "scripts/navigator.py",
-        "scripts/navigator_scope.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py"
-      ],
-      "effective_scope": [
-        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
-        "navigator.legacy.py",
-        "scripts/aidlc-official-bridge.py",
-        "scripts/aidlc-requirements.py",
-        "scripts/behavior-harness.py",
-        "scripts/behaviour_planning.py",
-        "scripts/capture_hooks.py",
-        "scripts/change-intent-anchor.py",
-        "scripts/closure-close.py",
-        "scripts/closure-contract.py",
-        "scripts/closure-finalizer.py",
-        "scripts/closure-recorder.py",
-        "scripts/code-graph-mapper.py",
-        "scripts/code_graph_cache.py",
-        "scripts/code_graph_inventory.py",
-        "scripts/commit_prompt.py",
-        "scripts/completion-report.py",
-        "scripts/debug-host-diagnosis.py",
-        "scripts/debug-intake.py",
-        "scripts/debug-orientation.py",
-        "scripts/debug-preflight.py",
-        "scripts/debug-privacy.py",
-        "scripts/debug-reproduction.py",
-        "scripts/enterprise-target-policy.py",
-        "scripts/evidence-tiers.py",
-        "scripts/execution-evidence.py",
-        "scripts/expand-intent.py",
-        "scripts/graph_builder.py",
-        "scripts/host-adapter-conformance.py",
-        "scripts/host-decision.py",
-        "scripts/host-workspace-adapter.py",
-        "scripts/install-copilot.py",
-        "scripts/maintainability-harness.py",
-        "scripts/mcp-server.py",
-        "scripts/metrics_extractor.py",
-        "scripts/navigator-scope-calibration.py",
-        "scripts/navigator-scope-release.py",
-        "scripts/navigator.py",
-        "scripts/navigator_core.py",
-        "scripts/navigator_graph_lifecycle.py",
-        "scripts/navigator_render.py",
-        "scripts/navigator_scope.py",
-        "scripts/official-aidlc-requirements.py",
-        "scripts/official-aidlc-sanitize.py",
-        "scripts/official-aidlc-state.py",
-        "scripts/planning-discussion.py",
-        "scripts/planning-feature-controls.py",
-        "scripts/planning-investigation.py",
-        "scripts/planning-revision.py",
-        "scripts/planning_lock.py",
-        "scripts/question-orchestrator.py",
-        "scripts/requirement-interpretation-draft.py",
-        "scripts/requirement-interpretation-scaffold.py",
-        "scripts/requirement_discovery.py",
-        "scripts/requirement_evidence.py",
-        "scripts/requirement_intake.py",
-        "scripts/run-ledger.py",
-        "scripts/session-control.py",
-        "scripts/session_control.py",
-        "scripts/spec-kit-bridge.py",
-        "scripts/spec-kit-detect.py",
-        "scripts/spec-kit-evidence.py",
-        "scripts/spec-kit-policy.py",
-        "scripts/spec-kit-slices.py",
-        "scripts/tailtrail.py",
-        "scripts/target_workspace.py",
-        "scripts/task-start.py",
-        "scripts/update-copilot.py",
-        "scripts/update-tailtrail.py",
-        "scripts/workflow_runtime/compiler.py",
-        "scripts/workflow_runtime/contracts.py",
-        "scripts/workflow_runtime/evidence.py",
-        "scripts/workflow_runtime/freshness.py",
-        "scripts/workflow_runtime/ownership.py",
-        "scripts/workflow_runtime/release.py",
-        "scripts/workflow_runtime/stage_results.py",
-        "scripts/workflow_runtime/start_integration.py",
-        "scripts/workflow_runtime/task_scope.py",
-        "scripts/workflow_runtime/vertical.py",
-        "tests/test_advanced_runtime.py",
-        "tests/test_aidlc_complexity_corroboration.py",
-        "tests/test_aidlc_official_bridge.py",
-        "tests/test_architecture_planning.py",
-        "tests/test_behavior_harness.py",
-        "tests/test_behaviour_planning.py",
-        "tests/test_change_intent_anchor.py",
-        "tests/test_closure_close.py",
-        "tests/test_closure_contract.py",
-        "tests/test_closure_finalizer.py",
-        "tests/test_closure_learning.py",
-        "tests/test_closure_recorder.py",
-        "tests/test_code_graph_cache.py",
-        "tests/test_debug_correction_integration.py",
-        "tests/test_debug_preflight.py",
-        "tests/test_debug_start_planning.py",
-        "tests/test_evidence_aware_testing_v2_v5.py",
-        "tests/test_evidence_tiers.py",
-        "tests/test_failure_classification.py",
-        "tests/test_focused_validation_contracts.py",
-        "tests/test_graph_builder.py",
-        "tests/test_higher_tier_testing.py",
-        "tests/test_host_adapter_conformance.py",
-        "tests/test_install_profiles.py",
-        "tests/test_learning_use_receipt.py",
-        "tests/test_mcp_server.py",
-        "tests/test_navigator_core.py",
-        "tests/test_navigator_debug_routing.py",
-        "tests/test_navigator_graph_lifecycle.py",
-        "tests/test_navigator_scope.py",
-        "tests/test_navigator_scope_calibration.py",
-        "tests/test_navigator_scope_release.py",
-        "tests/test_newcomer_support_journey.py",
-        "tests/test_plan_render.py",
-        "tests/test_planning_discussion.py",
-        "tests/test_planning_investigation.py",
-        "tests/test_planning_lock.py",
-        "tests/test_planning_revision.py",
-        "tests/test_repository_enforcement.py",
-        "tests/test_requirement_discovery.py",
-        "tests/test_requirement_routing_phase0.py",
-        "tests/test_review_scope.py",
-        "tests/test_scope_capture_wiring.py",
-        "tests/test_self_contained_package.py",
-        "tests/test_session_control.py",
-        "tests/test_target_workspace.py",
-        "tests/test_threat_model_stride.py",
-        "tests/test_transactional_installer.py",
-        "tests/test_ui_consistency.py",
-        "tests/test_workflow_adapters.py",
-        "tests/test_workflow_approvals.py",
-        "tests/test_workflow_ci_continuation.py",
-        "tests/test_workflow_compiler.py",
-        "tests/test_workflow_contracts.py",
-        "tests/test_workflow_documentation.py",
-        "tests/test_workflow_mcp.py",
-        "tests/test_workflow_ownership.py",
-        "tests/test_workflow_template_execution.py",
-        "tests/test_workflow_transitions.py"
-      ]
-    },
     {
       "action": "refresh",
       "at": "2026-09-29T07:52:18.829719+00:00",
@@ -34080,6 +32691,1114 @@
         "tests/test_spec_kit_amendment.py",
         "tests/test_spec_kit_evidence.py",
         "tests/test_target_workspace.py",
+        "tests/test_threat_model_stride.py",
+        "tests/test_transactional_installer.py",
+        "tests/test_ui_consistency.py",
+        "tests/test_workflow_adapters.py",
+        "tests/test_workflow_approvals.py",
+        "tests/test_workflow_ci_continuation.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_documentation.py",
+        "tests/test_workflow_freshness_recovery.py",
+        "tests/test_workflow_mcp.py",
+        "tests/test_workflow_ownership.py",
+        "tests/test_workflow_template_execution.py",
+        "tests/test_workflow_transitions.py"
+      ]
+    },
+    {
+      "action": "refresh",
+      "at": "2026-09-29T15:15:10.047949+00:00",
+      "attempt_id": "start-20260929151452-08fb0c",
+      "phase": "start",
+      "reason_codes": [
+        "bounded-goal-discovery",
+        "requested-scope-outside-cache"
+      ],
+      "target_paths": [
+        "scripts/task-next.py",
+        "tests/test_aidlc_complexity_corroboration.py",
+        "tests/test_drift_analysis.py",
+        "tests/test_mcp_server.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_task_recovery.py",
+        "tests/test_task_type_contract.py",
+        "tests/test_task_type_gate.py"
+      ],
+      "effective_scope": [
+        ".github/workflows/platform-supply-chain.yml",
+        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
+        "navigator.legacy.py",
+        "scripts/aidlc-official-bridge.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/architecture_planning.py",
+        "scripts/behavior-harness.py",
+        "scripts/behaviour_planning.py",
+        "scripts/capture_hooks.py",
+        "scripts/change-intent-anchor.py",
+        "scripts/closure-close.py",
+        "scripts/closure-contract.py",
+        "scripts/closure-finalizer.py",
+        "scripts/closure-recorder.py",
+        "scripts/code-graph-mapper.py",
+        "scripts/code_graph_cache.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/commit_prompt.py",
+        "scripts/completion-report.py",
+        "scripts/debug-host-diagnosis.py",
+        "scripts/debug-intake.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-reproduction.py",
+        "scripts/delivery-orchestrator.py",
+        "scripts/enterprise-target-policy.py",
+        "scripts/evidence-tiers.py",
+        "scripts/execution-evidence.py",
+        "scripts/expand-intent.py",
+        "scripts/export-release.py",
+        "scripts/graph_builder.py",
+        "scripts/host-adapter-conformance.py",
+        "scripts/host-decision.py",
+        "scripts/host-workspace-adapter.py",
+        "scripts/install-copilot.py",
+        "scripts/maintainability-harness.py",
+        "scripts/mcp-server.py",
+        "scripts/metrics_extractor.py",
+        "scripts/navigator-installed-release-proof.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/planning-aidlc-question.py",
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "scripts/question-orchestrator.py",
+        "scripts/release-confidence.py",
+        "scripts/release-publication.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement_evidence.py",
+        "scripts/requirement_intake.py",
+        "scripts/route-context.py",
+        "scripts/run-ledger.py",
+        "scripts/session-control.py",
+        "scripts/session_control.py",
+        "scripts/spec-kit-bridge.py",
+        "scripts/spec-kit-detect.py",
+        "scripts/spec-kit-evidence.py",
+        "scripts/spec-kit-policy.py",
+        "scripts/spec-kit-slices.py",
+        "scripts/tailtrail.py",
+        "scripts/target_workspace.py",
+        "scripts/task-next.py",
+        "scripts/task-start.py",
+        "scripts/update-copilot.py",
+        "scripts/update-tailtrail.py",
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/evidence.py",
+        "scripts/workflow_runtime/freshness.py",
+        "scripts/workflow_runtime/ownership.py",
+        "scripts/workflow_runtime/release.py",
+        "scripts/workflow_runtime/stage_results.py",
+        "scripts/workflow_runtime/start_integration.py",
+        "scripts/workflow_runtime/task_scope.py",
+        "scripts/workflow_runtime/vertical.py",
+        "tests/test_advanced_runtime.py",
+        "tests/test_aidlc_complexity_corroboration.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_architecture_planning.py",
+        "tests/test_auto_routing.py",
+        "tests/test_behavior_harness.py",
+        "tests/test_behaviour_planning.py",
+        "tests/test_change_intent_anchor.py",
+        "tests/test_closure_close.py",
+        "tests/test_closure_contract.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_closure_learning.py",
+        "tests/test_closure_recorder.py",
+        "tests/test_code_graph_cache.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_evaluation.py",
+        "tests/test_debug_harness.py",
+        "tests/test_debug_preflight.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_drift_analysis.py",
+        "tests/test_evidence_aware_testing_v2_v5.py",
+        "tests/test_evidence_tiers.py",
+        "tests/test_failure_classification.py",
+        "tests/test_focused_validation_contracts.py",
+        "tests/test_graph_builder.py",
+        "tests/test_harness_checkpoint.py",
+        "tests/test_higher_tier_testing.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_install_profiles.py",
+        "tests/test_learning_governance.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_mcp_server.py",
+        "tests/test_metrics_extractor.py",
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_navigator_graph_lifecycle.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_newcomer_support_journey.py",
+        "tests/test_official_aidlc_checkpoint.py",
+        "tests/test_plan_render.py",
+        "tests/test_planning_discussion.py",
+        "tests/test_planning_feature_controls.py",
+        "tests/test_planning_investigation.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py",
+        "tests/test_program_delivery.py",
+        "tests/test_release4_maintainability.py",
+        "tests/test_repository_enforcement.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_requirement_routing_phase0.py",
+        "tests/test_review_scope.py",
+        "tests/test_scope_answer_mapping.py",
+        "tests/test_scope_capture_wiring.py",
+        "tests/test_self_contained_package.py",
+        "tests/test_session_control.py",
+        "tests/test_spec_kit_amendment.py",
+        "tests/test_spec_kit_evidence.py",
+        "tests/test_target_workspace.py",
+        "tests/test_task_recovery.py",
+        "tests/test_task_type_contract.py",
+        "tests/test_task_type_gate.py",
+        "tests/test_threat_model_stride.py",
+        "tests/test_transactional_installer.py",
+        "tests/test_ui_consistency.py",
+        "tests/test_workflow_adapters.py",
+        "tests/test_workflow_approvals.py",
+        "tests/test_workflow_ci_continuation.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_documentation.py",
+        "tests/test_workflow_freshness_recovery.py",
+        "tests/test_workflow_mcp.py",
+        "tests/test_workflow_ownership.py",
+        "tests/test_workflow_template_execution.py",
+        "tests/test_workflow_transitions.py"
+      ]
+    },
+    {
+      "action": "refresh",
+      "at": "2026-09-29T15:25:56.328340+00:00",
+      "attempt_id": "start-20260929152536-7f2ec3",
+      "phase": "start",
+      "reason_codes": [
+        "1 anchor paths present in cached scope",
+        "1 anchor-connected cached files",
+        "anchor-slice-bounded-targets",
+        "explicit-scope-paths",
+        "persistent-graph-stale"
+      ],
+      "target_paths": [
+        ".github/workflows/platform-supply-chain.yml"
+      ],
+      "effective_scope": [
+        ".github/workflows/platform-supply-chain.yml",
+        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
+        "navigator.legacy.py",
+        "scripts/aidlc-official-bridge.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/architecture_planning.py",
+        "scripts/behavior-harness.py",
+        "scripts/behaviour_planning.py",
+        "scripts/capture_hooks.py",
+        "scripts/change-intent-anchor.py",
+        "scripts/closure-close.py",
+        "scripts/closure-contract.py",
+        "scripts/closure-finalizer.py",
+        "scripts/closure-recorder.py",
+        "scripts/code-graph-mapper.py",
+        "scripts/code_graph_cache.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/commit_prompt.py",
+        "scripts/completion-report.py",
+        "scripts/debug-host-diagnosis.py",
+        "scripts/debug-intake.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-reproduction.py",
+        "scripts/delivery-orchestrator.py",
+        "scripts/enterprise-target-policy.py",
+        "scripts/evidence-tiers.py",
+        "scripts/execution-evidence.py",
+        "scripts/expand-intent.py",
+        "scripts/export-release.py",
+        "scripts/graph_builder.py",
+        "scripts/host-adapter-conformance.py",
+        "scripts/host-decision.py",
+        "scripts/host-workspace-adapter.py",
+        "scripts/install-copilot.py",
+        "scripts/maintainability-harness.py",
+        "scripts/mcp-server.py",
+        "scripts/metrics_extractor.py",
+        "scripts/navigator-installed-release-proof.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/planning-aidlc-question.py",
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "scripts/question-orchestrator.py",
+        "scripts/release-confidence.py",
+        "scripts/release-publication.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement_evidence.py",
+        "scripts/requirement_intake.py",
+        "scripts/route-context.py",
+        "scripts/run-ledger.py",
+        "scripts/session-control.py",
+        "scripts/session_control.py",
+        "scripts/spec-kit-bridge.py",
+        "scripts/spec-kit-detect.py",
+        "scripts/spec-kit-evidence.py",
+        "scripts/spec-kit-policy.py",
+        "scripts/spec-kit-slices.py",
+        "scripts/tailtrail.py",
+        "scripts/target_workspace.py",
+        "scripts/task-next.py",
+        "scripts/task-start.py",
+        "scripts/update-copilot.py",
+        "scripts/update-tailtrail.py",
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/evidence.py",
+        "scripts/workflow_runtime/freshness.py",
+        "scripts/workflow_runtime/ownership.py",
+        "scripts/workflow_runtime/release.py",
+        "scripts/workflow_runtime/stage_results.py",
+        "scripts/workflow_runtime/start_integration.py",
+        "scripts/workflow_runtime/task_scope.py",
+        "scripts/workflow_runtime/vertical.py",
+        "tests/test_advanced_runtime.py",
+        "tests/test_aidlc_complexity_corroboration.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_architecture_planning.py",
+        "tests/test_auto_routing.py",
+        "tests/test_behavior_harness.py",
+        "tests/test_behaviour_planning.py",
+        "tests/test_change_intent_anchor.py",
+        "tests/test_closure_close.py",
+        "tests/test_closure_contract.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_closure_learning.py",
+        "tests/test_closure_recorder.py",
+        "tests/test_code_graph_cache.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_evaluation.py",
+        "tests/test_debug_harness.py",
+        "tests/test_debug_preflight.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_drift_analysis.py",
+        "tests/test_evidence_aware_testing_v2_v5.py",
+        "tests/test_evidence_tiers.py",
+        "tests/test_failure_classification.py",
+        "tests/test_focused_validation_contracts.py",
+        "tests/test_graph_builder.py",
+        "tests/test_harness_checkpoint.py",
+        "tests/test_higher_tier_testing.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_install_profiles.py",
+        "tests/test_learning_governance.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_mcp_server.py",
+        "tests/test_metrics_extractor.py",
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_navigator_graph_lifecycle.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_newcomer_support_journey.py",
+        "tests/test_official_aidlc_checkpoint.py",
+        "tests/test_plan_render.py",
+        "tests/test_planning_discussion.py",
+        "tests/test_planning_feature_controls.py",
+        "tests/test_planning_investigation.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py",
+        "tests/test_program_delivery.py",
+        "tests/test_release4_maintainability.py",
+        "tests/test_repository_enforcement.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_requirement_routing_phase0.py",
+        "tests/test_review_scope.py",
+        "tests/test_scope_answer_mapping.py",
+        "tests/test_scope_capture_wiring.py",
+        "tests/test_self_contained_package.py",
+        "tests/test_session_control.py",
+        "tests/test_spec_kit_amendment.py",
+        "tests/test_spec_kit_evidence.py",
+        "tests/test_target_workspace.py",
+        "tests/test_task_recovery.py",
+        "tests/test_task_type_contract.py",
+        "tests/test_task_type_gate.py",
+        "tests/test_threat_model_stride.py",
+        "tests/test_transactional_installer.py",
+        "tests/test_ui_consistency.py",
+        "tests/test_workflow_adapters.py",
+        "tests/test_workflow_approvals.py",
+        "tests/test_workflow_ci_continuation.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_documentation.py",
+        "tests/test_workflow_freshness_recovery.py",
+        "tests/test_workflow_mcp.py",
+        "tests/test_workflow_ownership.py",
+        "tests/test_workflow_template_execution.py",
+        "tests/test_workflow_transitions.py"
+      ]
+    },
+    {
+      "action": "refresh",
+      "at": "2026-09-29T15:29:43.517341+00:00",
+      "attempt_id": "start-20260929152927-7f2ec3",
+      "phase": "start",
+      "reason_codes": [
+        "1 anchor paths present in cached scope",
+        "1 anchor-connected cached files",
+        "anchor-slice-bounded-targets",
+        "explicit-scope-paths",
+        "persistent-graph-stale"
+      ],
+      "target_paths": [
+        ".github/workflows/platform-supply-chain.yml"
+      ],
+      "effective_scope": [
+        ".github/workflows/platform-supply-chain.yml",
+        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
+        "navigator.legacy.py",
+        "scripts/aidlc-official-bridge.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/architecture_planning.py",
+        "scripts/behavior-harness.py",
+        "scripts/behaviour_planning.py",
+        "scripts/capture_hooks.py",
+        "scripts/change-intent-anchor.py",
+        "scripts/closure-close.py",
+        "scripts/closure-contract.py",
+        "scripts/closure-finalizer.py",
+        "scripts/closure-recorder.py",
+        "scripts/code-graph-mapper.py",
+        "scripts/code_graph_cache.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/commit_prompt.py",
+        "scripts/completion-report.py",
+        "scripts/debug-host-diagnosis.py",
+        "scripts/debug-intake.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-reproduction.py",
+        "scripts/delivery-orchestrator.py",
+        "scripts/enterprise-target-policy.py",
+        "scripts/evidence-tiers.py",
+        "scripts/execution-evidence.py",
+        "scripts/expand-intent.py",
+        "scripts/export-release.py",
+        "scripts/graph_builder.py",
+        "scripts/host-adapter-conformance.py",
+        "scripts/host-decision.py",
+        "scripts/host-workspace-adapter.py",
+        "scripts/install-copilot.py",
+        "scripts/maintainability-harness.py",
+        "scripts/mcp-server.py",
+        "scripts/metrics_extractor.py",
+        "scripts/navigator-installed-release-proof.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/planning-aidlc-question.py",
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "scripts/question-orchestrator.py",
+        "scripts/release-confidence.py",
+        "scripts/release-publication.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement_evidence.py",
+        "scripts/requirement_intake.py",
+        "scripts/route-context.py",
+        "scripts/run-ledger.py",
+        "scripts/session-control.py",
+        "scripts/session_control.py",
+        "scripts/spec-kit-bridge.py",
+        "scripts/spec-kit-detect.py",
+        "scripts/spec-kit-evidence.py",
+        "scripts/spec-kit-policy.py",
+        "scripts/spec-kit-slices.py",
+        "scripts/tailtrail.py",
+        "scripts/target_workspace.py",
+        "scripts/task-next.py",
+        "scripts/task-start.py",
+        "scripts/update-copilot.py",
+        "scripts/update-tailtrail.py",
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/evidence.py",
+        "scripts/workflow_runtime/freshness.py",
+        "scripts/workflow_runtime/ownership.py",
+        "scripts/workflow_runtime/release.py",
+        "scripts/workflow_runtime/stage_results.py",
+        "scripts/workflow_runtime/start_integration.py",
+        "scripts/workflow_runtime/task_scope.py",
+        "scripts/workflow_runtime/vertical.py",
+        "tests/test_advanced_runtime.py",
+        "tests/test_aidlc_complexity_corroboration.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_architecture_planning.py",
+        "tests/test_auto_routing.py",
+        "tests/test_behavior_harness.py",
+        "tests/test_behaviour_planning.py",
+        "tests/test_change_intent_anchor.py",
+        "tests/test_closure_close.py",
+        "tests/test_closure_contract.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_closure_learning.py",
+        "tests/test_closure_recorder.py",
+        "tests/test_code_graph_cache.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_evaluation.py",
+        "tests/test_debug_harness.py",
+        "tests/test_debug_preflight.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_drift_analysis.py",
+        "tests/test_evidence_aware_testing_v2_v5.py",
+        "tests/test_evidence_tiers.py",
+        "tests/test_failure_classification.py",
+        "tests/test_focused_validation_contracts.py",
+        "tests/test_graph_builder.py",
+        "tests/test_harness_checkpoint.py",
+        "tests/test_higher_tier_testing.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_install_profiles.py",
+        "tests/test_learning_governance.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_mcp_server.py",
+        "tests/test_metrics_extractor.py",
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_navigator_graph_lifecycle.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_newcomer_support_journey.py",
+        "tests/test_official_aidlc_checkpoint.py",
+        "tests/test_plan_render.py",
+        "tests/test_planning_discussion.py",
+        "tests/test_planning_feature_controls.py",
+        "tests/test_planning_investigation.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py",
+        "tests/test_program_delivery.py",
+        "tests/test_release4_maintainability.py",
+        "tests/test_repository_enforcement.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_requirement_routing_phase0.py",
+        "tests/test_review_scope.py",
+        "tests/test_scope_answer_mapping.py",
+        "tests/test_scope_capture_wiring.py",
+        "tests/test_self_contained_package.py",
+        "tests/test_session_control.py",
+        "tests/test_spec_kit_amendment.py",
+        "tests/test_spec_kit_evidence.py",
+        "tests/test_target_workspace.py",
+        "tests/test_task_recovery.py",
+        "tests/test_task_type_contract.py",
+        "tests/test_task_type_gate.py",
+        "tests/test_threat_model_stride.py",
+        "tests/test_transactional_installer.py",
+        "tests/test_ui_consistency.py",
+        "tests/test_workflow_adapters.py",
+        "tests/test_workflow_approvals.py",
+        "tests/test_workflow_ci_continuation.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_documentation.py",
+        "tests/test_workflow_freshness_recovery.py",
+        "tests/test_workflow_mcp.py",
+        "tests/test_workflow_ownership.py",
+        "tests/test_workflow_template_execution.py",
+        "tests/test_workflow_transitions.py"
+      ]
+    },
+    {
+      "action": "refresh",
+      "at": "2026-09-29T15:37:41.670100+00:00",
+      "attempt_id": "start-20260929153728-7f2ec3",
+      "phase": "start",
+      "reason_codes": [
+        "1 anchor paths present in cached scope",
+        "1 anchor-connected cached files",
+        "anchor-slice-bounded-targets",
+        "explicit-scope-paths",
+        "persistent-graph-stale"
+      ],
+      "target_paths": [
+        ".github/workflows/platform-supply-chain.yml"
+      ],
+      "effective_scope": [
+        ".github/workflows/platform-supply-chain.yml",
+        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
+        "navigator.legacy.py",
+        "scripts/aidlc-official-bridge.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/architecture_planning.py",
+        "scripts/behavior-harness.py",
+        "scripts/behaviour_planning.py",
+        "scripts/capture_hooks.py",
+        "scripts/change-intent-anchor.py",
+        "scripts/closure-close.py",
+        "scripts/closure-contract.py",
+        "scripts/closure-finalizer.py",
+        "scripts/closure-recorder.py",
+        "scripts/code-graph-mapper.py",
+        "scripts/code_graph_cache.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/commit_prompt.py",
+        "scripts/completion-report.py",
+        "scripts/debug-host-diagnosis.py",
+        "scripts/debug-intake.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-reproduction.py",
+        "scripts/delivery-orchestrator.py",
+        "scripts/enterprise-target-policy.py",
+        "scripts/evidence-tiers.py",
+        "scripts/execution-evidence.py",
+        "scripts/expand-intent.py",
+        "scripts/export-release.py",
+        "scripts/graph_builder.py",
+        "scripts/host-adapter-conformance.py",
+        "scripts/host-decision.py",
+        "scripts/host-workspace-adapter.py",
+        "scripts/install-copilot.py",
+        "scripts/maintainability-harness.py",
+        "scripts/mcp-server.py",
+        "scripts/metrics_extractor.py",
+        "scripts/navigator-installed-release-proof.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/planning-aidlc-question.py",
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "scripts/question-orchestrator.py",
+        "scripts/release-confidence.py",
+        "scripts/release-publication.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement_evidence.py",
+        "scripts/requirement_intake.py",
+        "scripts/route-context.py",
+        "scripts/run-ledger.py",
+        "scripts/session-control.py",
+        "scripts/session_control.py",
+        "scripts/spec-kit-bridge.py",
+        "scripts/spec-kit-detect.py",
+        "scripts/spec-kit-evidence.py",
+        "scripts/spec-kit-policy.py",
+        "scripts/spec-kit-slices.py",
+        "scripts/tailtrail.py",
+        "scripts/target_workspace.py",
+        "scripts/task-next.py",
+        "scripts/task-start.py",
+        "scripts/update-copilot.py",
+        "scripts/update-tailtrail.py",
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/evidence.py",
+        "scripts/workflow_runtime/freshness.py",
+        "scripts/workflow_runtime/ownership.py",
+        "scripts/workflow_runtime/release.py",
+        "scripts/workflow_runtime/stage_results.py",
+        "scripts/workflow_runtime/start_integration.py",
+        "scripts/workflow_runtime/task_scope.py",
+        "scripts/workflow_runtime/vertical.py",
+        "tests/test_advanced_runtime.py",
+        "tests/test_aidlc_complexity_corroboration.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_architecture_planning.py",
+        "tests/test_auto_routing.py",
+        "tests/test_behavior_harness.py",
+        "tests/test_behaviour_planning.py",
+        "tests/test_change_intent_anchor.py",
+        "tests/test_closure_close.py",
+        "tests/test_closure_contract.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_closure_learning.py",
+        "tests/test_closure_recorder.py",
+        "tests/test_code_graph_cache.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_evaluation.py",
+        "tests/test_debug_harness.py",
+        "tests/test_debug_preflight.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_drift_analysis.py",
+        "tests/test_evidence_aware_testing_v2_v5.py",
+        "tests/test_evidence_tiers.py",
+        "tests/test_failure_classification.py",
+        "tests/test_focused_validation_contracts.py",
+        "tests/test_graph_builder.py",
+        "tests/test_harness_checkpoint.py",
+        "tests/test_higher_tier_testing.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_install_profiles.py",
+        "tests/test_learning_governance.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_mcp_server.py",
+        "tests/test_metrics_extractor.py",
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_navigator_graph_lifecycle.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_newcomer_support_journey.py",
+        "tests/test_official_aidlc_checkpoint.py",
+        "tests/test_plan_render.py",
+        "tests/test_planning_discussion.py",
+        "tests/test_planning_feature_controls.py",
+        "tests/test_planning_investigation.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py",
+        "tests/test_program_delivery.py",
+        "tests/test_release4_maintainability.py",
+        "tests/test_repository_enforcement.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_requirement_routing_phase0.py",
+        "tests/test_review_scope.py",
+        "tests/test_scope_answer_mapping.py",
+        "tests/test_scope_capture_wiring.py",
+        "tests/test_self_contained_package.py",
+        "tests/test_session_control.py",
+        "tests/test_spec_kit_amendment.py",
+        "tests/test_spec_kit_evidence.py",
+        "tests/test_target_workspace.py",
+        "tests/test_task_recovery.py",
+        "tests/test_task_type_contract.py",
+        "tests/test_task_type_gate.py",
+        "tests/test_threat_model_stride.py",
+        "tests/test_transactional_installer.py",
+        "tests/test_ui_consistency.py",
+        "tests/test_workflow_adapters.py",
+        "tests/test_workflow_approvals.py",
+        "tests/test_workflow_ci_continuation.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_documentation.py",
+        "tests/test_workflow_freshness_recovery.py",
+        "tests/test_workflow_mcp.py",
+        "tests/test_workflow_ownership.py",
+        "tests/test_workflow_template_execution.py",
+        "tests/test_workflow_transitions.py"
+      ]
+    },
+    {
+      "action": "refresh",
+      "at": "2026-09-29T15:39:55.527189+00:00",
+      "attempt_id": "start-20260929153943-7f2ec3",
+      "phase": "start",
+      "reason_codes": [
+        "1 anchor paths present in cached scope",
+        "1 anchor-connected cached files",
+        "anchor-slice-bounded-targets",
+        "explicit-scope-paths",
+        "persistent-graph-stale"
+      ],
+      "target_paths": [
+        ".github/workflows/platform-supply-chain.yml"
+      ],
+      "effective_scope": [
+        ".github/workflows/platform-supply-chain.yml",
+        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
+        "navigator.legacy.py",
+        "scripts/aidlc-official-bridge.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/architecture_planning.py",
+        "scripts/behavior-harness.py",
+        "scripts/behaviour_planning.py",
+        "scripts/capture_hooks.py",
+        "scripts/change-intent-anchor.py",
+        "scripts/closure-close.py",
+        "scripts/closure-contract.py",
+        "scripts/closure-finalizer.py",
+        "scripts/closure-recorder.py",
+        "scripts/code-graph-mapper.py",
+        "scripts/code_graph_cache.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/commit_prompt.py",
+        "scripts/completion-report.py",
+        "scripts/debug-host-diagnosis.py",
+        "scripts/debug-intake.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-reproduction.py",
+        "scripts/delivery-orchestrator.py",
+        "scripts/enterprise-target-policy.py",
+        "scripts/evidence-tiers.py",
+        "scripts/execution-evidence.py",
+        "scripts/expand-intent.py",
+        "scripts/export-release.py",
+        "scripts/graph_builder.py",
+        "scripts/host-adapter-conformance.py",
+        "scripts/host-decision.py",
+        "scripts/host-workspace-adapter.py",
+        "scripts/install-copilot.py",
+        "scripts/maintainability-harness.py",
+        "scripts/mcp-server.py",
+        "scripts/metrics_extractor.py",
+        "scripts/navigator-installed-release-proof.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/planning-aidlc-question.py",
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "scripts/question-orchestrator.py",
+        "scripts/release-confidence.py",
+        "scripts/release-publication.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement_evidence.py",
+        "scripts/requirement_intake.py",
+        "scripts/route-context.py",
+        "scripts/run-ledger.py",
+        "scripts/session-control.py",
+        "scripts/session_control.py",
+        "scripts/spec-kit-bridge.py",
+        "scripts/spec-kit-detect.py",
+        "scripts/spec-kit-evidence.py",
+        "scripts/spec-kit-policy.py",
+        "scripts/spec-kit-slices.py",
+        "scripts/tailtrail.py",
+        "scripts/target_workspace.py",
+        "scripts/task-next.py",
+        "scripts/task-start.py",
+        "scripts/update-copilot.py",
+        "scripts/update-tailtrail.py",
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/evidence.py",
+        "scripts/workflow_runtime/freshness.py",
+        "scripts/workflow_runtime/ownership.py",
+        "scripts/workflow_runtime/release.py",
+        "scripts/workflow_runtime/stage_results.py",
+        "scripts/workflow_runtime/start_integration.py",
+        "scripts/workflow_runtime/task_scope.py",
+        "scripts/workflow_runtime/vertical.py",
+        "tests/test_advanced_runtime.py",
+        "tests/test_aidlc_complexity_corroboration.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_architecture_planning.py",
+        "tests/test_auto_routing.py",
+        "tests/test_behavior_harness.py",
+        "tests/test_behaviour_planning.py",
+        "tests/test_change_intent_anchor.py",
+        "tests/test_closure_close.py",
+        "tests/test_closure_contract.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_closure_learning.py",
+        "tests/test_closure_recorder.py",
+        "tests/test_code_graph_cache.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_evaluation.py",
+        "tests/test_debug_harness.py",
+        "tests/test_debug_preflight.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_drift_analysis.py",
+        "tests/test_evidence_aware_testing_v2_v5.py",
+        "tests/test_evidence_tiers.py",
+        "tests/test_failure_classification.py",
+        "tests/test_focused_validation_contracts.py",
+        "tests/test_graph_builder.py",
+        "tests/test_harness_checkpoint.py",
+        "tests/test_higher_tier_testing.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_install_profiles.py",
+        "tests/test_learning_governance.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_mcp_server.py",
+        "tests/test_metrics_extractor.py",
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_navigator_graph_lifecycle.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_newcomer_support_journey.py",
+        "tests/test_official_aidlc_checkpoint.py",
+        "tests/test_plan_render.py",
+        "tests/test_planning_discussion.py",
+        "tests/test_planning_feature_controls.py",
+        "tests/test_planning_investigation.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py",
+        "tests/test_program_delivery.py",
+        "tests/test_release4_maintainability.py",
+        "tests/test_repository_enforcement.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_requirement_routing_phase0.py",
+        "tests/test_review_scope.py",
+        "tests/test_scope_answer_mapping.py",
+        "tests/test_scope_capture_wiring.py",
+        "tests/test_self_contained_package.py",
+        "tests/test_session_control.py",
+        "tests/test_spec_kit_amendment.py",
+        "tests/test_spec_kit_evidence.py",
+        "tests/test_target_workspace.py",
+        "tests/test_task_recovery.py",
+        "tests/test_task_type_contract.py",
+        "tests/test_task_type_gate.py",
+        "tests/test_threat_model_stride.py",
+        "tests/test_transactional_installer.py",
+        "tests/test_ui_consistency.py",
+        "tests/test_workflow_adapters.py",
+        "tests/test_workflow_approvals.py",
+        "tests/test_workflow_ci_continuation.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_documentation.py",
+        "tests/test_workflow_freshness_recovery.py",
+        "tests/test_workflow_mcp.py",
+        "tests/test_workflow_ownership.py",
+        "tests/test_workflow_template_execution.py",
+        "tests/test_workflow_transitions.py"
+      ]
+    },
+    {
+      "action": "refresh",
+      "at": "2026-09-29T15:44:30.574610+00:00",
+      "attempt_id": "start-20260929154419-7f2ec3",
+      "phase": "start",
+      "reason_codes": [
+        "1 anchor paths present in cached scope",
+        "1 anchor-connected cached files",
+        "anchor-slice-bounded-targets",
+        "explicit-scope-paths",
+        "persistent-graph-stale"
+      ],
+      "target_paths": [
+        ".github/workflows/platform-supply-chain.yml"
+      ],
+      "effective_scope": [
+        ".github/workflows/platform-supply-chain.yml",
+        "demo-project-layout/tailtrail-demo-workspace/services/claims-api/src/claims_api/app.py",
+        "navigator.legacy.py",
+        "scripts/aidlc-official-bridge.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/architecture_planning.py",
+        "scripts/behavior-harness.py",
+        "scripts/behaviour_planning.py",
+        "scripts/capture_hooks.py",
+        "scripts/change-intent-anchor.py",
+        "scripts/closure-close.py",
+        "scripts/closure-contract.py",
+        "scripts/closure-finalizer.py",
+        "scripts/closure-recorder.py",
+        "scripts/code-graph-mapper.py",
+        "scripts/code_graph_cache.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/commit_prompt.py",
+        "scripts/completion-report.py",
+        "scripts/debug-host-diagnosis.py",
+        "scripts/debug-intake.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-reproduction.py",
+        "scripts/delivery-orchestrator.py",
+        "scripts/enterprise-target-policy.py",
+        "scripts/evidence-tiers.py",
+        "scripts/execution-evidence.py",
+        "scripts/expand-intent.py",
+        "scripts/export-release.py",
+        "scripts/graph_builder.py",
+        "scripts/host-adapter-conformance.py",
+        "scripts/host-decision.py",
+        "scripts/host-workspace-adapter.py",
+        "scripts/install-copilot.py",
+        "scripts/maintainability-harness.py",
+        "scripts/mcp-server.py",
+        "scripts/metrics_extractor.py",
+        "scripts/navigator-installed-release-proof.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/planning-aidlc-question.py",
+        "scripts/planning-discussion.py",
+        "scripts/planning-feature-controls.py",
+        "scripts/planning-investigation.py",
+        "scripts/planning-revision.py",
+        "scripts/planning_lock.py",
+        "scripts/question-orchestrator.py",
+        "scripts/release-confidence.py",
+        "scripts/release-publication.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement_evidence.py",
+        "scripts/requirement_intake.py",
+        "scripts/route-context.py",
+        "scripts/run-ledger.py",
+        "scripts/session-control.py",
+        "scripts/session_control.py",
+        "scripts/spec-kit-bridge.py",
+        "scripts/spec-kit-detect.py",
+        "scripts/spec-kit-evidence.py",
+        "scripts/spec-kit-policy.py",
+        "scripts/spec-kit-slices.py",
+        "scripts/tailtrail.py",
+        "scripts/target_workspace.py",
+        "scripts/task-next.py",
+        "scripts/task-start.py",
+        "scripts/update-copilot.py",
+        "scripts/update-tailtrail.py",
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/evidence.py",
+        "scripts/workflow_runtime/freshness.py",
+        "scripts/workflow_runtime/ownership.py",
+        "scripts/workflow_runtime/release.py",
+        "scripts/workflow_runtime/stage_results.py",
+        "scripts/workflow_runtime/start_integration.py",
+        "scripts/workflow_runtime/task_scope.py",
+        "scripts/workflow_runtime/vertical.py",
+        "tests/test_advanced_runtime.py",
+        "tests/test_aidlc_complexity_corroboration.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_architecture_planning.py",
+        "tests/test_auto_routing.py",
+        "tests/test_behavior_harness.py",
+        "tests/test_behaviour_planning.py",
+        "tests/test_change_intent_anchor.py",
+        "tests/test_closure_close.py",
+        "tests/test_closure_contract.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_closure_learning.py",
+        "tests/test_closure_recorder.py",
+        "tests/test_code_graph_cache.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_evaluation.py",
+        "tests/test_debug_harness.py",
+        "tests/test_debug_preflight.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_drift_analysis.py",
+        "tests/test_evidence_aware_testing_v2_v5.py",
+        "tests/test_evidence_tiers.py",
+        "tests/test_failure_classification.py",
+        "tests/test_focused_validation_contracts.py",
+        "tests/test_graph_builder.py",
+        "tests/test_harness_checkpoint.py",
+        "tests/test_higher_tier_testing.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_install_profiles.py",
+        "tests/test_learning_governance.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_mcp_server.py",
+        "tests/test_metrics_extractor.py",
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_navigator_graph_lifecycle.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_newcomer_support_journey.py",
+        "tests/test_official_aidlc_checkpoint.py",
+        "tests/test_plan_render.py",
+        "tests/test_planning_discussion.py",
+        "tests/test_planning_feature_controls.py",
+        "tests/test_planning_investigation.py",
+        "tests/test_planning_lock.py",
+        "tests/test_planning_revision.py",
+        "tests/test_program_delivery.py",
+        "tests/test_release4_maintainability.py",
+        "tests/test_repository_enforcement.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_requirement_routing_phase0.py",
+        "tests/test_review_scope.py",
+        "tests/test_scope_answer_mapping.py",
+        "tests/test_scope_capture_wiring.py",
+        "tests/test_self_contained_package.py",
+        "tests/test_session_control.py",
+        "tests/test_spec_kit_amendment.py",
+        "tests/test_spec_kit_evidence.py",
+        "tests/test_target_workspace.py",
+        "tests/test_task_recovery.py",
+        "tests/test_task_type_contract.py",
+        "tests/test_task_type_gate.py",
         "tests/test_threat_model_stride.py",
         "tests/test_transactional_installer.py",
         "tests/test_ui_consistency.py",

@@ -3151,5 +3151,87 @@ class LegacyShimDemotionTests(unittest.TestCase):
         self.assertEqual(validation["state"], "validated")
 
 
+class InfraConfigurationOwnershipTests(unittest.TestCase):
+    def _investigate(self, root, seed_sources, task_types):
+        seeds = [{
+            "path": "ci/pipeline.yml",
+            "seed_sources": list(seed_sources),
+            "reason_codes": ["lexical-path-match"],
+        }]
+        candidates = navigator_scope.candidates_from_seeds(root, seeds, task_types)
+        frames = [{
+            "requirement_id": "req-1", "display_id": "REQ-01",
+            "statement": "Update the CI deployment pipeline configuration",
+            "query_terms": ["pipeline", "configuration"],
+        }]
+        rows, edges, _investigation = navigator_scope.investigate(
+            root, frames, candidates, task_types,
+            allow_git_inventory=False, allow_persistent_cache=False,
+            allow_passive_capture=False,
+        )
+        return {str(row.get("path")): row for row in rows if isinstance(row, dict)}
+
+    def test_explicit_infra_seed_owns_configuration(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "ci").mkdir(exist_ok=True)
+            (root / "ci" / "pipeline.yml").write_text("stages: [build]\n", encoding="utf-8")
+            by_path = self._investigate(root, ["explicit-path"], ["ci-sonar"])
+        row = by_path["ci/pipeline.yml"]
+        self.assertEqual(row["status"], "included")
+        self.assertIn("infra-task-configuration-owner", row["reason_codes"])
+
+    def test_lexical_only_config_stays_inspection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "ci").mkdir(exist_ok=True)
+            (root / "ci" / "pipeline.yml").write_text("stages: [build]\n", encoding="utf-8")
+            by_path = self._investigate(root, ["lexical-path"], ["ci-sonar"])
+        self.assertNotEqual(by_path["ci/pipeline.yml"]["status"], "included")
+
+    def test_config_not_owned_outside_infra_tasks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "ci").mkdir(exist_ok=True)
+            (root / "ci" / "pipeline.yml").write_text("stages: [build]\n", encoding="utf-8")
+            by_path = self._investigate(root, ["explicit-path"], ["implementation"])
+        self.assertNotEqual(by_path["ci/pipeline.yml"]["status"], "included")
+
+    def test_explicit_candidate_is_host_eligible_without_edges(self):
+        document = {
+            "state": "ambiguous",
+            "candidates": [{
+                "path": ".github/workflows/ci.yml", "candidate_id": "cand-ci",
+                "role": "implementation-owner", "status": "included",
+                "confidence": "medium",
+                "reason_codes": ["explicit-path-owner-candidate", "user-provided-path",
+                                 "infra-task-configuration-owner"],
+                "evidence_edge_ids": [],
+                "content_fingerprint": "sha256:" + "e" * 64,
+            }],
+            "edges": [],
+            "requirements": [{"requirement_id": "req-1", "display_id": "REQ-01"}],
+        }
+        eligible = navigator_scope._host_reasoning_eligible_candidates(document)
+        self.assertEqual([row["path"] for row in eligible],
+                         [".github/workflows/ci.yml"])
+
+    def test_explicit_candidate_offered_without_edges(self):
+        candidates = [{
+            "path": ".github/workflows/ci.yml", "candidate_id": "cand-ci",
+            "role": "implementation-owner", "status": "included",
+            "confidence": "medium",
+            "reason_codes": ["explicit-path-owner-candidate", "user-provided-path",
+                             "infra-task-configuration-owner"],
+            "evidence_edge_ids": [], "content_fingerprint": "sha256:" + "e" * 64,
+            "seed_sources": ["explicit-path"],
+        }]
+        options, evidence, validation = navigator_scope._validated_scope_question_options(
+            {"candidates": candidates, "edges": [],
+             "limits": {"scope_question_options": 3}}, 3)
+        self.assertEqual(options, [".github/workflows/ci.yml"])
+        self.assertEqual(evidence[0]["evidence"], "explicit user scope")
+
+
 if __name__ == "__main__":
     unittest.main()

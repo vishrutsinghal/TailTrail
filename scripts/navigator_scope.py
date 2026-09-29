@@ -766,6 +766,8 @@ _TASK_TYPE_FAMILY: dict[str, str] = {
     "refactor": "implementation",
     "qa": "qa",
     "documentation": "doc",
+    "infra": "infra",
+    "ci-sonar": "infra",
 }
 
 
@@ -2602,6 +2604,23 @@ def investigate(
             row["status"] = "inspection-only"
             row["confidence"] = "high"
             reasons.add("direct-runtime-caller")
+        elif (
+            repository_role == "configuration"
+            and {"infra", "ci-sonar"} & {str(value).lower() for value in task_types}
+            and (
+                "explicit-path" in set(row.get("seed_sources", []))
+                or any(edge["strength"] == "strong" and row["candidate_id"] in {edge["from_candidate_id"], edge["to_candidate_id"]} for edge in edges)
+            )
+        ):
+            # Infra work owns configuration files (pipelines, manifests,
+            # deploy descriptors) that no other task type may edit. The role
+            # stays honest via the reason code; corroboration (explicit
+            # --changed naming or a strong relationship edge) is mandatory so
+            # lexical proximity alone never promotes a config file.
+            row["role"] = "implementation-owner"
+            row["status"] = "included"
+            row["confidence"] = "high" if any(edge["strength"] == "strong" and row["candidate_id"] in {edge["from_candidate_id"], edge["to_candidate_id"]} for edge in edges) else "medium"
+            reasons.add("infra-task-configuration-owner")
         elif path in configuration_paths:
             row["role"] = "configuration"
             row["status"] = "inspection-only"
@@ -3156,7 +3175,16 @@ def _validated_scope_question_options(
             and bool(reasons & allowed_qualifications)
             and bool(supporting_edges)
         )
-        if not valid:
+        # Explicit user scope (--changed naming, host answers) is a host
+        # assertion, not a guess: offer such candidates even without strong
+        # edges. They rank below edge-backed options (see _score) and never
+        # auto-resolve — offering is not minting.
+        explicit = (
+            candidate.get("role") == "implementation-owner"
+            and candidate.get("status") == "included"
+            and bool({"explicit-path-owner-candidate", "user-provided-path"} & reasons)
+        )
+        if not valid and not explicit:
             if candidate.get("status") == "included":
                 rejected += 1
             continue
@@ -3166,7 +3194,7 @@ def _validated_scope_question_options(
         )
         eligible.append({
             "path": str(candidate.get("path")),
-            "evidence": qualification.removeprefix("owner-qualified-by-").replace("-", " "),
+            "evidence": qualification.removeprefix("owner-qualified-by-").replace("-", " ") if valid else "explicit user scope",
             "missing_discriminator": "which runtime path reproduces the requested behavior",
             "evidence_edge_ids": supporting_edges,
         })
@@ -3179,7 +3207,7 @@ def _validated_scope_question_options(
         except Exception:  # noqa: BLE001 — expansion is advisory; the question must survive it
             summaries = {}
 
-    def _score(row: dict[str, Any]) -> tuple[int, int, str]:
+    def _score(row: dict[str, Any]) -> tuple[int, int, int, str]:
         kinds = {
             str(edges[edge_id].get("kind", "unknown"))
             for edge_id in row["evidence_edge_ids"]
@@ -3195,7 +3223,8 @@ def _validated_scope_question_options(
                 "tests": list(summary.get("tests", [])),
                 "relations": sorted(kinds),
             }
-        return (-len(kinds), -count, row["path"])
+        edge_backed = 0 if row["evidence_edge_ids"] else 1
+        return (edge_backed, -len(kinds), -count, row["path"])
 
     eligible = sorted(eligible, key=_score)
     offered = eligible[:max(1, min(maximum, SCOPE_QUESTION_OPTION_CAP))]
@@ -3429,20 +3458,32 @@ def _host_reasoning_eligible_candidates(document: dict[str, Any]) -> list[dict[s
             }
         )
         reasons = {str(value) for value in candidate.get("reason_codes", [])}
+        explicit = bool(
+            {"explicit-path-owner-candidate", "user-provided-path"} & reasons
+        )
         if not (
             candidate.get("role") == "implementation-owner"
             and candidate.get("status") == "included"
-            and candidate.get("confidence") == "high"
-            and isinstance(candidate.get("content_fingerprint"), str)
-            and str(candidate["content_fingerprint"]).startswith("sha256:")
-            and "bounded-static-owner-evidence" in reasons
-            and edge_ids
+            and (
+                (
+                    candidate.get("confidence") == "high"
+                    and isinstance(candidate.get("content_fingerprint"), str)
+                    and str(candidate["content_fingerprint"]).startswith("sha256:")
+                    and "bounded-static-owner-evidence" in reasons
+                    and edge_ids
+                )
+                # Explicit user scope (--changed naming, host answers) is a
+                # host assertion: offerable without strong edges, ranked below
+                # edge-backed options. Offering is not minting — mapping still
+                # records the host's pick, it never invents ownership.
+                or explicit
+            )
         ):
             continue
         eligible.append({
             "path": str(candidate.get("path")),
             "candidate_id": candidate_id,
-            "content_fingerprint": str(candidate["content_fingerprint"]),
+            "content_fingerprint": str(candidate.get("content_fingerprint") or ""),
             "evidence_edge_ids": edge_ids,
         })
     return sorted(eligible, key=lambda row: row["path"])
@@ -3766,6 +3807,15 @@ def validate_host_proposal(root: Path, packet: dict[str, Any], proposal: dict[st
     candidates = {str(row.get("path")): row for row in packet.get("candidates", []) if isinstance(row, dict)}
     edges = {str(row.get("edge_id")): row for row in packet.get("edges", []) if isinstance(row, dict)}
     candidate_by_id = {str(row.get("candidate_id")): row for row in candidates.values()}
+    # Explicit host assertions (--changed naming, prior answers) carry no
+    # relationship edges by nature; the edge-coverage checks below exempt
+    # them (candidacy already required corroboration, so this cannot mint
+    # ownership over unexamined files).
+    explicit_paths = {
+        str(path) for path, row in candidates.items()
+        if isinstance(row, dict)
+        and bool({"explicit-path-owner-candidate", "user-provided-path"} & {str(value) for value in row.get("reason_codes", [])})
+    }
     expected_requirements = {str(row.get("requirement_id")) for row in packet.get("requirements", [])}
     packet_requirements = {
         str(row.get("requirement_id")): row
@@ -3916,7 +3966,7 @@ def validate_host_proposal(root: Path, packet: dict[str, Any], proposal: dict[st
             )
         }
         referenced_paths = {str(candidate_by_id.get(value, {}).get("path", "")) for value in referenced_ids}
-        unsupported = sorted(set([*owners, *callers, *proof]) - referenced_paths)
+        unsupported = sorted(set([*owners, *callers, *proof]) - referenced_paths - explicit_paths)
         if unsupported:
             errors.append(f"{requirement_id}:unsupported-path-claims:" + ",".join(unsupported))
         for owner in owners:
@@ -3965,7 +4015,7 @@ def validate_host_proposal(root: Path, packet: dict[str, Any], proposal: dict[st
                 str(value) for value in claim.get("evidence_edge_ids", [])
                 if isinstance(value, str)
             }
-            if not claim_edges:
+            if not claim_edges and path not in explicit_paths:
                 errors.append(f"{requirement_id}:path-claim-edge-required:{path}")
             if not claim_edges.issubset(set(references)) or not claim_edges.issubset(set(edges)):
                 errors.append(f"{requirement_id}:path-claim-edge-mismatch:{path}")
@@ -4290,7 +4340,11 @@ def proposal_from_scope_answers(
                 str(edges[str(edge_id)].get("to_candidate_id", "")),
             }
         })
-        if not touching:
+        candidate_reasons = {str(value) for value in candidate.get("reason_codes", [])}
+        explicit_assertion = bool(
+            {"explicit-path-owner-candidate", "user-provided-path"} & candidate_reasons
+        )
+        if not touching and not explicit_assertion:
             errors.append(f"answer-without-relationship-evidence:{normalized}")
             continue
         mapped[requirement_id] = normalized
