@@ -1399,9 +1399,24 @@ def _aidlc_mode_selection_inner(goal: str, requested: str | None, root: Path, pl
         selected["selection"] = "declared-complexity-escalation"
         selected["full_escalation"] = {"state": "not-eligible", "signals": signals, "reason": "Host-declared complexity escalation: no quantitative or routing signal fired, but the host declared 'complex'; recorded tie-break moves Lite one notch to Standard."}
     elif hands_free:
-        selected = official_aidlc_bridge.preflight(root, "standard", manifest)
-        selected["selection"] = "hands-free-default"
-        selected["full_escalation"] = {"state": "not-eligible", "signals": signals, "reason": "Hands-free mode selected Standard AIDLC; no programme-scale signals were found for Full escalation."}
+        # Hands-free goals always aim for Full AIDLC automatically; without a
+        # compatible pack the preflight falls back transparently and the run
+        # stays Lite with the pack reason recorded (never a silent upgrade).
+        selected = official_aidlc_bridge.preflight(root, "full", manifest)
+        if selected.get("state") == "official-pack-unavailable-fallback":
+            selected["selection"] = "hands-free-default"
+            selected["full_escalation"] = {
+                "state": "eligible-awaiting-compatible-pack",
+                "signals": signals,
+                "reason": "Hands-free mode selected Full AIDLC automatically, but no compatible pinned official pack is installed; TailTrail Lite remains active. Full mode requires a verified pack and a new Full-mode Planning Lock; this run cannot be silently upgraded.",
+            }
+        else:
+            selected["selection"] = "hands-free-full"
+            selected["full_escalation"] = {
+                "state": "selected",
+                "signals": signals,
+                "reason": "Hands-free mode selected Full AIDLC automatically with a compatible pinned official pack; Full execution still requires a new Full-mode Planning Lock and cannot silently upgrade an existing run.",
+            }
     else:
         selected = official_aidlc_bridge.preflight(root, "lite", manifest)
         selected["selection"] = "default"
@@ -6330,9 +6345,16 @@ def main() -> int:
                 args.scope_owner = inherit_from_run(root, args.from_run, goal)
             except ValueError as error:
                 parser.error(str(error))
-        if host_requirement_proposal and (
-            workflow_preview.workflow_type == "debug-investigation"
-            or (
+        if host_requirement_proposal and workflow_preview.workflow_type == "debug-investigation":
+            print(
+                "TailTrail notice: this goal routes to the debug phase, so the supplied build "
+                "requirement interpretation is set aside (it never applies to debug runs). "
+                "Continuing into debug orientation; supply --debug-diagnosis for a host diagnosis.",
+                file=sys.stderr,
+            )
+            host_requirement_proposal = None
+        elif host_requirement_proposal and (
+            (
                 args.aidlc in {"standard", "medium", "full"}
                 and required_official_authority is None
                 and not requirement_artifact_inputs
@@ -6471,10 +6493,19 @@ def main() -> int:
             visual_decisions,
         )
         if required_official_authority is not None:
-            validate_official_requirement_interpretation(
-                interpreted_requirements,
-                required_official_authority,
-            )
+            if hands_free and interpreted_requirements.get("authority") != "official-ai-dlc-pack":
+                print(
+                    "TailTrail notice: hands-free goal detected, selecting Full mode automatically. "
+                    "The supplied host interpretation carries no official authority, so the run "
+                    "proceeds with transparent pack fallback; the official Requirements Analysis "
+                    "stage still governs before any anchor freezes.",
+                    file=sys.stderr,
+                )
+            else:
+                validate_official_requirement_interpretation(
+                    interpreted_requirements,
+                    required_official_authority,
+                )
         sufficiency = interpreted_requirements.get("sufficiency")
         if isinstance(sufficiency, dict):
             sufficiency = navigator_requirement_route(
