@@ -136,5 +136,40 @@ class ScopeBindingContractTests(unittest.TestCase):
         self.assertFalse(bound["task_type_contract"]["restricted"])
 
 
+class ContractEdgeCaseTests(unittest.TestCase):
+    def test_empty_paths(self):
+        result = navigator_scope.editable_paths_for_task_types([], ["qa"])
+        self.assertEqual(result["editable"], [])
+        self.assertEqual(result["inspection"], [])
+
+    def test_duplicates_deduped(self):
+        result = navigator_scope.editable_paths_for_task_types(
+            ["tests/test_x.py", "tests/test_x.py"], ["qa"])
+        self.assertEqual(result["editable"], ["tests/test_x.py"])
+
+    def test_implementation_dominates_union(self):
+        result = navigator_scope.editable_paths_for_task_types(
+            ["tests/test_x.py", "src/work.py"], ["qa", "implementation"])
+        self.assertEqual(result["editable"], ["src/work.py", "tests/test_x.py"])
+        self.assertEqual(result["inspection"], [])
+
+    def test_infra_stays_broad(self):
+        result = navigator_scope.editable_paths_for_task_types(
+            ["infra/main.tf", "src/work.py"], ["infra"])
+        self.assertEqual(result["editable"], ["infra/main.tf", "src/work.py"])
+        self.assertFalse(result["contract"]["restricted"])
+
+    def test_blank_entries_ignored(self):
+        result = navigator_scope.editable_paths_for_task_types(
+            ["", "  ", "src/work.py"], ["implementation"])
+        self.assertEqual(result["editable"], ["src/work.py"])
+
+    def test_types_case_insensitive(self):
+        result = navigator_scope.editable_paths_for_task_types(
+            ["tests/test_x.py", "src/work.py"], ["QA"])
+        self.assertEqual(result["editable"], ["tests/test_x.py"])
+        self.assertEqual(result["inspection"], ["src/work.py"])
+
+
 if __name__ == "__main__":
     unittest.main()

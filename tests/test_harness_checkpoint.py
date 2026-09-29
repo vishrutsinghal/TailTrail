@@ -28,12 +28,56 @@ class HarnessCheckpointTests(unittest.TestCase):
    actual=checkpoint.checkpoint(root,"run",["src/Page.tsx","src/Page.cy.tsx"],results)
   self.assertEqual(actual["scope_assessment"]["status"],"within-approved-scope")
   self.assertEqual(actual["scope_assessment"]["unexpected_paths"],[])
- def test_existing_requirement_linked_proof_is_approved_validation_scope(self):
-  with tempfile.TemporaryDirectory() as temp:
-   root=Path(temp);ledger.init_run(root,"run","ui change");proposal=root/"proposal.json"
-   proposal.write_text(json.dumps({"requirements":[{"statement":"Hide one banner","acceptance_criteria":["banner absent"],"preserve_rules":["other errors visible"],"likely_paths":["src/Page.tsx"],"evidence_plan":["component"],"validation_contract":{"state":"required","tiers":["component"],"candidate_paths":["src/Page.cy.tsx"],"proposed_paths":[],"editable_paths":["src/Page.cy.tsx"],"commands":["npm run component"]}}]}),encoding="utf-8")
-   anchor.draft(root,"run",proposal);anchor.approve(root,"run");(root/"src").mkdir();(root/"src/Page.tsx").write_text("page",encoding="utf-8");(root/"src/Page.cy.tsx").write_text("proof",encoding="utf-8")
-   results=root/"results.json";results.write_text(json.dumps({"results":[{"control_id":"component","outcome":"pass"}]}),encoding="utf-8")
-   actual=checkpoint.checkpoint(root,"run",["src/Page.tsx","src/Page.cy.tsx"],results)
-  self.assertEqual(actual["scope_assessment"]["status"],"within-approved-scope")
-  self.assertEqual(actual["scope_assessment"]["approved_editable_paths"],["src/Page.cy.tsx","src/Page.tsx"])
+  def test_existing_requirement_linked_proof_is_approved_validation_scope(self):
+    with tempfile.TemporaryDirectory() as temp:
+     root=Path(temp);ledger.init_run(root,"run","ui change");proposal=root/"proposal.json"
+     proposal.write_text(json.dumps({"requirements":[{"statement":"Hide one banner","acceptance_criteria":["banner absent"],"preserve_rules":["other errors visible"],"likely_paths":["src/Page.tsx"],"evidence_plan":["component"],"validation_contract":{"state":"required","tiers":["component"],"candidate_paths":["src/Page.cy.tsx"],"proposed_paths":[],"editable_paths":["src/Page.cy.tsx"],"commands":["npm run component"]}}]}),encoding="utf-8")
+     anchor.draft(root,"run",proposal);anchor.approve(root,"run");(root/"src").mkdir();(root/"src/Page.tsx").write_text("page",encoding="utf-8");(root/"src/Page.cy.tsx").write_text("proof",encoding="utf-8")
+     results=root/"results.json";results.write_text(json.dumps({"results":[{"control_id":"component","outcome":"pass"}]}),encoding="utf-8")
+     actual=checkpoint.checkpoint(root,"run",["src/Page.tsx","src/Page.cy.tsx"],results)
+    self.assertEqual(actual["scope_assessment"]["status"],"within-approved-scope")
+    self.assertEqual(actual["scope_assessment"]["approved_editable_paths"],["src/Page.cy.tsx","src/Page.tsx"])
+class VcsVerificationTests(unittest.TestCase):
+  def git_repo(self,root):
+   import subprocess
+   subprocess.run(["git","init"],cwd=root,check=True,capture_output=True)
+   subprocess.run(["git","config","user.email","t@t"],cwd=root,check=True,capture_output=True)
+   subprocess.run(["git","config","user.name","t"],cwd=root,check=True,capture_output=True)
+  def test_vcs_state_reports_modified_and_untracked(self):
+   with tempfile.TemporaryDirectory() as temp:
+    root=Path(temp);self.git_repo(root)
+    (root/"a.py").write_text("1",encoding="utf-8");(root/"b.py").write_text("1",encoding="utf-8")
+    import subprocess;subprocess.run(["git","add","."],cwd=root,check=True,capture_output=True);subprocess.run(["git","commit","-m","x"],cwd=root,check=True,capture_output=True)
+    (root/"a.py").write_text("2",encoding="utf-8");(root/"c.py").write_text("new",encoding="utf-8")
+    state=checkpoint.vcs_state(root)
+    self.assertTrue(state["available"]);self.assertIn("a.py",state["modified"]);self.assertIn("c.py",state["untracked"]);self.assertNotIn("b.py",state["modified"])
+  def test_verify_changed_path_marks_phantom_unverified(self):
+   with tempfile.TemporaryDirectory() as temp:
+    root=Path(temp);self.git_repo(root)
+    (root/"a.py").write_text("1",encoding="utf-8");(root/"b.py").write_text("1",encoding="utf-8")
+    import subprocess;subprocess.run(["git","add","."],cwd=root,check=True,capture_output=True);subprocess.run(["git","commit","-m","x"],cwd=root,check=True,capture_output=True)
+    (root/"a.py").write_text("2",encoding="utf-8")
+    state=checkpoint.vcs_state(root)
+    self.assertTrue(checkpoint.verify_changed_path(root,"a.py",state)["verified"])
+    self.assertFalse(checkpoint.verify_changed_path(root,"b.py",state)["verified"])
+    self.assertEqual(checkpoint.verify_changed_path(root,"b.py",state)["vcs_status"],"clean")
+    self.assertEqual(checkpoint.verify_changed_path(root,"nope.py",state)["vcs_status"],"missing")
+  def test_non_git_repo_reports_unavailable(self):
+   with tempfile.TemporaryDirectory() as temp:
+    root=Path(temp);(root/"a.py").write_text("1",encoding="utf-8")
+    state=checkpoint.vcs_state(root)
+    self.assertFalse(state["available"])
+    self.assertEqual(checkpoint.verify_changed_path(root,"a.py",state)["vcs_status"],"unavailable")
+  def test_checkpoint_flags_phantom_claim_as_drift(self):
+   with tempfile.TemporaryDirectory() as temp:
+    root=Path(temp);self.git_repo(root)
+    ledger.init_run(root,"run","validation");proposal=root/"proposal.json";proposal.write_text(json.dumps({"requirements":[{"statement":"Reject zero","acceptance_criteria":["raises"],"preserve_rules":["positive valid"],"likely_paths":["src/a.py"],"evidence_plan":["unit"]}]}),encoding="utf-8");anchor.draft(root,"run",proposal);anchor.approve(root,"run")
+    (root/"src").mkdir();(root/"src/a.py").write_text("x",encoding="utf-8");(root/"src/b.py").write_text("y",encoding="utf-8")
+    import subprocess;subprocess.run(["git","add","."],cwd=root,check=True,capture_output=True);subprocess.run(["git","commit","-m","x"],cwd=root,check=True,capture_output=True)
+    (root/"src/a.py").write_text("xx",encoding="utf-8")
+    results=root/"results.json";results.write_text(json.dumps({"results":[{"control_id":"unit","outcome":"pass","tier":"unit","tiers":["unit"],"evidence_quality":"trusted"}]}),encoding="utf-8")
+    actual=checkpoint.checkpoint(root,"run",["src/a.py","src/b.py"],results)
+    by_path={item["path"]:item for item in actual["changed_paths"]}
+    self.assertTrue(by_path["src/a.py"]["verified"]);self.assertFalse(by_path["src/b.py"]["verified"])
+    self.assertIn("src/b.py",actual["scope_assessment"]["unverified_paths"])
+    self.assertTrue(any(row.get("classification")=="unverified-change" and row.get("path")=="src/b.py" for row in actual["drift"]))

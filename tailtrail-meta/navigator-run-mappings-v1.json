@@ -230,9 +230,45 @@
       "recorded_at": "2026-09-25T10:35:56.777904+00:00",
       "run_id": "start-20260925100332-40787e",
       "scope_decision_fingerprint": "sha256:cad00b6d42530fb76dbff70bf9abae335a08ff84526d619f95726836ef26f54c"
+    },
+    {
+      "closure_status": "evidence-incomplete",
+      "goal_fingerprint": "sha256:797c9295b0102a5f3bd409650ad1ea3c43f35941033041e897c68549c8737dc1",
+      "graph_cache_fingerprint": "sha256:0bdd13416420d67b0149f6dda77057cd68db0c5f075ccfdb271a29ac6e185ec5",
+      "mapping_fingerprint": "sha256:95ae2875f730c2d6e7aee99016d91882f099b849d0fbf643f5a4393d761d47d9",
+      "path_hashes": {
+        "navigator.legacy.py": "sha256:d1399783b471e9970367a739bb44840f5edaee72ff4cb2c6c090b91cff8f8977",
+        "pyproject.toml": "sha256:e93422a4f4c7540efd68239ab4feaa4317211d11f8db40734bc1c00df3b83cde",
+        "scripts/closure-contract.py": "sha256:b4017d9d07e96d52a1998df5bc2fd16676134b00a84405635942c184560f6e9b",
+        "scripts/code_graph_inventory.py": "sha256:e434a3cbca4664b9fb4a1f5dc53c27e1ea3be0ef60d9fa7de33552dcc6d00f5f",
+        "scripts/evidence-tiers.py": "sha256:ca085d2694ba2316c2d1332871fe9992240447dfbd36792a939a702c43165385",
+        "scripts/navigator_scope.py": "sha256:c67a82e228109dfc3270d85d2f728f7960bd791ecbdfb9d36ba28740ea4050a8",
+        "scripts/run-ledger.py": "sha256:a90d4b02100f21b2c2442bf0e7f01a531c59ef5131af4d692eea87ea54feec4f",
+        "tests/test_advanced_runtime.py": "sha256:375e601635a408941305ae68374b8c409491112ff64da67c2cef95903fda8059",
+        "tests/test_aidlc_official_bridge.py": "sha256:36b104c8d9e2adc0ef698c528baa698ba887eb194415f9a3f7891caabceec470",
+        "tests/test_architecture_fitness.py": "sha256:8b1adc4f57f0b64c980b5b0a3702d8c904c2a38991805200f5cc2c204d068fe7",
+        "tests/test_behavior_harness.py": "sha256:d77b12364fc4ad39d8d52936a61085cdb5cfb60265c8da662eba2bd72d2d555a",
+        "tests/test_change_intent_anchor.py": "sha256:259cdf340b2d7bd653f07d85ea216d86bc25592785c66722d2b7441f598b2546",
+        "tests/test_closure_contract.py": "sha256:fbb449a334b9bffb6403256ba33be0276558916cf906a30fab02b13c96efb5dd",
+        "tests/test_run_ledger.py": "sha256:2f3bed5b7ba1b1c409f7c0f62abfee96834fc0fae52ee52161b347789ea75b9c",
+        "tests/test_task_type_contract.py": "sha256:c05d0395e3bcd3e8eda7c9adc55daacf53ebef644fb07c9623de3ae8992ad341"
+      },
+      "query_terms": [
+        "add",
+        "cases",
+        "contract",
+        "coverage",
+        "edge",
+        "for",
+        "task-type",
+        "unit"
+      ],
+      "recorded_at": "2026-09-29T16:17:39.059705+00:00",
+      "run_id": "start-20260929161112-d87140",
+      "scope_decision_fingerprint": "sha256:b9d38857ccb79dee3ba51e017802664458d42b02ca8efeb9f791a476dec5fd13"
     }
   ],
   "schema_version": "1",
   "type": "tailtrail-navigator-run-mapping-index",
-  "updated_at": "2026-09-25T10:35:56.777917+00:00"
+  "updated_at": "2026-09-29T16:17:39.059719+00:00"
 }
