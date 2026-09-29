@@ -1147,6 +1147,166 @@ def _anchor_in_scope(data: dict[str, Any] | None, anchor: str) -> bool:
     return anchor in {str(item) for item in data.get("scope", []) if item}
 
 
+# --- Bounded finalist slice expansion --------------------------------------
+#
+# Scope-question finalists are ranked on packet edges (query-derived: the file
+# matched the goal's words). A graph slice says what the file does, who calls
+# it, and what proves it. Expanding slices for the finalists — and writing
+# them through to the shared cache keyed by content fingerprint — turns a
+# per-run cost into accumulated project knowledge: later runs reuse slices
+# whose fingerprints still match instead of re-expanding them.
+FINALIST_SLICE_CAP = 5
+FINALIST_SLICE_LIMIT = 8
+
+
+def _slice_graph(section: dict[str, Any] | None) -> dict[str, Any]:
+    graph = section.get("graph", {}) if isinstance(section, dict) else {}
+    return graph if isinstance(graph, dict) else {}
+
+
+def finalist_slice_summary(section: dict[str, Any] | None, path: str) -> dict[str, Any]:
+    """Summarize one file's evidence from a loaded mapper graph (pure).
+
+    Returns callers, tests, relation kinds, symbols, and reached files —
+    the evidence summary a ranked scope option carries so the host picks
+    from meaning instead of names. No I/O; unknown shapes yield empties.
+    """
+    rel = str(path).replace("\\", "/")
+    graph = _slice_graph(section)
+    references = graph.get("references", []) if isinstance(graph.get("references"), list) else []
+    callers: list[str] = []
+    relations: set[str] = set()
+    for ref in references:
+        if not isinstance(ref, dict):
+            continue
+        resolved = ref.get("module_resolution", {})
+        targets = set()
+        if isinstance(resolved, dict):
+            targets = {str(item).replace("\\", "/") for item in resolved.get("resolved_targets", []) or [] if isinstance(item, str)}
+        if rel not in targets:
+            continue
+        source = str(ref.get("referring_file", "")).replace("\\", "/")
+        if source and source != rel:
+            callers.append(source)
+        kind = str(ref.get("reference_type", "") or "unknown")
+        relations.add(kind)
+    symbols = [
+        {"name": str(item.get("name", "")), "kind": str(item.get("kind", "")), "line": item.get("line")}
+        for item in (graph.get("symbols", []) if isinstance(graph.get("symbols"), list) else [])
+        if isinstance(item, dict) and str(item.get("file", "")).replace("\\", "/") == rel
+    ][:FINALIST_SLICE_LIMIT]
+    tests = sorted({path for path in callers if looks_like_test(Path(path))})
+    callers = sorted(set(callers))
+    sliced = query_slice({"graph": graph}, [rel], limit=FINALIST_SLICE_LIMIT) if graph else {"files": [], "relations": []}
+    return {
+        "path": rel,
+        "callers": [path for path in callers if path not in tests][:FINALIST_SLICE_LIMIT],
+        "tests": tests[:FINALIST_SLICE_LIMIT],
+        "relations": sorted(relations | set(sliced.get("relations", []))),
+        "symbols": symbols,
+        "files": [item for item in sliced.get("files", []) if isinstance(item, str)][:FINALIST_SLICE_LIMIT],
+    }
+
+
+def _slice_fresh(section: dict[str, Any] | None, root: Path, rel: str) -> bool:
+    """A cached slice is valid only while its content fingerprint matches."""
+    if not isinstance(section, dict):
+        return False
+    source_files = section.get("source_files", {})
+    metadata = source_files.get(rel) if isinstance(source_files, dict) else None
+    expected = metadata.get("sha256") if isinstance(metadata, dict) else None
+    if not isinstance(expected, str) or not expected:
+        return False
+    return file_sha256(root / rel) == expected
+
+
+def expand_finalist_slices(
+    root: Path,
+    paths: list[str],
+    *,
+    limit: int = FINALIST_SLICE_LIMIT,
+    max_finalists: int = FINALIST_SLICE_CAP,
+    cache_override: Path | None = None,
+    persist: bool = True,
+) -> dict[str, dict[str, Any]]:
+    """Expand bounded evidence slices for scope finalists with write-through.
+
+    Finalists beyond ``max_finalists`` are reported unexpanded (never silently
+    dropped): breadth stays a host decision, not a truncation. Fresh cached
+    slices are reused untouched; stale or missing files are re-expanded live
+    with the same bounded primitives as a full build (``limit`` caps tests,
+    callers, and reached files) and written back keyed by content fingerprint,
+    so later runs reuse them. Returns per-path summaries with a ``status``
+    of fresh, expanded, missing, or deferred.
+    """
+    root = root.resolve()
+    rels = list(dict.fromkeys(
+        str(item).replace("\\", "/") for item in paths or [] if str(item).strip()
+    ))
+    summaries: dict[str, dict[str, Any]] = {}
+    for rel in rels[max_finalists:]:
+        summaries[rel] = {"path": rel, "status": "deferred", "callers": [], "tests": [], "relations": [], "symbols": [], "files": []}
+    if not rels:
+        return summaries
+    cache_file = cache_path(root, cache_override)
+    section, _error = load_cache(cache_file)
+    if section is not None and not isinstance(section, dict):
+        section = None
+    dirty = False
+    for rel in rels[:max_finalists]:
+        target = root / rel
+        if not target.is_file():
+            summaries[rel] = {"path": rel, "status": "missing", "callers": [], "tests": [], "relations": [], "symbols": [], "files": []}
+            continue
+        if _slice_fresh(section, root, rel):
+            summaries[rel] = {"status": "fresh", **finalist_slice_summary(section, rel)}
+            continue
+        candidates = list_text_files(root)
+        live_tests, live_callers = likely_tests_and_callers(root, [target], candidates, limit=limit)
+        extracted = extract_language_data(target, root)
+        new_refs: list[dict[str, Any]] = []
+        for caller in [*live_callers, *live_tests]:
+            new_refs.append({
+                "target": rel,
+                "referring_file": caller,
+                "reference_type": "caller" if caller in live_callers else "test-link",
+                "confidence": "heuristic",
+                "module_resolution": {"state": "resolved", "resolved_targets": [rel], "reason_codes": ["finalist-slice-expansion"], "config_paths": []},
+            })
+        if section is None:
+            section = {"schema_version": SCHEMA_VERSION, "root": root.as_posix(), "scope": [], "source_files": {}, "graph": {"symbols": [], "references": []}}
+        if not isinstance(section.get("source_files"), dict):
+            section["source_files"] = {}
+        if not isinstance(section.get("graph"), dict):
+            section["graph"] = {"symbols": [], "references": []}
+        meta = file_metadata(target)
+        if meta:
+            section["source_files"][rel] = meta
+        graph = section["graph"]
+        if isinstance(graph.get("symbols"), list):
+            seen_symbols = {(str(item.get("file", "")), str(item.get("name", "")), item.get("line")) for item in graph["symbols"] if isinstance(item, dict)}
+            for item in extracted.get("symbols", []) if isinstance(extracted, dict) else []:
+                marker = (str(item.get("file", "")), str(item.get("name", "")), item.get("line"))
+                if marker not in seen_symbols:
+                    graph["symbols"].append(item if isinstance(item, dict) else {"value": item})
+                    seen_symbols.add(marker)
+        if isinstance(graph.get("references"), list):
+            seen_refs = {(str(item.get("referring_file", "")), str(item.get("target", ""))) for item in graph["references"] if isinstance(item, dict)}
+            for item in new_refs:
+                marker = (item["referring_file"], item["target"])
+                if marker not in seen_refs:
+                    graph["references"].append(item)
+                    seen_refs.add(marker)
+        if isinstance(section.get("scope"), list) and rel not in section["scope"]:
+            section["scope"] = [*section["scope"], rel]
+        section["updated_at"] = now_utc()
+        dirty = True
+        summaries[rel] = {"status": "expanded", **finalist_slice_summary(section, rel)}
+    if dirty and persist:
+        write_cache(cache_file, section or {})
+    return summaries
+
+
 def risk_tags(scope: list[str], graph_data: dict[str, list[dict[str, Any]]], watch_files: dict[str, Any], scanner_evidence: dict[str, Any]) -> list[str]:
     tags: set[str] = set()
     text = " ".join(scope).lower()
