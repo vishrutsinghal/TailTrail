@@ -379,6 +379,68 @@ def clear(path: Path | str) -> Path:
     return cache_path
 
 
+def merge_refreshed_files(
+    section: dict[str, Any] | None,
+    entries: list[dict[str, Any]],
+    *,
+    updated_at: str | None = None,
+) -> dict[str, Any]:
+    """Merge re-extracted per-file entries into a mapper graph section (pure).
+
+    Each entry carries ``path``, ``sha256``, and optionally ``symbols`` and
+    ``references`` lists in mapper-graph row shape. For every touched path
+    the old symbols (by ``file``) and outbound references (by
+    ``referring_file``) are replaced, the ``source_files`` fingerprint
+    rotates, and the path joins ``scope``. Untouched files are returned
+    byte-identical. Malformed entries are skipped and reported — never
+    raised. Callers extract (mapper) and persist (write path); this function
+    only merges, so it stays dependency-free in both directions.
+    """
+    base = dict(section) if isinstance(section, dict) else {}
+    graph = dict(base.get("graph", {})) if isinstance(base.get("graph"), dict) else {}
+    symbols = [row for row in graph.get("symbols", []) if isinstance(row, dict)]
+    references = [row for row in graph.get("references", []) if isinstance(row, dict)]
+    source_files = dict(base.get("source_files", {})) if isinstance(base.get("source_files"), dict) else {}
+    scope = list(base.get("scope", [])) if isinstance(base.get("scope"), list) else []
+    merged: list[str] = []
+    skipped: list[str] = []
+    seen: set[str] = set()
+    for entry in entries or []:
+        if not isinstance(entry, dict):
+            skipped.append("<non-object>")
+            continue
+        rel = str(entry.get("path", "") or "").replace("\\", "/").strip()
+        digest = entry.get("sha256")
+        if not rel or rel in seen or not isinstance(digest, str) or not digest:
+            skipped.append(rel or "<empty-path>")
+            continue
+        seen.add(rel)
+        entry_symbols = [row for row in entry.get("symbols", []) if isinstance(row, dict)]
+        entry_refs = [row for row in entry.get("references", []) if isinstance(row, dict)]
+        symbols = [row for row in symbols if str(row.get("file", "")).replace("\\", "/") != rel]
+        symbols.extend(entry_symbols)
+        references = [
+            row for row in references
+            if str(row.get("referring_file", "")).replace("\\", "/") != rel
+        ]
+        references.extend(entry_refs)
+        meta = dict(source_files.get(rel, {})) if isinstance(source_files.get(rel), dict) else {}
+        meta["sha256"] = digest
+        source_files[rel] = meta
+        if rel not in scope:
+            scope.append(rel)
+        merged.append(rel)
+    graph["symbols"] = symbols
+    graph["references"] = references
+    base["graph"] = graph
+    base["source_files"] = source_files
+    base["scope"] = scope
+    base["updated_at"] = updated_at if updated_at is not None else _now()
+    base["refreshed_paths"] = sorted(merged)
+    base["refresh_skipped"] = sorted(skipped)
+    return base
+
+
 def _section_files(container: dict[str, Any]) -> dict[str, Any]:
     """Return a mutable copy of the Phase 1 files section (empty when absent)."""
     phase1 = container["phase1_files"]

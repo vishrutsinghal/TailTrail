@@ -341,5 +341,63 @@ class Stage0bContainerTests(unittest.TestCase):
         self.assertEqual(raw["sections"]["mapper_graph"]["custom_tool_state"], {"pinned": True})
 
 
+class MergeRefreshedFilesTests(unittest.TestCase):
+    def _section(self):
+        return {
+            "schema_version": 1,
+            "scope": ["a.py"],
+            "source_files": {"a.py": {"sha256": "old-a", "size": 10},
+                             "b.py": {"sha256": "keep-b", "size": 20}},
+            "graph": {
+                "symbols": [
+                    {"name": "old", "kind": "function", "file": "a.py", "line": 1},
+                    {"name": "keep", "kind": "function", "file": "b.py", "line": 1},
+                ],
+                "references": [
+                    {"target": "x", "referring_file": "a.py", "reference_type": "import"},
+                    {"target": "y", "referring_file": "b.py", "reference_type": "import"},
+                ],
+            },
+        }
+
+    def test_replaces_touched_keeps_untouched(self):
+        import copy
+        before = self._section()
+        snapshot = copy.deepcopy(before)
+        merged = cgc.merge_refreshed_files(before, [{
+            "path": "a.py", "sha256": "new-a",
+            "symbols": [{"name": "new", "kind": "function", "file": "a.py", "line": 1}],
+            "references": [{"target": "z", "referring_file": "a.py", "reference_type": "import"}],
+        }], updated_at="2026-01-01T00:00:00+00:00")
+        # Input untouched (pure function).
+        self.assertEqual(before, snapshot)
+        symbols = {(item["file"], item["name"]) for item in merged["graph"]["symbols"]}
+        self.assertEqual(symbols, {("a.py", "new"), ("b.py", "keep")})
+        refs = {(item["referring_file"], item["target"]) for item in merged["graph"]["references"]}
+        self.assertEqual(refs, {("a.py", "z"), ("b.py", "y")})
+        self.assertEqual(merged["source_files"]["a.py"]["sha256"], "new-a")
+        self.assertEqual(merged["source_files"]["b.py"]["sha256"], "keep-b")
+        self.assertEqual(merged["refreshed_paths"], ["a.py"])
+        self.assertEqual(merged["updated_at"], "2026-01-01T00:00:00+00:00")
+
+    def test_malformed_entries_skipped(self):
+        merged = cgc.merge_refreshed_files(self._section(), [
+            {"path": "", "sha256": "x"},
+            {"path": "a.py"},
+            "not-a-dict",
+            {"path": "c.py", "sha256": "new-c", "symbols": [], "references": []},
+        ], updated_at="t")
+        self.assertEqual(merged["refreshed_paths"], ["c.py"])
+        self.assertEqual(len(merged["refresh_skipped"]), 3)
+        self.assertIn("c.py", merged["scope"])
+
+    def test_empty_section_starts_clean(self):
+        merged = cgc.merge_refreshed_files(None, [
+            {"path": "a.py", "sha256": "s", "symbols": [], "references": []},
+        ], updated_at="t")
+        self.assertEqual(merged["refreshed_paths"], ["a.py"])
+        self.assertEqual(merged["source_files"]["a.py"]["sha256"], "s")
+
+
 if __name__ == "__main__":
     unittest.main()
