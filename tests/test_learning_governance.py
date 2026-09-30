@@ -55,11 +55,11 @@ def rejected_receipt(root: Path, learning: dict, run_id: str) -> None:
     use_proposal = proposal(root)
     LOCK.create(root, "reject stale learning", run_id)
     LOCK.save_start_report(root, run_id, {"goal": "reject stale learning", "navigator": {"learning_use_proposal": use_proposal}})
-    LOCK.approve(root, run_id, True)
     source = root / f"{run_id}-anchor.json"
     source.write_text(json.dumps({"requirements": [{"statement": "review learning", "acceptance_criteria": ["decision saved"], "preserve_rules": ["keep evidence"], "likely_paths": ["tests/service.py"], "evidence_plan": ["review"]}]}), encoding="utf-8")
     ANCHOR.draft(root, run_id, source)
     uid = ANCHOR.approve(root, run_id)["requirements"][0]["requirement_uid"]
+    LOCK.approve(root, run_id, True)
     RECEIPTS.record_decision(root, run_id, learning_id=learning["learning_id"], decision="rejected", decision_type="review", requirement_uids=[uid], rationale="Current evidence rejects this guidance", approved=True)
 
 

@@ -114,7 +114,6 @@ class LearningUseReceiptTests(unittest.TestCase):
             "goal": "validate receipt attribution",
             "navigator": {"learning_use_proposal": proposal},
         })
-        LOCK.approve(root, run_id, True)
         anchor_proposal = root / f"{run_id}-proposal.json"
         anchor_proposal.write_text(json.dumps({"requirements": [{
             "statement": "record learning use",
@@ -125,6 +124,7 @@ class LearningUseReceiptTests(unittest.TestCase):
         }]}), encoding="utf-8")
         ANCHOR.draft(root, run_id, anchor_proposal)
         uid = ANCHOR.approve(root, run_id)["requirements"][0]["requirement_uid"]
+        LOCK.approve(root, run_id, True)
         return learning, uid, proposal
 
     def record(self, root: Path, learning: dict, uid: str, *, run_id: str = "run", decision: str = "applied", decision_type: str = "implementation") -> dict:
@@ -302,10 +302,11 @@ class LearningUseReceiptTests(unittest.TestCase):
             RECEIPTS.attribute_completion(root, "run", completion(uid))
             after = RETRIEVAL.build_proposal(root, task_types=["test"], tags=[], paths=[], requirement_ids=[], mode="standard")["matches"][0]
 
-        self.assertEqual(after["applicability_score"], before["applicability_score"] + 2)
+        self.assertEqual(after["applicability_score"], before["applicability_score"] + 4)
         self.assertEqual(after["observed_utility_delta"], 2)
         self.assertEqual(after["attribution_count"], 1)
         self.assertNotIn("caused", " ".join(after["match_explanations"]).lower())
+        self.assertTrue(any("usefulness band strong" in reason for reason in after["match_explanations"]))
 
     def test_completion_report_joins_receipt_to_harness_and_validation_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

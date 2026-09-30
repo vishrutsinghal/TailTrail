@@ -406,18 +406,15 @@ def record_decision(
 def touch_on_use(root: Path, learning_id: str, run_id: str, receipt_id: str, decision: str) -> dict[str, Any]:
     """Record proof of life for an applied/advisory learning decision.
 
-    Appends a content-identical V3 amendment so the record's timestamp
-    advances and the chain shows the use. Best-effort and recorded: a touch
-    failure must never break receipt recording, which is the authoritative
-    act here. Decisions other than applied/advisory are not touches.
+    The use-receipt event itself (timestamped, run-linked) IS the proof of
+    life — no V3 amendment is made, because amending would rotate the record
+    version out from under in-flight proposals pinned to it (proposal
+    validation requires current record identity). Other decisions are not
+    touches.
     """
     if decision not in {"applied", "advisory"}:
         return {"status": "not-applicable"}
-    try:
-        touched = V3.amend(root, learning_id, reason=f"use observed in run {run_id} (receipt {receipt_id})")
-        return {"status": "touched", "record_id": touched.get("record_id")}
-    except Exception as error:
-        return {"status": "failed", "error": f"{type(error).__name__}: {error}"}
+    return {"status": "recorded", "receipt_id": receipt_id, "run_id": run_id}
 
 
 

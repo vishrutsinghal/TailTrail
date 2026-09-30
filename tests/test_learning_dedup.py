@@ -117,29 +117,29 @@ class NearDuplicateProposalTests(unittest.TestCase):
 
 
 class ProofOfLifeTouchTests(unittest.TestCase):
-    def test_touch_advances_applied_record(self):
+    def test_touch_records_applied_decision(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            before = _capture(root, "lrn-use", "Useful advice here.", ["a"])
             result = receipts.touch_on_use(root, "lrn-use", "run-1", "rid-1", "applied")
-            self.assertEqual(result["status"], "touched")
-            latest = v3.latest_records(v3.read_records(root))["lrn-use"]
-            self.assertNotEqual(latest["record_id"], before["record_id"])
-            self.assertEqual(latest["content"]["advice"], "Useful advice here.")
+            self.assertEqual(result["status"], "recorded")
+            self.assertEqual(result["receipt_id"], "rid-1")
 
     def test_non_use_decisions_untouched(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            _capture(root, "lrn-use", "Useful advice here.", ["a"])
             result = receipts.touch_on_use(root, "lrn-use", "run-1", "rid-1", "ignored")
             self.assertEqual(result["status"], "not-applicable")
-            latest = v3.latest_records(v3.read_records(root))["lrn-use"]
-            self.assertEqual(latest["utility"]["use_count"], 0)
 
-    def test_missing_record_fails_gracefully(self):
+    def test_touch_never_mints_versions(self):
+        # Proof of life lives in the receipt stream, never in a V3 amend:
+        # amending would rotate record identity out from under in-flight
+        # proposals pinned to it (proposal validation requires current).
         with tempfile.TemporaryDirectory() as temp:
-            result = receipts.touch_on_use(Path(temp), "lrn-nope", "run-1", "rid-1", "applied")
-            self.assertEqual(result["status"], "failed")
+            root = Path(temp)
+            before = list((root / ".tailtrail").rglob("*")) if (root / ".tailtrail").exists() else []
+            receipts.touch_on_use(root, "lrn-use", "run-1", "rid-1", "applied")
+            after = list((root / ".tailtrail").rglob("*")) if (root / ".tailtrail").exists() else []
+            self.assertEqual(before, after)
 
 
 class PhaseThreeDecidersTests(unittest.TestCase):
