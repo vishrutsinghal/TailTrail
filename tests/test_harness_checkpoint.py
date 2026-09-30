@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def load(name,path):
  s=importlib.util.spec_from_file_location(name,ROOT/path);m=importlib.util.module_from_spec(s);assert s and s.loader;sys.modules[name]=m;s.loader.exec_module(m);return m
-ledger=load("checkpoint_ledger","scripts/run-ledger.py");anchor=load("checkpoint_anchor","scripts/change-intent-anchor.py");checkpoint=load("checkpoint_module","scripts/harness-checkpoint.py");review=load("completion_review_module","scripts/completion-review.py")
+ledger=load("checkpoint_ledger","scripts/run-ledger.py");anchor=load("checkpoint_anchor","scripts/change-intent-anchor.py");checkpoint=load("checkpoint_module","scripts/harness-checkpoint.py");review=load("completion_review_module","scripts/completion-review.py");mapper=load("checkpoint_mapper","scripts/code-graph-mapper.py")
 class HarnessCheckpointTests(unittest.TestCase):
  def setup_run(self,root):
   ledger.init_run(root,"run", "validation");proposal=root/"proposal.json";proposal.write_text(json.dumps({"requirements":[{"statement":"Reject zero","acceptance_criteria":["raises"],"preserve_rules":["positive valid"],"likely_paths":["src/a.py"],"evidence_plan":["unit"]}]}),encoding="utf-8");anchor.draft(root,"run",proposal);anchor.approve(root,"run");(root/"src").mkdir();(root/"src/a.py").write_text("x",encoding="utf-8")
@@ -95,3 +95,21 @@ class VcsVerificationTests(unittest.TestCase):
     refreshed=set(actual["graph_refresh"].get("refreshed",[]))
     verified={item["path"] for item in actual["changed_paths"] if item.get("verified")}
     self.assertTrue(refreshed or verified=={"src/a.py"})
+class FreshnessProofTests(unittest.TestCase):
+  def test_post_checkpoint_slices_read_fresh_with_new_content(self):
+   with tempfile.TemporaryDirectory() as temp:
+    import subprocess
+    root=Path(temp)
+    subprocess.run(["git","init"],cwd=root,check=True,capture_output=True);subprocess.run(["git","config","user.email","t@t"],cwd=root,check=True,capture_output=True);subprocess.run(["git","config","user.name","t"],cwd=root,check=True,capture_output=True)
+    ledger.init_run(root,"run","validation");proposal=root/"proposal.json";proposal.write_text(json.dumps({"requirements":[{"statement":"Reject zero","acceptance_criteria":["raises"],"preserve_rules":["positive valid"],"likely_paths":["src/a.py"],"evidence_plan":["unit"]}]}),encoding="utf-8");anchor.draft(root,"run",proposal);anchor.approve(root,"run")
+    (root/"src").mkdir();(root/"src/a.py").write_text("def old_fn():\n return 1\n",encoding="utf-8")
+    subprocess.run(["git","add","."],cwd=root,check=True,capture_output=True);subprocess.run(["git","commit","-m","x"],cwd=root,check=True,capture_output=True)
+    (root/"src/a.py").write_text("def new_fn():\n return 2\n",encoding="utf-8")
+    results=root/"results.json";results.write_text(json.dumps({"results":[{"control_id":"unit","outcome":"pass","tier":"unit","tiers":["unit"],"evidence_quality":"trusted"}]}),encoding="utf-8")
+    actual=checkpoint.checkpoint(root,"run",["src/a.py"],results)
+    self.assertEqual(actual["graph_refresh"]["status"],"refreshed")
+    cache=root/"tailtrail-meta"/"code-graph-cache.json"
+    summaries=mapper.expand_finalist_slices(root,["src/a.py"],cache_override=cache)
+    self.assertEqual(summaries["src/a.py"]["status"],"fresh")
+    self.assertIn("new_fn",[item["name"] for item in summaries["src/a.py"]["symbols"]])
+    self.assertNotIn("old_fn",[item["name"] for item in summaries["src/a.py"]["symbols"]])
