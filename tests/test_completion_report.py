@@ -378,5 +378,58 @@ class CompletionReportTests(unittest.TestCase):
             self.assertEqual(report.undecided_learning_proposals(Path(temp), "run", {"receipts": []}), [])
 
 
+class UnverifiedChangeSurfacingTests(unittest.TestCase):
+    def test_phantom_claim_surfaces_in_requirement_drift(self):
+        import subprocess
+        checkpoint = load("completion_drift_checkpoint", "scripts/harness-checkpoint.py")
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for cmd in (["git", "init"], ["git", "config", "user.email", "t@t"],
+                        ["git", "config", "user.name", "t"]):
+                subprocess.run(cmd, cwd=root, check=True, capture_output=True)
+            ledger.init_run(root, "run", "validation")
+            proposal = root / "proposal.json"
+            proposal.write_text(json.dumps({"requirements": [{
+                "statement": "Reject zero", "acceptance_criteria": ["raises"],
+                "preserve_rules": ["positive valid"],
+                "likely_paths": ["src/a.py", "src/b.py"],
+                "evidence_plan": ["unit"],
+                "validation_contract": {"state": "required", "tiers": ["unit"]},
+            }]}), encoding="utf-8")
+            anchor.draft(root, "run", proposal)
+            anchor.approve(root, "run")
+            (root / "src").mkdir()
+            (root / "src" / "a.py").write_text("x = 1\n", encoding="utf-8")
+            (root / "src" / "b.py").write_text("y = 2\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True)
+            subprocess.run(["git", "commit", "-m", "x"], cwd=root, check=True, capture_output=True)
+            (root / "src" / "a.py").write_text("x = 2\n", encoding="utf-8")
+            results = root / "results.json"
+            results.write_text(json.dumps({"results": [{
+                "control_id": "unit", "outcome": "pass", "tier": "unit",
+                "tiers": ["unit"], "evidence_quality": "trusted",
+                "requirement_uids": ["req-1"],
+            }]}), encoding="utf-8")
+            # req uid is anchor-generated; read it back.
+            saved = json.loads((root / ".tailtrail" / "runs" / "run" / "anchors" / "approved-v1.json").read_text(encoding="utf-8"))
+            uid = saved["requirements"][0]["requirement_uid"]
+            results.write_text(json.dumps({"results": [{
+                "control_id": "unit", "outcome": "pass", "tier": "unit",
+                "tiers": ["unit"], "evidence_quality": "trusted",
+                "requirement_uids": [uid],
+            }]}), encoding="utf-8")
+            checkpoint.checkpoint(root, "run", ["src/a.py", "src/b.py"], results)
+            built = report.build(root, "run", record=False)
+            drifts = [row for row in built["requirement_status"]["requirements"][0]["drift"]]
+            self.assertTrue(any(
+                row.get("classification") == "unverified-change"
+                and row.get("path") == "src/b.py" for row in drifts))
+            # Visibility, not escalation: phantom does not join blocking drift.
+            self.assertFalse(any(
+                row.get("classification") in {"new-drift", "regressed", "needs-decision"}
+                and row.get("path") == "src/b.py"
+                for row in built["requirement_status"]["requirements"][0]["drift"]))
+
+
 if __name__ == "__main__":
     unittest.main()
