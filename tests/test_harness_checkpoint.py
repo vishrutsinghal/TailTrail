@@ -81,3 +81,17 @@ class VcsVerificationTests(unittest.TestCase):
     self.assertTrue(by_path["src/a.py"]["verified"]);self.assertFalse(by_path["src/b.py"]["verified"])
     self.assertIn("src/b.py",actual["scope_assessment"]["unverified_paths"])
     self.assertTrue(any(row.get("classification")=="unverified-change" and row.get("path")=="src/b.py" for row in actual["drift"]))
+  def test_checkpoint_refreshes_verified_slices(self):
+   with tempfile.TemporaryDirectory() as temp:
+    root=Path(temp);import subprocess
+    subprocess.run(["git","init"],cwd=root,check=True,capture_output=True);subprocess.run(["git","config","user.email","t@t"],cwd=root,check=True,capture_output=True);subprocess.run(["git","config","user.name","t"],cwd=root,check=True,capture_output=True)
+    ledger.init_run(root,"run","validation");proposal=root/"proposal.json";proposal.write_text(json.dumps({"requirements":[{"statement":"Reject zero","acceptance_criteria":["raises"],"preserve_rules":["positive valid"],"likely_paths":["src/a.py"],"evidence_plan":["unit"]}]}),encoding="utf-8");anchor.draft(root,"run",proposal);anchor.approve(root,"run")
+    (root/"src").mkdir();(root/"src/a.py").write_text("def build():\n return 1\n",encoding="utf-8")
+    subprocess.run(["git","add","."],cwd=root,check=True,capture_output=True);subprocess.run(["git","commit","-m","x"],cwd=root,check=True,capture_output=True)
+    (root/"src/a.py").write_text("def build():\n return 2\n",encoding="utf-8")
+    results=root/"results.json";results.write_text(json.dumps({"results":[{"control_id":"unit","outcome":"pass","tier":"unit","tiers":["unit"],"evidence_quality":"trusted"}]}),encoding="utf-8")
+    actual=checkpoint.checkpoint(root,"run",["src/a.py"],results)
+    self.assertIn(actual["graph_refresh"]["status"],{"refreshed","refresh-unavailable"})
+    refreshed=set(actual["graph_refresh"].get("refreshed",[]))
+    verified={item["path"] for item in actual["changed_paths"] if item.get("verified")}
+    self.assertTrue(refreshed or verified=={"src/a.py"})

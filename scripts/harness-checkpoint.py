@@ -81,7 +81,29 @@ def checkpoint(root:Path,run_id:str,changed:list[str],results_path:Path)->dict[s
  drift.extend({"requirement_uid":anchor["requirements"][0]["requirement_uid"],"category":"scope","classification":"unverified-change","path":path,"message":f"claimed edit `{path}` shows no VCS modification"} for path in unverified)
  scope_assessment={"status":"unresolved" if unexpected else "within-approved-scope","approved_editable_paths":approved_editable,"actual_changed_paths":sorted(set(changed)),"unexpected_paths":unexpected,"unverified_paths":unverified,"vcs_available":bool(vcs.get("available")),"boundary":"Implementation owners are editable for approved source work. Requirement-linked validation paths named by the approved validation contract are editable only for proof assertions; inspection-only paths remain read-only."}
  payload={"schema_version":"1","type":"tailtrail-harness-checkpoint","run_id":run_id,"checkpoint":number,"anchor_fingerprint":anchor["approved_fingerprint"],"changed_paths":verified_paths,"requirements":req,"control_results":results,"scope_assessment":scope_assessment,"drift":drift}
- out=directory/"checkpoints"/f"checkpoint-{number}.json"; L.atomic_json(out,payload); L.append_event(root,run_id,"harness_checkpoint",{"artifact":out.relative_to(root).as_posix(),"checkpoint":number,"requirement_states":current_states,"drift":drift}); return {"path":out.as_posix(),**payload}
+ out=directory/"checkpoints"/f"checkpoint-{number}.json"; L.atomic_json(out,payload); L.append_event(root,run_id,"harness_checkpoint",{"artifact":out.relative_to(root).as_posix(),"checkpoint":number,"requirement_states":current_states,"drift":drift}); refresh=refresh_verified_slices(root,[item for item in verified_paths if item.get("verified")]); return {"path":out.as_posix(),"graph_refresh":refresh,**payload}
+def refresh_verified_slices(root:Path,verified_paths:list[dict[str,Any]])->dict[str,Any]:
+ """Refresh graph slices for VCS-verified changed paths (best-effort).
+
+ Only paths the checkpoint verified (modified/untracked, never phantoms)
+ reach expansion, so unverified claims cannot pollute the graph. Any
+ failure — missing mapper, expansion error, persistence error — is
+ swallowed into the returned status: refresh is advisory to closure,
+ never a gate. Returns {"status": ...} with refreshed/deferred counts.
+ """
+ paths=[str(item.get("path","")) for item in verified_paths or [] if isinstance(item,dict) and str(item.get("path","")).strip() and bool(item.get("verified"))]
+ if not paths:
+  return {"status":"nothing-to-refresh","refreshed":[],"deferred":[]}
+ try:
+  import importlib.util as _ilu
+  spec=_ilu.spec_from_file_location("tailtrail_checkpoint_slice_mapper",ROOT/"scripts"/"code-graph-mapper.py")
+  if spec is None or spec.loader is None: raise RuntimeError("mapper unavailable")
+  module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+  summaries=module.expand_finalist_slices(root,paths)
+ except Exception as error:
+  return {"status":"refresh-unavailable","error":f"{type(error).__name__}: {error}","refreshed":[],"deferred":sorted(set(paths))}
+ refreshed=sorted(path for path,summary in summaries.items() if isinstance(summary,dict) and summary.get("status") in {"fresh","expanded"})
+ return {"status":"refreshed","refreshed":refreshed,"deferred":sorted(set(paths)-set(refreshed))}
 def main()->int:
  p=argparse.ArgumentParser();p.add_argument("--root",type=Path,default=Path.cwd());p.add_argument("--run-id",required=True);p.add_argument("--changed",action="append",default=[]);p.add_argument("--results",type=Path,required=True);a=p.parse_args()
  try: print(json.dumps(checkpoint(a.root.resolve(),a.run_id,a.changed,a.results),indent=2,sort_keys=True));return 0
