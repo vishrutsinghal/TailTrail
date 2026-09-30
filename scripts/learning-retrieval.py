@@ -184,6 +184,7 @@ def applicability(
     frame: dict[str, Any],
     observed_utility: int = 0,
     confidence_score: int | None = None,
+    usefulness_band: str | None = None,
 ) -> tuple[int, list[str]]:
     scope = record["applicability"]
     task_hits = set(normalized(scope["task_types"])) & set(frame["task_types"])
@@ -213,6 +214,15 @@ def applicability(
     score += observed_utility
     if observed_utility:
         reasons.append(f"observed closure association utility: {observed_utility:+d}")
+    # Usefulness tiebreak (never suppression): small magnitudes beside the
+    # 35/45 main signals, so bands reorder ties without overriding evidence.
+    # Demotion floor keeps do-not-use retrievable in principle; blocking
+    # stays with freshness, governance, and thresholds below.
+    usefulness_bonus = {"strong": 3, "usable": 1, "weak": -1, "do-not-use": -2}.get(
+        str(usefulness_band or ""))
+    if usefulness_bonus is not None:
+        score += usefulness_bonus
+        reasons.append(f"usefulness band {usefulness_band}: {usefulness_bonus:+d}")
     return min(100, score), reasons
 
 
@@ -371,6 +381,12 @@ def build_proposal(
     governance_blocks = GOVERNANCE.blocking_reasons(root)
     calibration_adjustments, calibration_blocks = CALIBRATION.load_adjustments(root)
     utility = RECEIPTS.utility_adjustments(root)
+    try:
+        usefulness = RECEIPTS.scores_by_id(root)
+    except Exception:
+        usefulness = {}
+    if not isinstance(usefulness, dict):
+        usefulness = {}
     eligible: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
     thresholds, threshold_source = effective_thresholds(root)
@@ -381,7 +397,10 @@ def build_proposal(
         raw_confidence = int(record["utility"]["confidence_score"])
         calibration_delta = int(calibration_adjustments.get(record["learning_class"], 0))
         effective_confidence = max(0, min(100, raw_confidence + calibration_delta))
-        score, explanations = applicability(record, frame, observed_delta, effective_confidence)
+        score, explanations = applicability(
+            record, frame, observed_delta, effective_confidence,
+            usefulness_band=(usefulness.get(record["learning_id"], {}) or {}).get("band"),
+        )
         if not explanations:
             continue
         if calibration_delta:

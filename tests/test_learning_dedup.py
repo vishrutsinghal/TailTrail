@@ -235,6 +235,64 @@ class PhaseThreeDecidersTests(unittest.TestCase):
                           {"strong", "usable", "weak", "do-not-use"})
 
 
+class PhaseFourCadenceTests(unittest.TestCase):
+    def test_gap_signals_from_drift_and_tiers(self):
+        closure_learning = load("tailtrail_phase4_closure_test",
+                                "scripts/closure-learning.py")
+        report = {
+            "requirement_status": {"requirements": [{
+                "requirement_uid": "req-1", "display_id": "REQ-01",
+                "drift": [
+                    {"classification": "new-drift", "message": "edit outside scope",
+                     "requirement_uid": "req-1"},
+                    {"classification": "unchanged", "message": "nothing",
+                     "requirement_uid": "req-1"},
+                ],
+            }]},
+            "tests": {
+                "passed_tiers": ["unit"],
+                "required_checks": [{
+                    "requirement_uids": ["req-1"], "tiers": ["unit", "contract"],
+                }],
+            },
+        }
+        signals = closure_learning.gap_signals(report)
+        kinds = sorted(item["kind"] for item in signals)
+        self.assertEqual(kinds, ["drift-finding", "unproven-tier"])
+        tier = next(item for item in signals if item["kind"] == "unproven-tier")
+        self.assertIn("contract", tier["text"])
+
+    def test_sweep_threshold_fires_and_rests(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            quiet = refresh.check_sweep_threshold(root, 10, 0.5)
+            self.assertFalse(quiet["triggered"])
+            self.assertEqual(quiet["evaluated"], 0)
+
+    def test_usefulness_tiebreak_orders_without_suppressing(self):
+        retrieval = load("tailtrail_phase4_retrieval_test",
+                         "scripts/learning-retrieval.py")
+        record = {
+            "applicability": {"task_types": ["closure"], "tags": ["t"],
+                              "requirement_ids": [], "path_patterns": [],
+                              "exclusions": []},
+            "utility": {"confidence_score": 50, "curated": False},
+            "privacy": {"sensitivity": "normal"},
+            "freshness": {"status": "current"},
+            "provenance": {"source_ref": "x", "source_fingerprint": "y"},
+        }
+        frame = {"task_types": ["closure"], "tags": ["t"],
+                 "requirement_ids": [], "paths": []}
+        plain, _ = retrieval.applicability(record, frame)
+        boosted, reasons = retrieval.applicability(
+            record, frame, usefulness_band="strong")
+        demoted, _ = retrieval.applicability(
+            record, frame, usefulness_band="do-not-use")
+        self.assertEqual(boosted - plain, 3)
+        self.assertEqual(plain - demoted, 2)
+        self.assertTrue(any("usefulness band" in reason for reason in reasons))
+
+
 class PhaseTwoSupervisionTests(unittest.TestCase):
     def _capture(self, root, learning_id, advice="Helpful advice here."):
         import hashlib

@@ -556,6 +556,36 @@ def revalidate_due(root: Path, approved: bool) -> dict[str, Any]:
     return {"revalidated": sorted(revalidated), "skipped": sorted(skipped)}
 
 
+def check_sweep_threshold(
+    root: Path, max_stale: int = 10, max_ratio: float = 0.5,
+) -> dict[str, Any]:
+    """Decide whether staleness warrants a sweep (read-only trigger).
+
+    Counts triggered records via sweep_v3 against the evaluated total and
+    fires when either the absolute count or the stale ratio crosses its
+    line. Returns the verdict plus the exact sweep command to run — the
+    nudge, not the sweep. Never mutates.
+    """
+    result = sweep_v3(root)
+    if result.get("state") != "evaluated":
+        return {"triggered": False, "reason": f"sweep state is {result.get('state')}",
+                "stale": 0, "evaluated": 0, "ratio": 0.0}
+    stale = len(result.get("triggered", []) or [])
+    clean = int(result.get("clean", 0) or 0)
+    total = stale + clean
+    ratio = (stale / total) if total else 0.0
+    fired = bool((max_stale > 0 and stale >= max_stale) or (total > 0 and ratio >= max_ratio))
+    return {
+        "triggered": fired,
+        "stale": stale,
+        "evaluated": total,
+        "ratio": round(ratio, 3),
+        "max_stale": max_stale,
+        "max_ratio": max_ratio,
+        "suggestion": "tailtrail learn refresh sweep --root .  # then apply per item with --approved" if fired else None,
+    }
+
+
 def command_sweep(args: argparse.Namespace) -> int:
     result = sweep_v3(args.root)
     if args.format == "json":

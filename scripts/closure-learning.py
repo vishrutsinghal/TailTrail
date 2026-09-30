@@ -133,6 +133,93 @@ def capture(root: Path, run_id: str, accepted_by: str) -> dict[str, Any]:
     return {**payload, "event_id": event_id, "reused": False}
 
 
+def gap_signals(report: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract candidate-worthy gap signals from a built completion report.
+
+    Pure function over the report dict: drift findings (new-drift,
+    regressed, needs-decision, unverified-change) plus required tiers with
+    no passing evidence. No I/O, so it unit-tests without a run directory.
+    """
+    if not isinstance(report, dict):
+        return []
+    tests = report.get("tests", {}) if isinstance(report.get("tests"), dict) else {}
+    passed_tiers = {str(value) for value in tests.get("passed_tiers", []) or []}
+    signals: list[dict[str, Any]] = []
+    for requirement in (report.get("requirement_status", {}) or {}).get("requirements", []):
+        if not isinstance(requirement, dict):
+            continue
+        uid = str(requirement.get("requirement_uid", ""))
+        for finding in requirement.get("drift", []) or []:
+            if not isinstance(finding, dict):
+                continue
+            classification = str(finding.get("classification", ""))
+            if classification in {"new-drift", "regressed", "needs-decision", "unverified-change"}:
+                signals.append({
+                    "kind": "drift-finding",
+                    "requirement_uid": uid,
+                    "display_id": str(requirement.get("display_id", uid)),
+                    "text": f"{classification}: {finding.get('message', '')}".strip(),
+                })
+        for check in tests.get("required_checks", []) or []:
+            if not isinstance(check, dict):
+                continue
+            if uid not in {str(value) for value in check.get("requirement_uids", []) or []}:
+                continue
+            for tier in check.get("tiers", []) or []:
+                if str(tier) not in passed_tiers:
+                    signals.append({
+                        "kind": "unproven-tier",
+                        "requirement_uid": uid,
+                        "display_id": str(requirement.get("display_id", uid)),
+                        "text": f"tier {tier} has no passing evidence",
+                    })
+    return signals
+
+
+def draft_gap_candidates(root: Path, run_id: str) -> dict[str, Any]:
+    """Draft learning candidates from closure gaps (staged, never promoted).
+
+    Reads the completion report's drift findings and unverified tiers and
+    stages one candidate file per distinct gap signal, following the same
+    candidate-only discipline as capture(): sanitized, deduplicated by
+    content hash, promotion explicitly deferred to learning review. Returns
+    drafted/skipped counts with artifact paths. Read-only against the run
+    except the staged candidate files themselves.
+    """
+    root = root.resolve()
+    report = REPORT.build(root, run_id, record=False)
+    directory = L.state_dir(root, run_id) / "gap-learning"
+    drafted: list[str] = []
+    skipped: list[str] = []
+    seen: set[str] = set()
+    signals = gap_signals(report)
+    directory.mkdir(parents=True, exist_ok=True)
+    for signal in signals:
+        candidate_id = "gap-" + hashlib.sha256(canonical(signal).encode("utf-8")).hexdigest()[:16]
+        if candidate_id in seen:
+            skipped.append(candidate_id)
+            continue
+        seen.add(candidate_id)
+        path = directory / f"{candidate_id}.json"
+        if path.is_file():
+            skipped.append(candidate_id)
+            continue
+        payload = {
+            "schema_version": "1",
+            "type": "tailtrail-gap-learning-candidate",
+            "candidate_id": candidate_id,
+            "run_id": run_id,
+            "signal": signal,
+            "promotion": "candidate-only; explicit learning review required",
+            "sanitization": "No raw source, prompt, log, repository name, user identity, or customer data is stored.",
+            "boundary": "This candidate records one observed gap. It is not a rule, a quality claim, or an automatic future-agent instruction.",
+        }
+        L.atomic_json(path, payload)
+        drafted.append(candidate_id)
+    return {"drafted": sorted(drafted), "skipped": sorted(skipped),
+            "artifact_dir": directory.relative_to(root).as_posix()}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd())
