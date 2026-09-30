@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import re
@@ -502,6 +503,152 @@ def command_sweep(args: argparse.Namespace) -> int:
     return 0
 
 
+def _advice_key(advice: str, tags: list[str]) -> str:
+    normalized = re.sub(r"\s+", " ", str(advice or "").strip().lower())
+    return normalized + "|" + ",".join(sorted(str(tag) for tag in tags or []))
+
+
+def _advice_tokens(advice: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]{3,}", str(advice or "").lower()))
+
+
+def exact_duplicate_v3_groups(records: list[dict[str, Any]]) -> dict[str, list[str]]:
+    """Group current V3 records by identical normalized advice plus tags.
+
+    Only `current` records participate; terminal ones are already resolved.
+    Returns {group_key: [learning_ids]} for groups larger than one.
+    """
+    groups: dict[str, list[str]] = {}
+    for record in records:
+        if not isinstance(record, dict) or str(record.get("freshness", {}).get("status", "")) != "current":
+            continue
+        content = record.get("content", {}) if isinstance(record.get("content"), dict) else {}
+        applicability = record.get("applicability", {}) if isinstance(record.get("applicability"), dict) else {}
+        key = _advice_key(str(content.get("advice", "")), list(applicability.get("tags", []) or []))
+        if key.split("|", 1)[0]:
+            groups.setdefault(key, []).append(str(record.get("learning_id", "")))
+    return {key: sorted(ids) for key, ids in groups.items() if len([item for item in ids if item]) > 1}
+
+
+def near_duplicate_proposals(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Propose merges for related-but-not-identical current records.
+
+    Detection is deterministic (Jaccard token overlap >= 0.5 plus a shared
+    tag); the decision stays human. Proposals only — nothing here mutates
+    the store. Exact-duplicate pairs are excluded (they belong to automatic
+    collapse, not judgment).
+    """
+    current = [
+        row for row in records
+        if isinstance(row, dict) and str(row.get("freshness", {}).get("status", "")) == "current"
+    ]
+    exact_keys = {
+        _advice_key(
+            str((row.get("content", {}) or {}).get("advice", "")),
+            list((row.get("applicability", {}) or {}).get("tags", []) or []),
+        )
+        for row in current
+    }
+    proposals: list[dict[str, Any]] = []
+    for index, left in enumerate(current):
+        left_content = left.get("content", {}) if isinstance(left.get("content"), dict) else {}
+        left_app = left.get("applicability", {}) if isinstance(left.get("applicability"), dict) else {}
+        left_tokens = _advice_tokens(str(left_content.get("advice", "")))
+        left_tags = {str(tag) for tag in left_app.get("tags", []) or []}
+        if not left_tokens:
+            continue
+        for right in current[index + 1:]:
+            right_content = right.get("content", {}) if isinstance(right.get("content"), dict) else {}
+            right_app = right.get("applicability", {}) if isinstance(right.get("applicability"), dict) else {}
+            right_tokens = _advice_tokens(str(right_content.get("advice", "")))
+            right_tags = {str(tag) for tag in right_app.get("tags", []) or []}
+            if not right_tokens or not (left_tags & right_tags):
+                continue
+            union = left_tokens | right_tokens
+            similarity = len(left_tokens & right_tokens) / len(union) if union else 0.0
+            pair_key = _advice_key(str(right_content.get("advice", "")), list(right_tags))
+            if pair_key in exact_keys and _advice_key(str(left_content.get("advice", "")), list(left_tags)) == pair_key:
+                continue
+            if similarity >= 0.5:
+                first, second = sorted([str(left.get("learning_id", "")), str(right.get("learning_id", ""))])
+                proposals.append({
+                    "canonical_learning_id": first,
+                    "merged_learning_ids": [second],
+                    "similarity": round(similarity, 3),
+                    "shared_tags": sorted(left_tags & right_tags),
+                    "status": "proposed",
+                    "boundary": "Host or user approval required; detection never merges.",
+                })
+    return proposals
+
+
+def execute_merge_group(
+    root: Path,
+    canonical_id: str,
+    merged_ids: list[str],
+    reason: str,
+    approved: bool,
+) -> dict[str, Any]:
+    """Supersede duplicate learnings into one canonical record.
+
+    Mirrors the `apply` convention: `approved` must be True or nothing
+    happens. Each merged record gets a V3 `supersede` transition pointing at
+    the canonical record, which must itself be current. Failures raise —
+    partial merges would leave the group half-resolved.
+    """
+    if approved is not True:
+        raise ValueError("duplicate merge execution requires --approved")
+    if not str(reason or "").strip():
+        raise ValueError("duplicate merge execution requires a reason")
+    V3 = load_sweep_v3()
+    root = root.resolve()
+    superseded: list[str] = []
+    for learning_id in merged_ids:
+        if str(learning_id) == str(canonical_id):
+            continue
+        V3.terminal_transition(root, str(learning_id), "supersede", str(reason), replacement=str(canonical_id))
+        superseded.append(str(learning_id))
+    return {
+        "canonical_learning_id": str(canonical_id),
+        "superseded": sorted(superseded),
+        "reason": str(reason),
+    }
+
+
+def command_merge_duplicates(args: argparse.Namespace) -> int:
+    V3 = load_sweep_v3()
+    root = args.root.resolve()
+    if args.approved is not True:
+        raise SystemExit("merge-duplicates requires --approved")
+    try:
+        latest = V3.latest_records(V3.read_records(root))
+    except (OSError, ValueError) as error:
+        raise SystemExit(f"Learning V3 store is unreadable: {error}")
+    groups = exact_duplicate_v3_groups(list(latest.values()))
+    if not groups:
+        print("No exact-duplicate learning groups found.")
+        return 0
+    by_sequence = {
+        learning_id: int(record.get("sequence", 0) or 0)
+        for learning_id, record in latest.items()
+    }
+    executed: list[dict[str, Any]] = []
+    for key in sorted(groups):
+        ids = sorted(groups[key], key=lambda item: (by_sequence.get(item, 0), item))
+        executed.append(execute_merge_group(
+            root, ids[0], ids[1:],
+            args.reason or "approved exact-duplicate collapse", True,
+        ))
+    if args.format == "json":
+        print(json.dumps({"merged_groups": executed}, indent=2, sort_keys=True))
+    else:
+        for row in executed:
+            print(f"Merged {', '.join(row['superseded'])} into `{row['canonical_learning_id']}`.")
+    return 0
+
+
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Inspect and recommend TailTrail learning refresh actions.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -533,6 +680,13 @@ def build_parser() -> argparse.ArgumentParser:
     sweep.add_argument("--root", type=Path, default=Path.cwd())
     sweep.add_argument("--format", choices=("markdown", "json"), default="markdown")
 
+
+    merge_duplicates = subparsers.add_parser("merge-duplicates", help="Supersede exact-duplicate learnings into their earliest record.")
+    merge_duplicates.add_argument("--root", type=Path, default=Path.cwd())
+    merge_duplicates.add_argument("--reason", default=None)
+    merge_duplicates.add_argument("--approved", action="store_true")
+    merge_duplicates.add_argument("--format", choices=("markdown", "json"), default="markdown")
+
     return parser
 
 
@@ -548,6 +702,8 @@ def main() -> int:
         return command_apply(args)
     if args.command == "sweep":
         return command_sweep(args)
+    if args.command == "merge-duplicates":
+        return command_merge_duplicates(args)
     raise SystemExit(f"Unknown command: {args.command}")
 
 

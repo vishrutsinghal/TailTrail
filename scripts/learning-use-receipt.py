@@ -399,7 +399,27 @@ def record_decision(
     }
     saved = append_event(root, run_id, payload)
     L.append_event(root, run_id, "learning_use_decision_recorded", {"receipt_id": rid, "event_id": saved["event_id"], "learning_id": learning_id, "decision": decision, "requirement_uids": uids, "artifact": relative(root, stream(root, run_id))})
-    return {**saved, "reused": False, "artifact": relative(root, stream(root, run_id))}
+    utility_touch = touch_on_use(root, learning_id, run_id, rid, decision)
+    return {**saved, "reused": False, "artifact": relative(root, stream(root, run_id)), "utility_touch": utility_touch}
+
+
+def touch_on_use(root: Path, learning_id: str, run_id: str, receipt_id: str, decision: str) -> dict[str, Any]:
+    """Record proof of life for an applied/advisory learning decision.
+
+    Appends a content-identical V3 amendment so the record's timestamp
+    advances and the chain shows the use. Best-effort and recorded: a touch
+    failure must never break receipt recording, which is the authoritative
+    act here. Decisions other than applied/advisory are not touches.
+    """
+    if decision not in {"applied", "advisory"}:
+        return {"status": "not-applicable"}
+    try:
+        touched = V3.amend(root, learning_id, reason=f"use observed in run {run_id} (receipt {receipt_id})")
+        return {"status": "touched", "record_id": touched.get("record_id")}
+    except Exception as error:
+        return {"status": "failed", "error": f"{type(error).__name__}: {error}"}
+
+
 
 
 def association(decision: dict[str, Any], completion: dict[str, Any]) -> str:
