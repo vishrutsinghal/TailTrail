@@ -142,5 +142,85 @@ class ProofOfLifeTouchTests(unittest.TestCase):
             self.assertEqual(result["status"], "failed")
 
 
+class PhaseTwoSupervisionTests(unittest.TestCase):
+    def _capture(self, root, learning_id, advice="Helpful advice here."):
+        import hashlib
+        record = v3.build_record(
+            root, learning_id=learning_id, learning_class="positive-pattern",
+            summary=f"Summary {learning_id}", advice=advice,
+            source_kind="test", source_ref="test",
+            source_fingerprint="sha256:" + hashlib.sha256(learning_id.encode()).hexdigest(),
+            captured_by="test", tags=["t"],
+        )
+        return v3.append_record(root, record)
+
+    def test_snapshot_and_restore_round_trip(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-keep", "Kept advice here.")
+            manifest = refresh.snapshot_store(root)
+            self.assertGreater(manifest["record_count"], 0)
+            stamp = Path(manifest["snapshot"]).name
+            journal = root / ".tailtrail" / "learning-v3" / "events.jsonl"
+            before = journal.read_bytes()
+            journal.write_bytes(b"tampered\n")
+            restored = refresh.restore_snapshot(root, stamp)
+            self.assertIn("events.jsonl", restored["restored"])
+            self.assertEqual(journal.read_bytes(), before)
+
+    def test_queue_dedupes_decided_pairs(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            proposal = {"canonical_learning_id": "lrn-aaaa",
+                        "merged_learning_ids": ["lrn-bbbb"],
+                        "similarity": 0.7, "shared_tags": ["t"]}
+            first = refresh.queue_merge_proposals(root, [proposal])
+            self.assertEqual((first["queued"], first["skipped"]), (1, 0))
+            refresh.decide_merge_proposal(
+                root, "lrn-aaaa", "rejected", "different nuance", True)
+            again = refresh.queue_merge_proposals(root, [proposal])
+            self.assertEqual((again["queued"], again["skipped"]), (0, 1))
+
+    def test_decide_rejected_retires_pair(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-aaaa", "Advice alpha here.")
+            self._capture(root, "lrn-bbbb", "Advice alpha here now.")
+            refresh.queue_merge_proposals(root, [{
+                "canonical_learning_id": "lrn-aaaa", "merged_learning_ids": ["lrn-bbbb"],
+                "similarity": 0.8, "shared_tags": ["t"]}])
+            result = refresh.decide_merge_proposal(
+                root, "lrn-aaaa", "rejected", "different nuance", True)
+            self.assertEqual(result["decision"], "rejected")
+            latest = v3.latest_records(v3.read_records(root))
+            self.assertEqual(latest["lrn-bbbb"]["freshness"]["status"], "current")
+
+    def test_decide_approved_executes_merge(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-aaaa", "Same words here.")
+            self._capture(root, "lrn-bbbb", "Same words here.")
+            refresh.queue_merge_proposals(root, [{
+                "canonical_learning_id": "lrn-aaaa", "merged_learning_ids": ["lrn-bbbb"],
+                "similarity": 1.0, "shared_tags": ["t"]}])
+            result = refresh.decide_merge_proposal(
+                root, "lrn-aaaa", "approved", "exact duplicate", True)
+            self.assertEqual(result["executed"][0]["superseded"], ["lrn-bbbb"])
+            latest = v3.latest_records(v3.read_records(root))
+            self.assertEqual(latest["lrn-bbbb"]["freshness"]["status"], "superseded")
+
+    def test_delete_requires_snapshot_and_approval(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-doomed", "Doomed advice here.")
+            with self.assertRaisesRegex(ValueError, "snapshot"):
+                refresh.delete_learning(root, "lrn-doomed", "reason", True)
+            with self.assertRaisesRegex(ValueError, "--approved"):
+                refresh.delete_learning(root, "lrn-doomed", "reason", False)
+            refresh.snapshot_store(root)
+            result = refresh.delete_learning(root, "lrn-doomed", "superseded content", True)
+            self.assertEqual(result["status"], "revoked")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -503,6 +503,9 @@ def command_sweep(args: argparse.Namespace) -> int:
     return 0
 
 
+MERGE_QUEUE = Path(".tailtrail") / "learning-merge-queue.jsonl"
+
+
 def _advice_key(advice: str, tags: list[str]) -> str:
     normalized = re.sub(r"\s+", " ", str(advice or "").strip().lower())
     return normalized + "|" + ",".join(sorted(str(tag) for tag in tags or []))
@@ -647,6 +650,206 @@ def command_merge_duplicates(args: argparse.Namespace) -> int:
     return 0
 
 
+
+
+def snapshot_store(root: Path) -> dict[str, Any]:
+    """Snapshot the V3 learning store before any destructive step.
+
+    Copies the event journal and project frame into a timestamped snapshot
+    directory with per-file fingerprints plus a manifest. Restoring is a
+    plain file copy back. No ledger event is emitted: snapshots are rollback
+    paths, not decisions — the manifest itself is the audit record.
+    """
+    from datetime import datetime, timezone
+
+    V3 = load_sweep_v3()
+    root = root.resolve()
+    store = root / ".tailtrail" / "learning-v3" / "events.jsonl"
+    frame = root / ".tailtrail" / "learning-v3" / "project-frame.json"
+    if not store.is_file():
+        raise ValueError("no Learning V3 store exists to snapshot")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    destination = root / ".tailtrail" / "learning-v3" / "snapshots" / stamp
+    destination.mkdir(parents=True, exist_ok=False)
+    files: dict[str, str] = {}
+    for source in (store, frame):
+        if not source.is_file():
+            continue
+        data = source.read_bytes()
+        (destination / source.name).write_bytes(data)
+        files[source.name] = "sha256:" + hashlib.sha256(data).hexdigest()
+    try:
+        count = len(V3.read_records(root))
+    except (OSError, ValueError):
+        count = 0
+    manifest = {
+        "schema_version": "1",
+        "type": "tailtrail-learning-store-snapshot",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "files": files,
+        "record_count": count,
+    }
+    (destination / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"snapshot": destination.relative_to(root).as_posix(), **manifest}
+
+
+def restore_snapshot(root: Path, stamp: str) -> dict[str, Any]:
+    """Restore a snapshot over the live store (rollback path).
+
+    Overwrites the journal and frame with byte-exact copies and verifies
+    fingerprints after writing. Destructive by nature: callers must confirm
+    separately — this function performs, it never asks.
+    """
+    root = root.resolve()
+    destination = root / ".tailtrail" / "learning-v3" / "snapshots" / str(stamp)
+    manifest_path = destination / "manifest.json"
+    if not manifest_path.is_file():
+        raise ValueError(f"learning snapshot `{stamp}` does not exist")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ValueError(f"learning snapshot `{stamp}` manifest is unreadable: {error}")
+    restored: list[str] = []
+    for name, digest in (manifest.get("files", {}) or {}).items():
+        blob = (destination / str(name)).read_bytes()
+        if "sha256:" + hashlib.sha256(blob).hexdigest() != digest:
+            raise ValueError(f"learning snapshot `{stamp}` file `{name}` fails integrity check")
+        target = root / ".tailtrail" / "learning-v3" / str(name)
+        target.write_bytes(blob)
+        restored.append(str(name))
+    return {"snapshot": destination.relative_to(root).as_posix(), "restored": sorted(restored)}
+
+
+def _read_queue(root: Path) -> list[dict[str, Any]]:
+    path = root / MERGE_QUEUE
+    if not path.is_file():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except (ValueError, json.JSONDecodeError):
+            continue
+        if isinstance(row, dict):
+            rows.append(row)
+    return rows
+
+
+def queue_merge_proposals(root: Path, proposals: list[dict[str, Any]]) -> dict[str, Any]:
+    """Persist near-duplicate merge proposals; decided pairs never requeue.
+
+    Each proposal needs canonical_learning_id + merged_learning_ids. Pairs
+    already approved/rejected/executed are skipped (decision history, not
+    content, dedupes). Returns queued/skipped counts. Proposals decide
+    nothing — execution requires a separate approved decision.
+    """
+    root = root.resolve()
+    decided = set()
+    for row in _read_queue(root):
+        if row.get("status") in {"approved", "rejected", "executed"}:
+            canonical = str(row.get("canonical_learning_id", ""))
+            for merged in row.get("merged_learning_ids", []) or []:
+                decided.add((canonical, str(merged)))
+    queued = 0
+    skipped = 0
+    path = root / MERGE_QUEUE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8", newline="\n") as handle:
+        for item in proposals or []:
+            if not isinstance(item, dict):
+                skipped += 1
+                continue
+            canonical = str(item.get("canonical_learning_id", ""))
+            merged = sorted({str(value) for value in item.get("merged_learning_ids", []) or [] if str(value).strip()})
+            if not canonical or not merged or canonical in merged:
+                skipped += 1
+                continue
+            if all((canonical, value) in decided for value in merged):
+                skipped += 1
+                continue
+            handle.write(json.dumps({
+                "schema_version": "1",
+                "type": "tailtrail-learning-merge-proposal",
+                "canonical_learning_id": canonical,
+                "merged_learning_ids": merged,
+                "similarity": item.get("similarity"),
+                "shared_tags": list(item.get("shared_tags", []) or []),
+                "status": "proposed",
+            }, sort_keys=True) + "\n")
+            queued += 1
+    return {"queued": queued, "skipped": skipped}
+
+
+def decide_merge_proposal(
+    root: Path, canonical_id: str, decision: str, reason: str, approved: bool,
+) -> dict[str, Any]:
+    """Approve (and execute) or reject a pending merge proposal.
+
+    Approval executes the supersede transitions immediately through
+    execute_merge_group, so approved means merged, never pending-forever.
+    Rejection records why, which permanently retires the pair from future
+    queues. Both paths require approved=True and a reason.
+    """
+    if approved is not True:
+        raise ValueError("merge proposal decisions require --approved")
+    if decision not in {"approved", "rejected"}:
+        raise ValueError("merge proposal decision must be approved or rejected")
+    if not str(reason or "").strip():
+        raise ValueError("merge proposal decisions require a reason")
+    root = root.resolve()
+    pending = [
+        row for row in _read_queue(root)
+        if row.get("status") == "proposed"
+        and str(row.get("canonical_learning_id", "")) == str(canonical_id)
+    ]
+    if not pending:
+        raise ValueError(f"no pending merge proposal for `{canonical_id}`")
+    executed: list[dict[str, Any]] = []
+    for row in pending:
+        merged = [str(value) for value in row.get("merged_learning_ids", []) or []]
+        if decision == "approved":
+            executed.append(execute_merge_group(
+                root, str(canonical_id), merged, str(reason), True))
+        path = root / MERGE_QUEUE
+        with path.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(json.dumps({
+                "schema_version": "1",
+                "type": "tailtrail-learning-merge-proposal",
+                "canonical_learning_id": str(canonical_id),
+                "merged_learning_ids": merged,
+                "similarity": row.get("similarity"),
+                "shared_tags": list(row.get("shared_tags", []) or []),
+                "status": "executed" if decision == "approved" else "rejected",
+                "reason": str(reason),
+            }, sort_keys=True) + "\n")
+    return {"canonical_learning_id": str(canonical_id), "decision": decision,
+            "executed": executed}
+
+
+def delete_learning(root: Path, learning_id: str, reason: str, approved: bool) -> dict[str, Any]:
+    """Revoke a dead learning with a tombstone reason (no silent deletes).
+
+    Requires a pre-existing snapshot (destructive acts need a rollback
+    path) and approval. Revocation is terminal and history-preserving: the
+    record stays in the chain marked revoked, so nothing is unhappened,
+    only retired with attribution.
+    """
+    if approved is not True:
+        raise ValueError("learning deletion requires --approved")
+    if not str(reason or "").strip():
+        raise ValueError("learning deletion requires a reason")
+    root = root.resolve()
+    snapshots = root / ".tailtrail" / "learning-v3" / "snapshots"
+    if not snapshots.is_dir() or not any(snapshots.iterdir()):
+        raise ValueError("learning deletion requires a prior store snapshot; snapshot first, then delete")
+    V3 = load_sweep_v3()
+    record = V3.terminal_transition(root, str(learning_id), "revoke", str(reason))
+    return {"learning_id": str(learning_id), "status": "revoked",
+            "record_id": record.get("record_id"), "reason": str(reason)}
 
 
 def build_parser() -> argparse.ArgumentParser:
