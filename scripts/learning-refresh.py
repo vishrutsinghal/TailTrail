@@ -455,6 +455,7 @@ def sweep_v3(root: Path) -> dict[str, Any]:
     triggered: list[dict[str, Any]] = []
     needs_backfill: list[str] = []
     clean = 0
+    usefulness = _usefulness_scores(root)
     for learning_id in sorted(latest):
         record = latest[learning_id]
         if record.get("freshness", {}).get("status") != "current":
@@ -474,10 +475,85 @@ def sweep_v3(root: Path) -> dict[str, Any]:
             })
         else:
             clean += 1
+    for row in triggered:
+        score = usefulness.get(row["learning_id"], {})
+        row["usefulness"] = {"score": score.get("score"), "band": score.get("band")}
+    triggered.sort(key=lambda row: (
+        row.get("usefulness", {}).get("score") if isinstance(row.get("usefulness", {}).get("score"), int) else 999,
+        row["learning_id"],
+    ))
+
     return {"schema_version": "1", "type": "tailtrail-learning-refresh-sweep",
             "state": "evaluated", "triggered": triggered, "needs_backfill": sorted(needs_backfill), "clean": clean,
+            "usefulness": {key: {"score": value.get("score"), "band": value.get("band")} for key, value in usefulness.items()},
             "backfill_command": "tailtrail learn v3 revalidate --root . --learning-id <id> --reason \"snapshot backfill\" --evidence-ref <file> --approved",
             "boundary": "Read-only evaluation; triggering actions and backfills each require their own explicit approval."}
+
+
+def _usefulness_scores(root: Path) -> dict[str, dict[str, Any]]:
+    """Load usefulness scores lazily; failures yield an empty map, never a break.
+
+    Scores inform review ordering only — a missing score must not block
+    sweep evaluation, which stands on fingerprint comparison alone.
+    """
+    try:
+        import importlib.util as _ilu
+        from pathlib import Path as _Path
+
+        here = _Path(__file__).resolve().parent / "learning-use-receipt.py"
+        spec = _ilu.spec_from_file_location("tailtrail_refresh_use_scores", here)
+        if spec is None or spec.loader is None:
+            return {}
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        scores = module.scores_by_id(root)
+        return dict(scores) if isinstance(scores, dict) else {}
+    except Exception:
+        return {}
+
+
+def revalidate_due(root: Path, approved: bool) -> dict[str, Any]:
+    """Revalidate clean records whose deadline elapsed (automatic truth gate).
+
+    Only records with unchanged fingerprints qualify: drifted records need
+    a mark-stale decision (host/user), never a silent re-snapshot. Records
+    without surviving evidence refs are skipped. Requires approved=True,
+    mirroring every other mutating path in this file.
+    """
+    if approved is not True:
+        raise ValueError("truth revalidation requires --approved")
+    V3 = load_sweep_v3()
+    root = root.resolve()
+    revalidated: list[str] = []
+    skipped: list[str] = []
+    try:
+        latest = V3.latest_records(V3.read_records(root))
+    except (OSError, ValueError) as error:
+        raise ValueError(f"Learning V3 store is unreadable: {error}")
+    from datetime import datetime, timezone
+
+    for learning_id in sorted(latest):
+        record = latest[learning_id]
+        if record.get("freshness", {}).get("status") != "current":
+            continue
+        if not isinstance(record.get("freshness", {}).get("invalidator_snapshot"), dict):
+            continue
+        reasons, _ = V3.compare_snapshot(root, record)
+        if reasons:
+            continue
+        deadline = parse_time(record.get("freshness", {}).get("revalidate_after"))
+        if deadline is not None and deadline > datetime.now(timezone.utc):
+            continue
+        refs = sorted({
+            str(value) for value in (record.get("provenance", {}) or {}).get("evidence_refs", []) or []
+            if isinstance(value, str) and value.strip() and (root / value.strip()).is_file()
+        })
+        if not refs:
+            skipped.append(learning_id)
+            continue
+        V3.revalidate(root, learning_id, reason="automatic truth revalidation: fingerprints unchanged", evidence_refs=refs)
+        revalidated.append(learning_id)
+    return {"revalidated": sorted(revalidated), "skipped": sorted(skipped)}
 
 
 def command_sweep(args: argparse.Namespace) -> int:

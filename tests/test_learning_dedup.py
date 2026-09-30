@@ -142,6 +142,99 @@ class ProofOfLifeTouchTests(unittest.TestCase):
             self.assertEqual(result["status"], "failed")
 
 
+class PhaseThreeDecidersTests(unittest.TestCase):
+    def _capture(self, root, learning_id, advice="Helpful advice here.", tags=None,
+                 revalidate_after=None, evidence=None):
+        import hashlib
+        record = v3.build_record(
+            root, learning_id=learning_id, learning_class="positive-pattern",
+            summary=f"Summary {learning_id}", advice=advice,
+            source_kind="test", source_ref="test",
+            source_fingerprint="sha256:" + hashlib.sha256(learning_id.encode()).hexdigest(),
+            captured_by="test", tags=list(tags or ["t"]),
+            evidence_refs=list(evidence or []),
+            revalidate_after=revalidate_after,
+        )
+        return v3.append_record(root, record)
+
+    def test_revalidate_due_refreshes_elapsed_deadline(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "proof.txt").write_text("evidence", encoding="utf-8")
+            self._capture(root, "lrn-due", "Timely advice here.",
+                          revalidate_after="2000-01-01T00:00:00+00:00",
+                          evidence=["proof.txt"])
+            result = refresh.revalidate_due(root, True)
+            self.assertEqual(result["revalidated"], ["lrn-due"])
+            latest = v3.latest_records(v3.read_records(root))["lrn-due"]
+            self.assertGreater(len(v3.read_records(root)), 1)
+
+    def test_revalidate_due_requires_approval(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(ValueError, "--approved"):
+                refresh.revalidate_due(Path(temp), False)
+
+    def test_sweep_output_carries_usefulness(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-scored", "Scored advice here.")
+            result = refresh.sweep_v3(root)
+            self.assertIn("usefulness", result)
+            self.assertIn("lrn-scored", result["usefulness"])
+            self.assertIn(result["usefulness"]["lrn-scored"]["band"],
+                          {"strong", "usable", "weak", "do-not-use"})
+
+    def test_delete_requires_snapshot_and_approval(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-doomed", "Doomed advice here.")
+            with self.assertRaisesRegex(ValueError, "snapshot"):
+                refresh.delete_learning(root, "lrn-doomed", "reason", True)
+            with self.assertRaisesRegex(ValueError, "--approved"):
+                refresh.delete_learning(root, "lrn-doomed", "reason", False)
+
+    def test_delete_revokes_with_tombstone(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-doomed", "Doomed advice here.")
+            refresh.snapshot_store(root)
+            result = refresh.delete_learning(root, "lrn-doomed", "superseded by sweep", True)
+            self.assertEqual(result["status"], "revoked")
+            latest = v3.latest_records(v3.read_records(root))["lrn-doomed"]
+            self.assertEqual(latest["freshness"]["status"], "revoked")
+
+    def test_decide_merge_requires_approval_and_reason(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with self.assertRaisesRegex(ValueError, "--approved"):
+                refresh.decide_merge_proposal(root, "lrn-aaaa", "approved", "reason", False)
+            with self.assertRaisesRegex(ValueError, "reason"):
+                refresh.decide_merge_proposal(root, "lrn-aaaa", "approved", "  ", True)
+
+    def test_snapshot_restore_round_trip(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-keep", "Kept advice here.")
+            manifest = refresh.snapshot_store(root)
+            self.assertIn("record_count", manifest)
+            stamp = Path(manifest["snapshot"]).name
+            before = (root / ".tailtrail" / "learning-v3" / "events.jsonl").read_bytes()
+            (root / ".tailtrail" / "learning-v3" / "events.jsonl").write_bytes(b"corrupted\n")
+            restored = refresh.restore_snapshot(root, stamp)
+            self.assertIn("events.jsonl", restored["restored"])
+            self.assertEqual(
+                (root / ".tailtrail" / "learning-v3" / "events.jsonl").read_bytes(), before)
+
+    def test_scores_by_id_maps_bands(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._capture(root, "lrn-scored", "Scored advice here.")
+            scores = receipts.scores_by_id(root)
+            self.assertIn("lrn-scored", scores)
+            self.assertIn(scores["lrn-scored"]["band"],
+                          {"strong", "usable", "weak", "do-not-use"})
+
+
 class PhaseTwoSupervisionTests(unittest.TestCase):
     def _capture(self, root, learning_id, advice="Helpful advice here."):
         import hashlib

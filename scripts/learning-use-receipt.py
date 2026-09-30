@@ -642,6 +642,110 @@ def split_csv(value: str | None) -> list[str]:
     return sorted({item.strip() for item in (value or "").split(",") if item.strip()})
 
 
+def usefulness_scores(root: Path) -> dict[str, dict[str, Any]]:
+    """Score every learning by observed use (read-only; computed, not stored).
+
+    Inputs: V3 latest records (created_at, confidence, curated, freshness)
+    plus every run's use-receipt stream (applied/advisory/rejected/stale
+    decisions per learning). Scoring is transparent arithmetic, documented
+    per component so retrieval can consume it later without inheriting a
+    black box:
+      base = confidence_score // 10 (0-10)
+      +2 per applied decision, +1 per advisory (capped at +10)
+      -3 per rejected or stale decision (floor 0)
+      +1 if touched (amended/revalidated) after creation
+      curated adds nothing extra (curation is a gate elsewhere, not a score)
+    Bands: >=12 strong, >=7 usable, >=4 weak, else do-not-use. Scores inform
+    review; they authorize nothing.
+    """
+    root = root.resolve()
+    try:
+        latest = V3.latest_records(V3.read_records(root))
+    except (OSError, ValueError):
+        return {}
+    decisions: dict[str, dict[str, int]] = {}
+    runs = root / ".tailtrail" / "runs"
+    if runs.is_dir():
+        for stream_path in sorted(runs.glob("*/learning/use-receipts.jsonl")):
+            try:
+                lines = stream_path.read_text(encoding="utf-8").splitlines()
+            except OSError:
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except (ValueError, json.JSONDecodeError):
+                    continue
+                if not isinstance(event, dict):
+                    continue
+                learning_id = str(event.get("learning_id", ""))
+                decision = str(event.get("decision", ""))
+                if not learning_id or decision not in {"applied", "advisory", "rejected", "stale", "ignored"}:
+                    continue
+                tally = decisions.setdefault(learning_id, {"applied": 0, "advisory": 0, "rejected": 0, "stale": 0})
+                if decision in tally:
+                    tally[decision] += 1
+    from datetime import datetime, timezone
+
+    scores: dict[str, dict[str, Any]] = {}
+    for learning_id, record in latest.items():
+        if not isinstance(record, dict):
+            continue
+        utility = record.get("utility", {}) if isinstance(record.get("utility"), dict) else {}
+        try:
+            base = int(utility.get("confidence_score", 0)) // 10
+        except (TypeError, ValueError):
+            base = 0
+        tally = decisions.get(str(learning_id), {})
+        score = base + min(10, 2 * tally.get("applied", 0) + tally.get("advisory", 0))
+        score -= 3 * (tally.get("rejected", 0) + tally.get("stale", 0))
+        created = str(record.get("created_at", ""))
+        try:
+            age_days = (datetime.now(timezone.utc) - datetime.fromisoformat(created)).days
+        except (ValueError, TypeError):
+            age_days = 0
+        score = max(0, min(20, score))
+        band = "strong" if score >= 12 else "usable" if score >= 7 else "weak" if score >= 4 else "do-not-use"
+        scores[str(learning_id)] = {
+            "score": score,
+            "band": band,
+            "applied": tally.get("applied", 0),
+            "advisory": tally.get("advisory", 0),
+            "rejected": tally.get("rejected", 0),
+            "stale_decisions": tally.get("stale", 0),
+            "curated": bool(utility.get("curated", False)),
+            "freshness": str((record.get("freshness", {}) or {}).get("status", "unknown")),
+            "age_days": age_days,
+        }
+    return scores
+
+
+def scores_by_id(root: Path) -> dict[str, dict[str, Any]]:
+    """Return {learning_id: {score, band}} for sweep display (read-only).
+
+    Thin projection over usefulness_scores: sweep output needs ranks, not
+    full tallies. Never raises on readable stores; unreadable stores yield
+    an empty map so evaluation degrades to unscored instead of failing.
+    """
+    try:
+        scores = usefulness_scores(root)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(scores, dict):
+        return {}
+    return {
+        str(learning_id): {
+            "score": row.get("score"),
+            "band": row.get("band"),
+        }
+        for learning_id, row in scores.items()
+        if isinstance(row, dict)
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
