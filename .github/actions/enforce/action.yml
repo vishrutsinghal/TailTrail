@@ -4,7 +4,7 @@ inputs:
   version:
     description: Exact TailTrail version to install when distribution is pypi.
     required: true
-    default: "0.6.0"
+    default: "1.0.0"
   distribution:
     description: Use pypi for released consumers or checkout for TailTrail's own source validation.
     required: true

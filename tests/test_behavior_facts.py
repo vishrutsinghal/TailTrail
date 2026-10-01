@@ -103,11 +103,11 @@ GO_GUARD = """package orders
 import "errors"
 
 func RejectZeroQuantity(quantity int) error {
-	if quantity == 0 {
-		err := errors.New("quantity must be positive")
-		return err
-	}
-	return nil
+    if quantity == 0 {
+        err := errors.New("quantity must be positive")
+        return err
+    }
+    return nil
 }
 """
 

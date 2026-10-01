@@ -1,4 +1,4 @@
-"""Versioned package migration namespace; no migrations are required for 0.6."""
+"""Versioned package migration namespace; no migrations are required for 1.0."""
 
 MIGRATION_API_VERSION = 1
 CURRENT_PACKAGED_STATE = 1

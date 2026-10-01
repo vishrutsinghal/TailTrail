@@ -764,6 +764,8 @@
         "scripts/navigator-scope-release.py",
         "scripts/navigator-installed-release-proof.py",
         "scripts/requirement_discovery.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
         "scripts/start_posture.py",
         "scripts/task-start.py",
         "scripts/task-next.py",
@@ -1823,10 +1825,12 @@
         "scripts/tailtrail.py",
         "scripts/check-tailtrail.py",
         "scripts/sync-adapters.py",
-        "scripts/orchestration_facade.py"
+        "scripts/orchestration_facade.py",
+        "scripts/host-decision.py"
       ],
       "tests": [
-        "tests/test_cli_dispatch.py"
+        "tests/test_cli_dispatch.py",
+        "tests/test_orchestration_facade.py"
       ],
       "mcp_tools": [],
       "requires_approval": false,

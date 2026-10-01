@@ -6,6 +6,15 @@ TailTrail follows semantic versioning as described in `VERSIONING.md`.
 
 ## Unreleased
 
+No unreleased changes.
+
+## 1.0.0 - 2026-10-01
+
+TailTrail 1.0.0 is the first stable packaged release. It promotes the existing
+self-contained CLI, transactional host installation, evidence-bound workflow,
+and release qualification contracts without removing the documented 0.6
+surfaces.
+
 ### Added
 
 - Shared Question Orchestrator for Navigator, Lite AIDLC, and pinned official

@@ -133,7 +133,7 @@ class DebugStartPlanningTests(unittest.TestCase):
         goal = "debug the issue in the report: first 6 steps are repeating in the report"
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            managed = root / ".tailtrail" / "install" / "transactions" / "tx" / "backup" / ".tailtrail" / "install" / "payload" / "common" / "0.6.0" / "scripts" / "task-start.py"
+            managed = root / ".tailtrail" / "install" / "transactions" / "tx" / "backup" / ".tailtrail" / "install" / "payload" / "common" / "1.0.0" / "scripts" / "task-start.py"
             managed.parent.mkdir(parents=True)
             managed.write_text("first 6 steps repeating report generator\n", encoding="utf-8")
             source = root / "src" / "report_generator.py"

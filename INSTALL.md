@@ -11,7 +11,7 @@ TailTrail source checkout and has no runtime dependencies:
 
 ```bash
 python3.12 -m venv .venv
-.venv/bin/python -m pip install tailtrail-0.6.0-py3-none-any.whl
+.venv/bin/python -m pip install tailtrail-1.0.0-py3-none-any.whl
 .venv/bin/tailtrail hello
 .venv/bin/tailtrail doctor
 ```
@@ -101,9 +101,9 @@ Use `tailtrail upgrade` to upgrade the installed Python package and every
 already-installed project payload from one reviewed release wheel:
 
 ```bash
-tailtrail upgrade --artifact tailtrail-0.6.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target /path/to/project --dry-run
-tailtrail upgrade --artifact tailtrail-0.6.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target /path/to/project --approved
 ```
 
@@ -158,7 +158,7 @@ launcher at `.tailtrail/install/payload/<host>/scripts/tailtrail.py`. Shared
 files are preserved while any other host manifest still references them.
 
 Default text and guided-setup JSON results are summaries. Existing lifecycle
-JSON remains full for 0.6 compatibility; add `--compact` where only counts and
+JSON remains full for backward compatibility; add `--compact` where only counts and
 `plan_summary` are needed. Add `--verbose` to setup for exact managed paths and
 the complete deterministic plan.
 
@@ -223,8 +223,8 @@ After building the canonical wheel and source distribution, run:
 
 ```bash
 tailtrail eval scope installed-release-proof \
-  --wheel dist/tailtrail-0.6.0-py3-none-any.whl \
-  --sdist dist/tailtrail-0.6.0.tar.gz \
+  --wheel dist/tailtrail-1.0.0-py3-none-any.whl \
+  --sdist dist/tailtrail-1.0.0.tar.gz \
   --source-root . \
   --output fsr7-installed-release-proof.json
 ```

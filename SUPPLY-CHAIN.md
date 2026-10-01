@@ -21,12 +21,12 @@ Run:
 
 ```bash
 python3 scripts/supply-chain.py create \
-  --artifact dist/tailtrail-0.6.0-py3-none-any.whl \
-  --artifact dist/tailtrail-0.6.0.tar.gz \
+  --artifact dist/tailtrail-1.0.0-py3-none-any.whl \
+  --artifact dist/tailtrail-1.0.0.tar.gz \
   --output release-evidence --commit <full-git-sha>
 python3 scripts/supply-chain.py verify \
-  --artifact dist/tailtrail-0.6.0-py3-none-any.whl \
-  --artifact dist/tailtrail-0.6.0.tar.gz \
+  --artifact dist/tailtrail-1.0.0-py3-none-any.whl \
+  --artifact dist/tailtrail-1.0.0.tar.gz \
   --bundle release-evidence
 ```
 
@@ -37,8 +37,8 @@ identity-attestation job creates GitHub/Sigstore attestations only after the
 six-cell platform gate passes. Consumers verify each downloaded subject with:
 
 ```bash
-gh attestation verify tailtrail-0.6.0-py3-none-any.whl --repo <owner/repository>
-gh attestation verify tailtrail-0.6.0.tar.gz --repo <owner/repository>
+gh attestation verify tailtrail-1.0.0-py3-none-any.whl --repo <owner/repository>
+gh attestation verify tailtrail-1.0.0.tar.gz --repo <owner/repository>
 ```
 
 Detached checksums detect changed bytes but do not establish publisher
@@ -48,8 +48,12 @@ locally edited `release-evidence.json` as signed proof.
 The trusted discovery metadata is `release-channel-v1.json`; inspect it with
 `tailtrail release info`. A qualifying `v*` tag runs platform qualification,
 creates GitHub identity attestations, verifies tag/package version agreement,
-and publishes the already-built canonical wheel, sdist, checksums, SBOM, and
-release evidence to GitHub Releases. Publication never rebuilds an artifact.
+publishes the already-built canonical wheel and sdist to PyPI through the
+`pypi` GitHub environment and PyPI Trusted Publishing, then publishes the same
+artifacts plus checksums, SBOM, and release evidence to GitHub Releases.
+Publication never rebuilds an artifact. The PyPI trusted publisher is bound to
+repository `vishrutsinghal/tailr`, workflow `platform-supply-chain.yml`, and
+environment `pypi`; a tag must not be created until that publisher exists.
 The workflow definition is not proof that a release ran; support aggregation
 requires a separate observed publication receipt.
 The hosted platform aggregate and the post-publication observation receipt are
