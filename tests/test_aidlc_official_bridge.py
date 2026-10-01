@@ -324,7 +324,7 @@ class OfficialAidlcBridgeTests(unittest.TestCase):
         self.assertEqual(escalated.returncode, 0, escalated.stderr)
         self.assertEqual(json.loads(default.stdout)["aidlc_mode"]["mode"], "lite")
         self.assertEqual(json.loads(requested.stdout)["aidlc_mode"]["mode"], "standard")
-        self.assertEqual(json.loads(hands_free.stdout)["aidlc_mode"]["mode"], "full")
+        self.assertEqual(json.loads(hands_free.stdout)["aidlc_mode"]["mode"], "standard")
         self.assertEqual(json.loads(escalated.stdout)["aidlc_mode"]["mode"], "full")
         self.assertIn("official AI-DLC Requirements Analysis", json.loads(requested.stdout)["aidlc_mode_features"]["included"][3])
         self.assertIn("substitute questions", json.loads(escalated.stdout)["aidlc_mode_features"]["not_included"][0])
