@@ -75,7 +75,7 @@ def start_command(root: Path, *args: str) -> list[str]:
             "--root", root.as_posix(), *args]
 
 
-class HandsFreeAutoRoutingTests(unittest.TestCase):
+class HandsFreeAutoFullTests(unittest.TestCase):
     def test_hands_free_without_pack_falls_back_transparent(self):
         with tempfile.TemporaryDirectory() as temp:
             selected = task_start.aidlc_mode_selection(
