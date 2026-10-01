@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 
 
-REPOSITORY = "vishrutsinghal/tailr"
+REPOSITORY = "vishrutsinghal/TailTrail"
 
 
 def digest(path: Path) -> str:

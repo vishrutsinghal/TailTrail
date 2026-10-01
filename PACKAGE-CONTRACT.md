@@ -1,6 +1,6 @@
 # TailTrail Package Contract
 
-TailTrail 1.0 is distributed as a self-contained Python wheel and source
+TailTrail 1.x is distributed as a self-contained Python wheel and source
 distribution. Normal installed execution uses resources below the installed
 `tailtrail` package and never searches the current directory, parent
 directories, or a source checkout. `tailtrail_cli.py` is a source-checkout

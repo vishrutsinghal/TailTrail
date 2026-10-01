@@ -1,10 +1,10 @@
 Metadata-Version: 2.4
 Name: tailtrail
-Version: 1.0.0
+Version: 1.1.0
 Summary: Local-first development guidance for smaller, evidence-backed coding workflows.
 Author: TailTrail
-License: Apache-2.0
-Requires-Python: <3.14,>=3.12
+License-Expression: Apache-2.0
+Requires-Python: <3.15,>=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
 License-File: NOTICE.md
@@ -25,7 +25,7 @@ requirement.
 
 It works with Codex, GitHub Copilot, Claude, Cursor, ChatGPT, and Gemini.
 
-The self-contained `tailtrail` wheel and sdist support CPython 3.12 and 3.13,
+The self-contained `tailtrail` wheel and sdist support CPython 3.12, 3.13 and 3.14,
 have no runtime dependencies, verify their packaged resources before command
 dispatch, and do not need a source checkout. See [INSTALL.md](INSTALL.md).
 

@@ -82,6 +82,22 @@
       "owner": "tailtrail-install",
       "reason": "The uninstall result replacement changes only package-version resolution and preserves recovered transaction reporting.",
       "expires": "2026-10-01"
+    },
+    {
+      "fingerprint": "6bd106f7c86f1a0a00f1ac5d0f6c79ab5af615179acf26f73c0350089464436c",
+      "rule_id": "safeguard-preservation",
+      "path": "scripts/installation-qualification.py",
+      "owner": "tailtrail-release",
+      "reason": "The repository identity changes from the private development repository to the public release repository; identity-attestation verification, timeout, fail-closed return-code handling, and exact repository binding remain intact.",
+      "expires": "2026-10-31"
+    },
+    {
+      "fingerprint": "fefdca533641de1ee62c45a4b499c2a947c4e2fbd5b46144fbc0bda1ef792b24",
+      "rule_id": "safeguard-preservation",
+      "path": "tests/test_cross_platform_supply_chain.py",
+      "owner": "tailtrail-release",
+      "reason": "The test is renamed from six to nine hosted receipts because the exact matrix expanded from two to three Python versions; the test body and fail-closed missing-cell assertion remain intact.",
+      "expires": "2026-10-31"
     }
   ]
 }

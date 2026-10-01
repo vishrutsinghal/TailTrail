@@ -22,7 +22,7 @@ created.
 - Minor: new compatible commands, docs, templates, report sections, or parser support.
 - Major: breaking command behavior, install layout, file contract, output schema, or default privacy behavior.
 
-The 1.0 compatibility window covers CPython 3.12, 3.13 and 3.14, the console and
+The 1.x compatibility window covers CPython 3.12, 3.13 and 3.14, the console and
 Python API named in `PACKAGE-CONTRACT.md`, documented exit classes, and stable
 JSON field meanings. Additive JSON fields are minor-compatible. Removing or
 reinterpreting a documented field, exit class, or stable Python name requires a
@@ -32,7 +32,7 @@ major release and migration notes.
 
 - Use tags like `v1.0.0`.
 - Do not move a published tag.
-- A release tag must reference the same full commit recorded by all six hosted
+- A release tag must reference the same full commit recorded by all nine hosted
   platform receipts and the provenance subjects. Never rebuild after tagging.
 - Release notes should include:
   - added

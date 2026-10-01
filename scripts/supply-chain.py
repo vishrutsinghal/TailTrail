@@ -63,6 +63,13 @@ def verify_source_identity(commit: str) -> None:
         raise ValueError("release provenance requires a clean source checkout; local dirty-worktree artifacts are not attributable to HEAD")
 
 
+def release_product() -> dict[str, str]:
+    product = read_json(ROOT / "release-manifest.json").get("product", {})
+    if not isinstance(product, dict) or not isinstance(product.get("name"), str) or not isinstance(product.get("version"), str):
+        raise ValueError("release manifest product name and version are required")
+    return {"name": product["name"], "version": product["version"]}
+
+
 def create_bundle(artifacts: list[Path], output: Path, repository: str, commit: str, epoch: int, *, verify_environment: bool = True, verify_source: bool = True) -> dict[str, Any]:
     if not commit or len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit):
         raise ValueError("source commit must be a full lowercase Git SHA")
@@ -72,6 +79,7 @@ def create_bundle(artifacts: list[Path], output: Path, repository: str, commit: 
         verify_build_environment(lock)
     if verify_source:
         verify_source_identity(commit)
+    product = release_product()
     records = [
         {"filename": path.name, "sha256": digest(path), "size": path.stat().st_size}
         for path in sorted(artifacts, key=lambda item: item.name)
@@ -98,7 +106,7 @@ def create_bundle(artifacts: list[Path], output: Path, repository: str, commit: 
         "serialNumber": f"urn:uuid:{commit[:8]}-{commit[8:12]}-4{commit[13:16]}-a{commit[17:20]}-{commit[20:32]}",
         "version": 1,
         "metadata": {
-            "component": {"type": "application", "name": "tailtrail", "version": "1.0.0"},
+            "component": {"type": "application", **product},
             "properties": [{"name": "tailtrail:runtime-dependency-count", "value": "0"}],
         },
         "components": components,
@@ -168,6 +176,14 @@ def verify_bundle(artifacts: list[Path], bundle: Path, *, require_attestation: b
         issues.append("provenance source commit does not match release evidence")
     if sbom.get("bomFormat") != "CycloneDX" or sbom.get("specVersion") != "1.6":
         issues.append("SBOM is not CycloneDX 1.6")
+    try:
+        product = release_product()
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        issues.append(f"release manifest product is unreadable: {error}")
+    else:
+        component = sbom.get("metadata", {}).get("component", {})
+        if component.get("name") != product["name"] or component.get("version") != product["version"]:
+            issues.append("SBOM component does not match release manifest product")
     components = {f"{item.get('name')}=={item.get('version')}" for item in sbom.get("components", [])}
     if components != set(evidence.get("build", {}).get("dependencies", [])):
         issues.append("SBOM dependency inventory does not match locked build inputs")

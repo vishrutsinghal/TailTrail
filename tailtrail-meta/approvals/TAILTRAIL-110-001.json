@@ -1,0 +1,16 @@
+{
+  "schema_version": "1",
+  "type": "tailtrail-repository-approval",
+  "policy_version": 1,
+  "approval_id": "TAILTRAIL-110-001",
+  "approved": true,
+  "owner": "vishrutsinghal",
+  "reason": "Owner requested TailTrail 1.1.0 CPython 3.14 release preparation on tailtrail_v3 and subsequent publication from the vishrutsinghal/TailTrail repository.",
+  "paths": [
+    ".github/actions/",
+    ".github/workflows/",
+    "schemas/",
+    "release-manifest.json"
+  ],
+  "expires": "2026-10-31"
+}

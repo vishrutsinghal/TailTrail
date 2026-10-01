@@ -11,7 +11,7 @@ TailTrail source checkout and has no runtime dependencies:
 
 ```bash
 python3.12 -m venv .venv
-.venv/bin/python -m pip install tailtrail-1.0.0-py3-none-any.whl
+.venv/bin/python -m pip install tailtrail-1.1.0-py3-none-any.whl
 .venv/bin/tailtrail hello
 .venv/bin/tailtrail doctor
 ```
@@ -101,9 +101,9 @@ Use `tailtrail upgrade` to upgrade the installed Python package and every
 already-installed project payload from one reviewed release wheel:
 
 ```bash
-tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.1.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target /path/to/project --dry-run
-tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.1.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target /path/to/project --approved
 ```
 
@@ -223,8 +223,8 @@ After building the canonical wheel and source distribution, run:
 
 ```bash
 tailtrail eval scope installed-release-proof \
-  --wheel dist/tailtrail-1.0.0-py3-none-any.whl \
-  --sdist dist/tailtrail-1.0.0.tar.gz \
+  --wheel dist/tailtrail-1.1.0-py3-none-any.whl \
+  --sdist dist/tailtrail-1.1.0.tar.gz \
   --source-root . \
   --output fsr7-installed-release-proof.json
 ```

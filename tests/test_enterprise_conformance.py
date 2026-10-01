@@ -42,10 +42,10 @@ class EnterpriseConformanceTests(unittest.TestCase):
     def test_hosted_platform_report_must_cover_the_exact_matrix(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "platform.json"
-            path.write_text(json.dumps({"type": "tailtrail-platform-qualification-report", "valid": True, "observed_cells": 5}), encoding="utf-8")
+            path.write_text(json.dumps({"type": "tailtrail-platform-qualification-report", "valid": True, "observed_cells": 8}), encoding="utf-8")
             blocked = self.module.inspect(ROOT, platform_report=path, run_probes=False)
             self.assertFalse(blocked["release_qualification"]["qualified"])
-            path.write_text(json.dumps({"type": "tailtrail-platform-qualification-report", "valid": True, "observed_cells": 6}), encoding="utf-8")
+            path.write_text(json.dumps({"type": "tailtrail-platform-qualification-report", "valid": True, "observed_cells": 9}), encoding="utf-8")
             qualified = self.module.inspect(ROOT, platform_report=path, run_probes=False)
             self.assertTrue(qualified["release_qualification"]["qualified"])
 

@@ -15,9 +15,9 @@ Use this checklist before any open-market release.
 - [ ] Confirm the canonical wheel and sdist rebuilt byte-for-byte with the exact `release-build-lock.json` inputs and fixed source epoch.
 - [ ] Confirm `scripts/package-release-proof.py` accepts the canonical artifacts and the wheel built from the canonical sdist installs successfully.
 - [ ] Confirm `scripts/supply-chain.py verify` accepts `SHA256SUMS`, CycloneDX SBOM, provenance candidate, dependency inventory, and release evidence.
-- [ ] Confirm PyPI project `tailtrail` has a Trusted Publisher for repository `vishrutsinghal/tailr`, workflow `platform-supply-chain.yml`, and environment `pypi`.
-- [ ] Confirm the exact Linux/macOS/Windows x CPython 3.12/3.13 hosted receipt aggregate passes for the release commit and both artifact routes.
-- [ ] Confirm PyPI contains both the canonical `1.0.0` wheel and source distribution produced by the qualified tag workflow.
+- [ ] Confirm PyPI project `tailtrail` has a Trusted Publisher for repository `vishrutsinghal/TailTrail`, workflow `platform-supply-chain.yml`, and environment `pypi`.
+- [ ] Confirm the exact Linux/macOS/Windows x CPython 3.12/3.13/3.14 hosted receipt aggregate passes for the release commit and both artifact routes.
+- [ ] Confirm PyPI contains both the canonical `1.1.0` wheel and source distribution produced by the qualified tag workflow.
 - [ ] On a `v*` tag, confirm GitHub identity attestations exist for both canonical artifacts and verify them with `gh attestation verify`; checksum files alone are not publisher identity.
 - [ ] Run the tampered artifact, checksum, provenance, receipt hash, missing-cell, and non-hosted-receipt negative tests.
 - [ ] Run `git diff --check`.

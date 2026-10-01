@@ -10,13 +10,13 @@
     "type": {"const": "tailtrail-release-publication-receipt"},
     "observed": {"const": true},
     "provider": {"const": "github"},
-    "repository": {"const": "vishrutsinghal/tailr"},
+    "repository": {"const": "vishrutsinghal/TailTrail"},
     "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
     "commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
-    "release_url": {"type": "string", "pattern": "^https://github.com/vishrutsinghal/tailr/releases/tag/v"},
+    "release_url": {"type": "string", "pattern": "^https://github.com/vishrutsinghal/TailTrail/releases/tag/v"},
     "artifact": {"type": "string", "pattern": "^tailtrail-[0-9]+\\.[0-9]+\\.[0-9]+-py3-none-any\\.whl$"},
     "artifact_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "identity_verified": {"const": true},
-    "workflow_run_url": {"type": "string", "pattern": "^https://github.com/vishrutsinghal/tailr/actions/runs/[0-9]+$"}
+    "workflow_run_url": {"type": "string", "pattern": "^https://github.com/vishrutsinghal/TailTrail/actions/runs/[0-9]+$"}
   }
 }

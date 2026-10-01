@@ -122,7 +122,7 @@ class InstallationExperienceTests(unittest.TestCase):
 
     def test_release_discovery_and_publication_workflow_are_explicit(self) -> None:
         payload = json.loads(run("release", "info", "--format", "json").stdout)
-        self.assertEqual(payload["repository"], "https://github.com/vishrutsinghal/tailr")
+        self.assertEqual(payload["repository"], "https://github.com/vishrutsinghal/TailTrail")
         self.assertIn("gh attestation verify", payload["commands"]["identity"])
         workflow = (ROOT / ".github" / "workflows" / "platform-supply-chain.yml").read_text(encoding="utf-8")
         self.assertIn("pypi-publication:", workflow)
@@ -136,14 +136,16 @@ class InstallationExperienceTests(unittest.TestCase):
     def test_publication_receipt_is_observed_and_qualification_requires_attestation_verification(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            artifact = root / "tailtrail-1.0.0-py3-none-any.whl"
+            artifact = root / "tailtrail-1.1.0-py3-none-any.whl"
             artifact.write_bytes(b"qualified wheel")
-            remote = {"url": "https://github.com/vishrutsinghal/tailr/releases/tag/v1.0.0", "tagName": "v1.0.0", "assets": [{"name": artifact.name}]}
+            remote = {"url": "https://github.com/vishrutsinghal/TailTrail/releases/tag/v1.1.0", "tagName": "v1.1.0", "assets": [{"name": artifact.name}]}
             completed = subprocess.CompletedProcess(["gh"], 0, stdout=json.dumps(remote), stderr="")
             with mock.patch.dict("os.environ", {"GITHUB_RUN_ID": "12345"}), mock.patch.object(PUBLICATION.subprocess, "run", return_value=completed):
-                receipt = PUBLICATION.observe("1.0.0", "a" * 40, artifact, root / "receipt.json")
+                receipt = PUBLICATION.observe("1.1.0", "a" * 40, artifact, root / "receipt.json")
             self.assertTrue(receipt["observed"])
+            self.assertEqual(receipt["repository"], "vishrutsinghal/TailTrail")
             self.assertEqual(receipt["artifact_sha256"], hashlib.sha256(artifact.read_bytes()).hexdigest())
+            self.assertTrue(QUALIFICATION._publication_valid(receipt))
             with mock.patch.object(QUALIFICATION.shutil, "which", return_value="/usr/bin/gh"), mock.patch.object(QUALIFICATION.subprocess, "run", return_value=subprocess.CompletedProcess(["gh"], 0, stdout="verified", stderr="")):
                 self.assertTrue(QUALIFICATION._identity_verified(artifact))
             with mock.patch.object(QUALIFICATION.shutil, "which", return_value=None):

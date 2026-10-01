@@ -32,7 +32,7 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/enforce
         with:
-          version: "1.0.0"
+          version: "1.1.0"
           distribution: checkout
           base: ${{ steps.range.outputs.base }}
           head: ${{ github.sha }}

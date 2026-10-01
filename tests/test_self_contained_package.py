@@ -101,10 +101,24 @@ class SelfContainedPackageTests(unittest.TestCase):
         self.assertTrue(python_compatibility((3, 12))[0])
         self.assertTrue(python_compatibility((3, 13))[0])
         self.assertTrue(python_compatibility((3, 14))[0])
+        self.assertFalse(python_compatibility((3, 15))[0])
         supported, message = python_compatibility((3, 11))
         self.assertFalse(supported)
         self.assertIn(">=3.12,<3.15", message)
         self.assertEqual({int(item) for item in ExitCode}, {0, 1, 2, 3, 70})
+
+    def test_distribution_metadata_declares_the_current_python_window(self) -> None:
+        with zipfile.ZipFile(self.wheel) as archive:
+            metadata_name = next(name for name in archive.namelist() if name.endswith(".dist-info/METADATA"))
+            metadata = archive.read(metadata_name).decode("utf-8")
+        with tarfile.open(self.sdist) as archive:
+            pkg_info_name = next(name for name in archive.getnames() if name.endswith("/PKG-INFO"))
+            extracted = archive.extractfile(pkg_info_name)
+            self.assertIsNotNone(extracted)
+            pkg_info = extracted.read().decode("utf-8")
+        for body in (metadata, pkg_info):
+            self.assertIn("Version: 1.1.0", body)
+            self.assertIn("Requires-Python: <3.15,>=3.12", body)
 
     def test_migration_contract_is_versioned_and_fail_closed(self) -> None:
         self.assertEqual(required_migrations(1), ())

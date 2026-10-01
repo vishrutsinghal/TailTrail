@@ -418,7 +418,7 @@ def sarif(report: dict[str, Any]) -> dict[str, Any]:
     for item in report["findings"]:
         rules[item["rule_id"]] = {"id": item["rule_id"], "shortDescription": {"text": item["message"]}, "help": {"text": item["remediation"]}}
         results.append({"ruleId": item["rule_id"], "level": level[item["severity"]], "message": {"text": item["message"]}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": item["path"]}, "region": {"startLine": item["line"]}}}], "partialFingerprints": {"tailtrailFingerprint": item["fingerprint"]}, "properties": {"classification": item["classification"], "state": item["state"], "blocking": item["blocking"], "evidence": item["evidence"], "remediation": item["remediation"]}})
-    return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0", "runs": [{"tool": {"driver": {"name": "TailTrail Repository Enforcement", "version": "1.0.0", "informationUri": "https://github.com/vishrutsinghal/tailr", "rules": list(rules.values())}}, "results": results}]}
+    return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0", "runs": [{"tool": {"driver": {"name": "TailTrail Repository Enforcement", "version": "1.1.0", "informationUri": "https://github.com/vishrutsinghal/TailTrail", "rules": list(rules.values())}}, "results": results}]}
 
 
 def migrate(input_path: Path, output_path: Path) -> int:

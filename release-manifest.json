@@ -366,6 +366,7 @@
       "https://github.com/ai-mode/ai-mode",
       "https://github.com/awslabs/aidlc-workflows",
       "https://github.com/github/spec-kit",
+      "https://github.com/vishrutsinghal/TailTrail",
       "https://github.com/vishrutsinghal/tailr"
     ],
     "excluded_files": [

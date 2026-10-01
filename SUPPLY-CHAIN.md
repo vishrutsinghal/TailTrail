@@ -21,12 +21,12 @@ Run:
 
 ```bash
 python3 scripts/supply-chain.py create \
-  --artifact dist/tailtrail-1.0.0-py3-none-any.whl \
-  --artifact dist/tailtrail-1.0.0.tar.gz \
+  --artifact dist/tailtrail-1.1.0-py3-none-any.whl \
+  --artifact dist/tailtrail-1.1.0.tar.gz \
   --output release-evidence --commit <full-git-sha>
 python3 scripts/supply-chain.py verify \
-  --artifact dist/tailtrail-1.0.0-py3-none-any.whl \
-  --artifact dist/tailtrail-1.0.0.tar.gz \
+  --artifact dist/tailtrail-1.1.0-py3-none-any.whl \
+  --artifact dist/tailtrail-1.1.0.tar.gz \
   --bundle release-evidence
 ```
 
@@ -34,11 +34,11 @@ The bundle contains `SHA256SUMS`, a CycloneDX 1.6 SBOM, an in-toto/SLSA
 provenance candidate, and `release-evidence.json`. The candidate records build
 inputs and subjects but is not a signature. On a `v*` tag, the least-privilege
 identity-attestation job creates GitHub/Sigstore attestations only after the
-six-cell platform gate passes. Consumers verify each downloaded subject with:
+nine-cell platform gate passes. Consumers verify each downloaded subject with:
 
 ```bash
-gh attestation verify tailtrail-1.0.0-py3-none-any.whl --repo <owner/repository>
-gh attestation verify tailtrail-1.0.0.tar.gz --repo <owner/repository>
+gh attestation verify tailtrail-1.1.0-py3-none-any.whl --repo <owner/repository>
+gh attestation verify tailtrail-1.1.0.tar.gz --repo <owner/repository>
 ```
 
 Detached checksums detect changed bytes but do not establish publisher
@@ -52,7 +52,7 @@ publishes the already-built canonical wheel and sdist to PyPI through the
 `pypi` GitHub environment and PyPI Trusted Publishing, then publishes the same
 artifacts plus checksums, SBOM, and release evidence to GitHub Releases.
 Publication never rebuilds an artifact. The PyPI trusted publisher is bound to
-repository `vishrutsinghal/tailr`, workflow `platform-supply-chain.yml`, and
+repository `vishrutsinghal/TailTrail`, workflow `platform-supply-chain.yml`, and
 environment `pypi`; a tag must not be created until that publisher exists.
 The workflow definition is not proof that a release ran; support aggregation
 requires a separate observed publication receipt.
@@ -67,7 +67,7 @@ canonical sdist into separate isolated environments. It exercises the console
 launcher, spaces and Unicode paths, CRLF preservation, permissions and
 symlinks where the OS exposes them, plus install, verify, update, rollback, and
 uninstall for Codex, Copilot, and Claude Core. The aggregate command requires
-exactly Linux/macOS/Windows x Python 3.12/3.13, the same source SHA, and the same
+exactly Linux/macOS/Windows x Python 3.12/3.13/3.14, the same source SHA, and the same
 artifact hashes.
 
 ## Package-manager boundary

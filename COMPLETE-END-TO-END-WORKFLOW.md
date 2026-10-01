@@ -127,7 +127,7 @@ runtime package dependencies.
 
 ```bash
 python3.12 -m venv .venv
-.venv/bin/python -m pip install tailtrail-1.0.0-py3-none-any.whl
+.venv/bin/python -m pip install tailtrail-1.1.0-py3-none-any.whl
 .venv/bin/tailtrail package-info --format json
 .venv/bin/tailtrail hello
 .venv/bin/tailtrail doctor
@@ -218,9 +218,9 @@ For a reviewed package upgrade, use one local hash-pinned wheel for the Python
 environment and all selected project payloads:
 
 ```bash
-tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.1.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target . --dry-run
-tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.1.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target . --approved
 ```
 
@@ -477,7 +477,7 @@ reported separately.
 ```mermaid
 flowchart LR
     S[Source commit + build lock] --> B[Wheel + sdist built once]
-    B --> P[Linux · macOS · Windows<br/>Python 3.12 · 3.13]
+    B --> P[Linux · macOS · Windows<br/>Python 3.12 · 3.13 · 3.14]
     B --> H[Codex · Copilot · Claude<br/>six real scenarios each]
     P --> PA[Attested platform aggregate]
     H --> HR[Sanitized host receipts]
@@ -501,7 +501,7 @@ tailtrail qualify prepare --host all --root .
 
 Run the six prepared scenarios in each real host and record sanitized receipts
 with `tailtrail adapters runtime record`. Hosted CI must produce the exact
-Windows/macOS/Linux × CPython 3.12/3.13 aggregate for the same artifact.
+Windows/macOS/Linux × CPython 3.12/3.13/3.14 aggregate for the same artifact.
 
 ```bash
 tailtrail qualify report --host all --root . \

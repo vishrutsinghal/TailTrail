@@ -46,16 +46,24 @@ class CrossPlatformSupplyChainTests(unittest.TestCase):
     def test_supply_chain_bundle_round_trip_and_tamper_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            wheel = root / "tailtrail-1.0.0-py3-none-any.whl"
-            sdist = root / "tailtrail-1.0.0.tar.gz"
+            wheel = root / "tailtrail-1.1.0-py3-none-any.whl"
+            sdist = root / "tailtrail-1.1.0.tar.gz"
             wheel.write_bytes(b"wheel bytes")
             sdist.write_bytes(b"sdist bytes")
             bundle = root / "evidence"
             commit = "1" * 40
             evidence = SUPPLY.create_bundle([wheel, sdist], bundle, "https://github.com/example/tailtrail", commit, 1704067200, verify_environment=False, verify_source=False)
             self.assertEqual(evidence["attestation"], "required-on-tag")
+            sbom_path = bundle / "tailtrail.cdx.json"
+            sbom = json.loads(sbom_path.read_text(encoding="utf-8"))
+            self.assertEqual(sbom["metadata"]["component"], {"type": "application", "name": "tailtrail", "version": "1.1.0"})
             self.assertEqual(SUPPLY.verify_bundle([wheel, sdist], bundle), [])
             self.assertEqual(SUPPLY.verify_bundle([wheel, sdist], bundle, require_attestation=True), ["identity-backed release attestation is required"])
+            sbom["metadata"]["component"]["version"] = "1.0.0"
+            sbom_path.write_text(json.dumps(sbom), encoding="utf-8")
+            self.assertIn("SBOM component does not match release manifest product", SUPPLY.verify_bundle([wheel, sdist], bundle))
+            sbom["metadata"]["component"]["version"] = "1.1.0"
+            sbom_path.write_text(json.dumps(sbom), encoding="utf-8")
             wheel.write_bytes(b"tampered")
             issues = SUPPLY.verify_bundle([wheel, sdist], bundle)
             self.assertTrue(any("digest or size mismatch" in issue for issue in issues), issues)
@@ -81,7 +89,7 @@ class CrossPlatformSupplyChainTests(unittest.TestCase):
             "checks": checks, "valid": True,
         }
 
-    def test_matrix_report_requires_exact_six_hosted_receipts(self) -> None:
+    def test_matrix_report_requires_exact_nine_hosted_receipts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             receipts = root / "receipts"

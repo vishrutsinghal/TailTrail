@@ -1,13 +1,13 @@
 {
   "schema_version": "1",
   "type": "tailtrail-release-channel",
-  "repository": "https://github.com/vishrutsinghal/tailr",
-  "latest_release": "https://github.com/vishrutsinghal/tailr/releases/latest",
+  "repository": "https://github.com/vishrutsinghal/TailTrail",
+  "latest_release": "https://github.com/vishrutsinghal/TailTrail/releases/latest",
   "current_source_version": "1.1.0",
   "publication": "tag-gated",
   "artifact": "tailtrail-{version}-py3-none-any.whl",
   "verification": {
-    "identity": "gh attestation verify {artifact} --repo vishrutsinghal/tailr",
+    "identity": "gh attestation verify {artifact} --repo vishrutsinghal/TailTrail",
     "checksum": "Compare the downloaded artifact with SHA256SUMS from the same release.",
     "install": "python3 -m pip install --no-deps {artifact}"
   },

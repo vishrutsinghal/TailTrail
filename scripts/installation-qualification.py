@@ -16,6 +16,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 HOSTS = ("codex", "copilot", "claude")
+REPOSITORY = "vishrutsinghal/TailTrail"
 
 
 def _load_runtime() -> Any:
@@ -45,15 +46,15 @@ def _publication_valid(payload: dict[str, Any] | None) -> bool:
         and payload.get("type") == "tailtrail-release-publication-receipt"
         and payload.get("observed") is True
         and payload.get("provider") == "github"
-        and payload.get("repository") == "vishrutsinghal/tailr"
+        and payload.get("repository") == REPOSITORY
         and payload.get("identity_verified") is True
         and isinstance(payload.get("commit"), str)
         and len(payload["commit"]) == 40
         and all(character in "0123456789abcdef" for character in payload["commit"])
-        and payload.get("release_url") == f"https://github.com/vishrutsinghal/tailr/releases/tag/v{payload.get('version')}"
+        and payload.get("release_url") == f"https://github.com/{REPOSITORY}/releases/tag/v{payload.get('version')}"
         and payload.get("artifact") == f"tailtrail-{payload.get('version')}-py3-none-any.whl"
         and isinstance(payload.get("workflow_run_url"), str)
-        and payload["workflow_run_url"].startswith("https://github.com/vishrutsinghal/tailr/actions/runs/")
+        and payload["workflow_run_url"].startswith(f"https://github.com/{REPOSITORY}/actions/runs/")
         and payload["workflow_run_url"].rsplit("/", 1)[-1].isdigit()
         and isinstance(payload.get("artifact_sha256"), str)
         and len(payload["artifact_sha256"]) == 64
@@ -64,7 +65,7 @@ def _publication_valid(payload: dict[str, Any] | None) -> bool:
 def _identity_verified(path: Path | None) -> bool:
     if path is None or not path.is_file() or shutil.which("gh") is None:
         return False
-    result = subprocess.run(["gh", "attestation", "verify", path.as_posix(), "--repo", "vishrutsinghal/tailr"], text=True, capture_output=True, check=False, timeout=60)
+    result = subprocess.run(["gh", "attestation", "verify", path.as_posix(), "--repo", REPOSITORY], text=True, capture_output=True, check=False, timeout=60)
     return result.returncode == 0
 
 

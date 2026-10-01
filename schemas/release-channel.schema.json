@@ -8,8 +8,8 @@
   "properties": {
     "schema_version": {"const": "1"},
     "type": {"const": "tailtrail-release-channel"},
-    "repository": {"const": "https://github.com/vishrutsinghal/tailr"},
-    "latest_release": {"const": "https://github.com/vishrutsinghal/tailr/releases/latest"},
+    "repository": {"const": "https://github.com/vishrutsinghal/TailTrail"},
+    "latest_release": {"const": "https://github.com/vishrutsinghal/TailTrail/releases/latest"},
     "current_source_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
     "publication": {"const": "tag-gated"},
     "artifact": {"type": "string", "minLength": 1},
