@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tailtrail.local/schemas/tailtrail-registry.schema.json",
+  "title": "TailTrail Feature Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "features"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "status",
+          "surface",
+          "roadmap_ref",
+          "owner",
+          "governance_class",
+          "commands",
+          "docs",
+          "scripts",
+          "tests",
+          "mcp_tools",
+          "requires_approval",
+          "read_only",
+          "evidence_label",
+          "depends_on",
+          "since_version",
+          "deprecated_in_version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "implemented",
+              "deprecated"
+            ]
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "core",
+              "extended"
+            ]
+          },
+          "roadmap_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "governance_class": {
+            "type": "string",
+            "enum": [
+              "governance",
+              "product",
+              "dev-experience",
+              "benchmark",
+              "telemetry"
+            ]
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "docs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scripts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mcp_tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requires_approval": {
+            "type": "boolean"
+          },
+          "read_only": {
+            "type": "boolean"
+          },
+          "evidence_label": {
+            "type": "string",
+            "enum": [
+              "none",
+              "estimated",
+              "local-evidence",
+              "measured",
+              "benchmark-measured"
+            ]
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          },
+          "since_version": {
+            "type": "string"
+          },
+          "deprecated_in_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "integration_contract": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "implemented_capabilities",
+              "remaining_integration",
+              "deferred_domains",
+              "future_scope",
+              "canonical_owners"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "prototype-implemented",
+                  "integration-incomplete",
+                  "integrated"
+                ]
+              },
+              "implemented_capabilities": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "remaining_integration": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "deferred_domains": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "future_scope": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "canonical_owners": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "intent_and_routing",
+                  "approved_investigation_boundary",
+                  "lifecycle_state",
+                  "execution_evidence",
+                  "requirement_and_drift_status",
+                  "delivery_closure",
+                  "learning_and_evaluation"
+                ],
+                "properties": {
+                  "intent_and_routing": { "type": "string", "minLength": 1 },
+                  "approved_investigation_boundary": { "type": "string", "minLength": 1 },
+                  "lifecycle_state": { "type": "string", "minLength": 1 },
+                  "execution_evidence": { "type": "string", "minLength": 1 },
+                  "requirement_and_drift_status": { "type": "string", "minLength": 1 },
+                  "delivery_closure": { "type": "string", "minLength": 1 },
+                  "learning_and_evaluation": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          },
+          "scope_ownership": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "scope_decision",
+              "target_identity",
+              "relationship_evidence",
+              "validated_persistence"
+            ],
+            "properties": {
+              "scope_decision": {
+                "const": "Navigator"
+              },
+              "target_identity": {
+                "const": "Target Workspace"
+              },
+              "relationship_evidence": {
+                "const": "Code Graph"
+              },
+              "validated_persistence": {
+                "const": "Planning Lock"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

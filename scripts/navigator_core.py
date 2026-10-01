@@ -1,0 +1,809 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class FeatureDecision:
+    name: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class NavigatorRequest:
+    explicit: bool
+    depth: str
+    subject: str
+
+
+@dataclass(frozen=True)
+class WorkflowClassification:
+    workflow_type: str
+    reason_code: str
+    reason: str
+    known_symptom: str | None
+    unknown_evidence: tuple[str, ...]
+    selected_features: tuple[str, ...]
+    required_later_features: tuple[str, ...]
+    conditional_features: tuple[str, ...]
+    approval_posture: str
+    alternative: str | None
+
+
+DEBUG_INTENT_PHRASES = (
+    "double charge",
+    "double-charge",
+    "charged twice",
+    "charges twice",
+    "crashes when",
+    "throws an exception",
+    "raises an exception",
+    "fails when",
+    "failing when",
+    "intermittent failure",
+    "returns the wrong",
+    "returns wrong",
+    "produces the wrong",
+    "unexpected result",
+    "reproduce:",
+    "regression:",
+    "bug:",
+    "defect:",
+    "stopped working",
+    "no longer works",
+    "used to work",
+    "investigate why",
+    "diagnose why",
+    "find the root cause",
+)
+
+AMBIGUOUS_FAILURE_TERMS = ("bug", "defect", "failure", "failing", "fix", "issue", "problem")
+EXPLICIT_DEBUG_PREFIX = re.compile(r"^debug\b", re.IGNORECASE)
+
+
+def classify_workflow_intent(
+    goal: str,
+    *,
+    override: str | None = None,
+    has_error_artifact: bool = False,
+    has_reproduction_command: bool = False,
+) -> WorkflowClassification:
+    """Classify build versus symptom-first debug work conservatively.
+
+    This is Navigator's canonical intent decision. Hosts and CLI adapters may
+    supply explicit authority/evidence signals, but must not duplicate these
+    heuristics. Ambiguity deliberately remains on the build path.
+    """
+    normalized_override = (override or "").strip().lower()
+    if normalized_override not in {"", "build", "debug"}:
+        raise ValueError("workflow override must be build or debug")
+    lowered = goal.lower().strip()
+    if normalized_override == "debug":
+        workflow_type, reason_code = "debug-investigation", "explicit-debug-override"
+        reason = "The user explicitly selected the Debug Harness workflow."
+    elif normalized_override == "build":
+        workflow_type, reason_code = "build", "explicit-build-override"
+        reason = "The user explicitly selected the normal build workflow."
+    elif EXPLICIT_DEBUG_PREFIX.match(lowered):
+        workflow_type, reason_code = "debug-investigation", "explicit-debug-command"
+        reason = "The goal begins with the explicit Debug command form."
+    elif has_error_artifact or has_reproduction_command:
+        workflow_type, reason_code = "debug-investigation", "supplied-debug-evidence"
+        reason = "A failure artifact or reproduction command makes this a symptom-first investigation."
+    elif any(phrase in lowered for phrase in DEBUG_INTENT_PHRASES):
+        workflow_type, reason_code = "debug-investigation", "symptom-first-phrase"
+        reason = "The goal reports an observed symptom or explicitly asks for root-cause investigation."
+    else:
+        workflow_type = "build"
+        ambiguous = any(keyword_found(lowered, term) for term in AMBIGUOUS_FAILURE_TERMS)
+        reason_code = "ambiguous-default-build" if ambiguous else "implementation-intent"
+        reason = (
+            "Failure wording is not specific enough to prove a symptom-first investigation; Navigator defaults safely to build."
+            if ambiguous
+            else "The goal states an implementation outcome rather than an observed unexplained symptom."
+        )
+
+    if workflow_type == "debug-investigation":
+        unknown = []
+        if not has_error_artifact:
+            unknown.append("exact sanitized failure output or receipt")
+        if not has_reproduction_command:
+            unknown.append("deterministic reproduction command and observed outcome")
+        unknown.extend(("confirmed failing path and callers", "approved expected-behaviour boundary"))
+        return WorkflowClassification(
+            workflow_type=workflow_type,
+            reason_code=reason_code,
+            reason=reason,
+            known_symptom=goal.strip() or None,
+            unknown_evidence=tuple(unknown),
+            selected_features=("Navigator", "Debug Harness", "Reproduction Contract"),
+            required_later_features=(
+                "Correction implementation until root cause is proven and approved",
+                "Canonical closure until implementation and validation evidence exist",
+            ),
+            conditional_features=(
+                "Governed learning until trusted acceptance",
+            ),
+            approval_posture="planning-only; reproduction investigation requires its own approval before experiments",
+            alternative="Use --build to treat the same goal as an implementation request.",
+        )
+
+    ambiguous = reason_code == "ambiguous-default-build"
+    return WorkflowClassification(
+        workflow_type=workflow_type,
+        reason_code=reason_code,
+        reason=reason,
+        known_symptom=None,
+        unknown_evidence=(),
+        selected_features=("Navigator", "Planning Lock"),
+        required_later_features=(),
+        conditional_features=("Debug Harness unless an unexplained symptom or debug evidence is supplied",),
+        approval_posture="normal Planning Lock approval before implementation",
+        alternative=(
+            "Use --debug or describe the observed symptom/reproduction to start a debug investigation."
+            if ambiguous
+            else None
+        ),
+    )
+
+
+def requirement_impact_matrix(requirements: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Normalize Navigator requirement rows without assigning durable run UIDs.
+
+    Durable UIDs are intentionally assigned by the approved local anchor, not
+    inferred from a transient conversational proposal.
+    """
+    rows: list[dict[str, object]] = []
+    for index, requirement in enumerate(requirements, start=1):
+        statement = str(requirement.get("statement", "")).strip()
+        if not statement:
+            raise ValueError(f"requirement {index} needs a statement")
+        rows.append(
+            {
+                "display_id": str(requirement.get("display_id") or f"REQ-{index:02d}"),
+                **({"requirement_id": str(requirement["requirement_id"])} if requirement.get("requirement_id") else {}),
+                **({"query_terms": list(requirement["query_terms"])} if requirement.get("query_terms") else {}),
+                "kind": str(requirement.get("kind") or "change"),
+                "statement": statement,
+                "acceptance_criteria": list(requirement.get("acceptance_criteria", [])),
+                "preserve_rules": list(requirement.get("preserve_rules", [])),
+                "likely_paths": list(requirement.get("likely_paths", [])),
+                "evidence_plan": list(requirement.get("evidence_plan", [])),
+                "confidence": str(requirement.get("confidence") or "local-estimate"),
+            }
+        )
+    return rows
+
+
+RISK_KEYWORDS = {
+    "auth": "auth/security",
+    "authorization": "auth/security",
+    "permission": "auth/security",
+    "secret": "secrets",
+    "password": "secrets",
+    "token": "secrets/token",
+    "security": "security",
+    "dependency": "dependency",
+    "package": "dependency",
+    "library": "dependency",
+    "upgrade": "dependency",
+    "migration": "data migration",
+    "schema": "data shape",
+    "production": "production",
+    "release": "release",
+    "aws": "live E2E dependency",
+    "e2e": "live E2E dependency",
+    "database": "live E2E dependency",
+    "eventual consistency": "live E2E dependency",
+    "test data": "live E2E dependency",
+    "sonar": "ci/sonar",
+    "sonarqube": "ci/sonar",
+    "sonarcloud": "ci/sonar",
+    "ci": "ci/sonar",
+    "pipeline": "ci/sonar",
+    "quality gate": "ci/sonar",
+    "vulnerability": "vulnerability scan",
+    "vulnerabilities": "vulnerability scan",
+    "vuln": "vulnerability scan",
+    "cve": "vulnerability scan",
+    "ghsa": "vulnerability scan",
+    "sast": "vulnerability scan",
+    "secret leak": "vulnerability scan",
+    "container scan": "vulnerability scan",
+    "image scan": "vulnerability scan",
+    "trivy": "vulnerability scan",
+    "snyk": "vulnerability scan",
+    "semgrep": "vulnerability scan",
+    "codeql": "vulnerability scan",
+    "fortify": "vulnerability scan",
+    "checkmarx": "vulnerability scan",
+    "veracode": "vulnerability scan",
+    "gitleaks": "vulnerability scan",
+    "dependency-check": "vulnerability scan",
+    "dependency audit": "vulnerability scan",
+    "multi-team": "multi-team",
+    "regulated": "regulated",
+    "compliance": "regulated",
+}
+
+TASK_KEYWORDS = {
+    "bug": "bug",
+    "fix": "bug",
+    "refactor": "refactor",
+    "review": "review",
+    "diff": "review",
+    "pr": "review",
+    "feature": "feature",
+    "add": "feature",
+    "implement": "implementation",
+    "endpoint": "feature",
+    "api": "feature",
+    "test": "qa",
+    "tests": "qa",
+    "unit test": "qa",
+    "unit tests": "qa",
+    "regression": "qa",
+    "coverage": "qa",
+    "test coverage": "qa",
+    "validation": "qa",
+    "handoff": "handoff",
+    "release": "release",
+    "sonar": "ci-sonar",
+    "sonarqube": "ci-sonar",
+    "sonarcloud": "ci-sonar",
+    "ci": "ci-sonar",
+    "quality gate": "ci-sonar",
+    "lint": "qa",
+    "scanner": "qa",
+    "scan": "qa",
+    "vulnerability": "security",
+    "vulnerabilities": "security",
+    "vuln": "security",
+    "cve": "security",
+    "ghsa": "security",
+    "sast": "security",
+    "secret leak": "security",
+    "container scan": "security",
+    "image scan": "security",
+    "trivy": "security",
+    "snyk": "security",
+    "semgrep": "security",
+    "codeql": "security",
+    "fortify": "security",
+    "checkmarx": "security",
+    "veracode": "security",
+    "gitleaks": "security",
+    "dependency-check": "security",
+    "dependency": "dependency",
+    "package": "dependency",
+    "security": "security",
+    "auth": "security",
+}
+
+TINY_KEYWORDS = ("typo", "comment", "rename", "readme", "docs only", "documentation only")
+
+# UI changes need a small extra boundary: the requested screen should fit the
+# repository's established design system instead of introducing a parallel one.
+# This is deliberately lexical and path-based; it routes planning and does not
+# claim visual equivalence or run a browser during a Planning Lock.
+UI_GOAL_TERMS = (
+    "ui", "user interface", "frontend", "front end", "screen", "page",
+    "component", "layout", "modal", "dialog", "form", "dashboard",
+    "button", "typography", "font", "theme", "responsive", "accessibility",
+)
+UI_PATH_SUFFIXES = (".css", ".scss", ".sass", ".less", ".jsx", ".tsx", ".vue", ".svelte")
+UI_PATH_PARTS = {"components", "component", "ui", "views", "pages", "screens", "styles", "theme", "frontend", "client"}
+
+NAVIGATOR_PREFIX = re.compile(
+    r"^\s*(?:(?:using|use)\s+)?(?:tailtrail\s+)?navigator\b\s*[:,.-]?\s*",
+    re.IGNORECASE,
+)
+
+
+def explicit_navigator_request(goal: str) -> NavigatorRequest | None:
+    """Parse a short explicit Navigator request without treating it as task text."""
+    match = NAVIGATOR_PREFIX.match(goal)
+    if not match:
+        return None
+
+    remainder = goal[match.end() :].strip()
+    lowered = remainder.lower()
+    if re.match(r"context\b", lowered):
+        depth = "context"
+    elif "before implementation" in lowered:
+        depth = "plan"
+    elif re.match(r"(?:implement|implementation)\b", lowered):
+        depth = "implement"
+    elif re.search(r"\b(?:give|show|create|make)?\s*(?:me\s+)?(?:a\s+)?plan\b", lowered):
+        depth = "plan"
+    else:
+        depth = "context"
+
+    subject = remainder
+    subject = re.sub(r"^context\s+(?:for\s+)?", "", subject, flags=re.IGNORECASE)
+    subject = re.sub(r"^(?:give|show|create|make)\s+(?:me\s+)?", "", subject, flags=re.IGNORECASE)
+    subject = re.sub(r"^(?:a\s+)?(?:navigator\s+)?plan\s+(?:for\s+)?", "", subject, flags=re.IGNORECASE)
+    subject = re.sub(r"^(?:implement|implementation)(?:\s+plan)?\s+(?:for\s+)?", "", subject, flags=re.IGNORECASE)
+    subject = re.sub(r"\s+before\s+implementation\s*$", "", subject, flags=re.IGNORECASE).strip(" .:")
+    return NavigatorRequest(explicit=True, depth=depth, subject=subject or "current task")
+
+CI_SONAR_TERMS = (
+    "sonar",
+    "sonarqube",
+    "sonarcloud",
+    "sonar-scanner",
+    "quality gate",
+    "pipeline",
+    "build failed",
+    "test failed",
+    "ci failed",
+    "lint failed",
+    "static analysis",
+    "file:line",
+)
+
+VULNERABILITY_TERMS = (
+    "cve",
+    "ghsa",
+    "vulnerability",
+    "vulnerabilities",
+    "vuln",
+    "sast",
+    "secret leak",
+    "container scan",
+    "image scan",
+    "trivy",
+    "snyk",
+    "npm audit",
+    "pip-audit",
+    "dependency-check",
+    "gitleaks",
+    "codeql",
+    "fortify",
+    "checkmarx",
+    "veracode",
+    "semgrep",
+    "bandit",
+    "checkov",
+    "tfsec",
+)
+
+TEST_PRECISION_TERMS = (
+    "add test",
+    "add tests",
+    "add unit test",
+    "add unit tests",
+    "unit test",
+    "unit tests",
+    "regression test",
+    "regression tests",
+    "test coverage",
+    "coverage",
+    "test case",
+    "test cases",
+    "focused test",
+    "focused tests",
+    "after dev",
+    "after development",
+    "post-change validation",
+    "post change validation",
+    "validation confidence",
+    "before pr",
+    "before raising pr",
+    "before merge",
+)
+
+TEST_ADDITION_TERMS = (
+    "add test",
+    "add tests",
+    "add unit test",
+    "add unit tests",
+    "add regression test",
+    "add regression tests",
+    "add focused test",
+    "add focused tests",
+    "add focused unit test",
+    "add focused unit tests",
+    "add validation test",
+    "add validation tests",
+    "add focused validation",
+    "add validation coverage",
+    "add test coverage",
+)
+
+# Tolerates inserted words ("add new test cases", "add a few more tests") that the
+# exact-phrase TEST_ADDITION_TERMS list above does not, without enumerating every
+# combination by hand.
+TEST_ADDITION_PATTERN = re.compile(
+    r"\badd(?:ing)?\b(?:\s+\w+){0,3}\s+(?:regression\s+)?tests?\b"
+    r"|\badd(?:ing)?\b(?:\s+\w+){0,3}\s+test\s*cases?\b",
+    re.IGNORECASE,
+)
+
+CROSS_REPO_REFERENCE_TERMS = (
+    "cross-repo",
+    "cross repo",
+    "reference:",
+    "reference repo",
+    "reference repository",
+    "target:",
+    "other repo",
+    "other repository",
+    "sibling repo",
+    "sibling repository",
+    "use repo",
+    "use service",
+    "as reference",
+    "take reference",
+    "same pattern",
+    "match pattern",
+    "target repo",
+)
+
+REJECTION_TERMS = (
+    "reject",
+    "rejected",
+    "rejection",
+    "not accepted",
+    "did not accept",
+    "didn't accept",
+    "not liked",
+    "did not like",
+    "didn't like",
+    "bad suggestion",
+    "wrong suggestion",
+)
+
+REVISION_TERMS = (
+    "revise",
+    "revised",
+    "revision",
+    "changed the plan",
+    "changed approach",
+    "different approach",
+    "edit plan",
+)
+
+REPO_OVERVIEW_TERMS = (
+    "tell me important features",
+    "important features of this repo",
+    "important features in this repo",
+    "what does this repo do",
+    "what this repo does",
+    "summarize this repo",
+    "repo overview",
+    "repository overview",
+    "project overview",
+    "explain this repo",
+    "explain this repository",
+    "what are the main features",
+    "main features of this repo",
+    "key features of this repo",
+    "important modules",
+    "understand this repo",
+    "walk me through this repo",
+)
+
+REVIEW_INTENT_TERMS = (
+    "review my code",
+    "review my changes",
+    "review the code",
+    "review code",
+    "code review",
+    "review this pr",
+    "review pr",
+    "review this branch",
+    "check this pr",
+    "check for bugs",
+    "quality review",
+    "security review",
+    "review after",
+    "review it after",
+    "after implementation",
+    "before pr",
+    "before raising pr",
+)
+
+FULL_REVIEW_TERMS = (
+    "full repo review",
+    "full repository review",
+    "review entire repo",
+    "review whole repo",
+    "full code review",
+    "architecture review",
+    "broad review",
+)
+
+BRANCH_REVIEW_TERMS = (
+    "branch against",
+    "against main",
+    "against master",
+    "against develop",
+    "before pr",
+    "before raising pr",
+    "current branch",
+    "this branch",
+)
+
+PATH_REVIEW_TERMS = (
+    "this folder",
+    "this directory",
+    "this module",
+    "under ",
+    "--dir",
+)
+
+
+def is_repo_overview_request(goal: str) -> bool:
+    lowered = goal.lower()
+    return any(term in lowered for term in REPO_OVERVIEW_TERMS)
+
+
+def review_requested(goal: str, tasks: list[str] | None = None) -> bool:
+    lowered = goal.lower()
+    return "review" in (tasks or []) or any(term in lowered for term in REVIEW_INTENT_TERMS)
+
+
+def post_implementation_review_requested(goal: str) -> bool:
+    lowered = goal.lower()
+    return any(term in lowered for term in ("review after", "review it after", "after implementation", "then review", "and review"))
+
+
+def full_review_requested(goal: str) -> bool:
+    lowered = goal.lower()
+    return any(term in lowered for term in FULL_REVIEW_TERMS)
+
+
+def branch_review_requested(goal: str) -> bool:
+    lowered = goal.lower()
+    return any(term in lowered for term in BRANCH_REVIEW_TERMS)
+
+
+def path_review_requested(goal: str) -> bool:
+    lowered = goal.lower()
+    return any(term in lowered for term in PATH_REVIEW_TERMS)
+
+
+def feature_signal_is_test_only(goal: str) -> bool:
+    lowered = goal.lower()
+    test_addition = any(term in lowered for term in TEST_ADDITION_TERMS) or TEST_ADDITION_PATTERN.search(goal) is not None
+    if not test_addition:
+        return False
+    non_test_feature_terms = ("feature", "implement", "endpoint", "api", "workflow", "service", "screen", "page")
+    # Word-boundary match: a naive substring check previously misread "implementation"
+    # (in phrases like "current implementation pattern") as the word "implement".
+    return not any(keyword_found(lowered, term) for term in non_test_feature_terms)
+
+
+def keyword_found(text: str, keyword: str) -> bool:
+    """Match a planning keyword as a token or phrase, never as a substring.
+
+    Short routing terms such as ``ci`` and ``pr`` previously matched words such
+    as ``accessibility`` and ``preview``.  That selected CI and review controls
+    for unrelated UI work.  Separators such as ``/`` and ``-`` remain valid
+    boundaries so paths and ordinary hyphenated prose still work.
+    """
+    normalized = re.escape(keyword.lower()).replace(r"\ ", r"\s+")
+    return re.search(rf"(?<![a-z0-9_]){normalized}(?![a-z0-9_])", text.lower()) is not None
+
+
+def _non_negated_keyword_found(text: str, keyword: str) -> bool:
+    """Return true when a keyword expresses requested work, not a prohibition."""
+    normalized = re.escape(keyword.lower()).replace(r"\ ", r"\s+")
+    for match in re.finditer(rf"(?<![a-z0-9_]){normalized}(?![a-z0-9_])", text.lower()):
+        prefix = text.lower()[max(0, match.start() - 80):match.start()]
+        if re.search(r"(?:do\s+not|don't|must\s+not|should\s+not|avoid|without|no\s+new)\b[^.;!?]{0,70}$", prefix):
+            continue
+        return True
+    return False
+
+
+def dependency_change_requested(goal: str) -> bool:
+    """Distinguish dependency work from a no-new-dependency guardrail."""
+    return any(
+        _non_negated_keyword_found(goal, word)
+        for word in ("dependency", "package", "library", "upgrade")
+    )
+
+
+def review_change_requested(goal: str) -> bool:
+    """Identify code/work review without treating a UI label as review work."""
+    lowered = goal.lower().strip()
+    if re.match(r"^review\b", lowered):
+        return True
+    return any(
+        keyword_found(lowered, phrase)
+        for phrase in (
+            "review my code", "review the code", "review code", "code review",
+            "review my changes", "review the changes", "review this diff",
+            "review this pr", "review the pr", "review this branch",
+            "post-change review", "after implementation", "before pr",
+        )
+    )
+
+
+def task_types(goal: str) -> list[str]:
+    if is_repo_overview_request(goal):
+        return ["repo-overview"]
+    lowered = goal.lower()
+    found = []
+    documentation_only = any(
+        term in lowered
+        for term in ("documentation only", "docs only", "readme only", "changelog only", "markdown documentation", "readme documentation")
+    )
+    if documentation_only:
+        found.append("documentation")
+    for word, task in TASK_KEYWORDS.items():
+        if word == "add" and task == "feature" and feature_signal_is_test_only(goal):
+            continue
+        if task == "dependency" and not dependency_change_requested(goal):
+            continue
+        if word == "review" and task == "review" and not review_change_requested(goal):
+            continue
+        if keyword_found(lowered, word) and task not in found:
+            found.append(task)
+    return found or ["implementation"]
+
+
+def ui_change_requested(goal: str, changed: list[str]) -> bool:
+    """Identify a UI change without mistaking an API's word "component" for one.
+
+    A direct UI term is sufficient.  A supplied frontend/style path is also
+    sufficient because it is concrete user scope, not a guess from the whole
+    repository.  This function only selects a preservation guardrail; source
+    discovery remains an approved read-only delivery step.
+    """
+    lowered = goal.lower()
+    if any(keyword_found(lowered, term) for term in UI_GOAL_TERMS):
+        return True
+    for raw_path in changed:
+        path = Path(raw_path.replace("\\", "/"))
+        if path.suffix.lower() in UI_PATH_SUFFIXES:
+            return True
+        if any(part.lower() in UI_PATH_PARTS for part in path.parts):
+            return True
+    return False
+
+
+def risk_indicators(goal: str, changed: list[str]) -> list[str]:
+    lowered = goal.lower()
+    risks = {
+        label
+        for word, label in RISK_KEYWORDS.items()
+        if keyword_found(lowered, word)
+        and (label != "dependency" or dependency_change_requested(goal))
+    }
+    path_text = " ".join(changed).lower()
+    for word, label in RISK_KEYWORDS.items():
+        if keyword_found(path_text, word):
+            risks.add(label)
+    if len(changed) > 3:
+        risks.add("multi-file")
+    return sorted(risks)
+
+
+def is_tiny(goal: str, risks: list[str], changed: list[str]) -> bool:
+    lowered = goal.lower()
+    return bool(any(word in lowered for word in TINY_KEYWORDS) and not risks and len(changed) <= 1)
+
+
+def has_override(goal: str, phrase: str) -> bool:
+    return phrase in goal.lower()
+
+
+def term_found(goal: str, terms: tuple[str, ...]) -> bool:
+    return any(keyword_found(goal, term) for term in terms)
+
+
+def ci_sonar_requested(goal: str, tasks: list[str], risks: list[str]) -> bool:
+    return "ci-sonar" in tasks or "ci/sonar" in risks or term_found(goal, CI_SONAR_TERMS)
+
+
+def vulnerability_requested(goal: str, risks: list[str]) -> bool:
+    return "vulnerability scan" in risks or term_found(goal, VULNERABILITY_TERMS)
+
+
+def quality_scan_requested(goal: str, tasks: list[str], risks: list[str]) -> bool:
+    lowered = goal.lower()
+    scan_terms = (
+        "full code scan",
+        "sonar check",
+        "sonarqube",
+        "sonarcloud",
+        "quality gate",
+        "quality scan",
+        "lint issue",
+        "before pr",
+        "vulnerability",
+        "vulnerabilities",
+        "vuln",
+        "sast",
+        "security scan",
+        "dependency audit",
+    )
+    return (
+        any(term in lowered for term in scan_terms)
+        or "vulnerability scan" in risks
+        or ("ci-sonar" in tasks and "scan" in lowered)
+    )
+
+
+def test_precision_requested(goal: str, tasks: list[str], risks: list[str], changed: list[str]) -> bool:
+    lowered = goal.lower()
+    if any(term in lowered for term in TEST_PRECISION_TERMS):
+        return True
+    if "qa" in tasks and any(task in tasks for task in ("bug", "feature", "implementation", "refactor", "review")):
+        return True
+    if "ci/sonar" in risks and any(term in lowered for term in ("fix", "resolve", "remediate", "change")):
+        return True
+    return bool(changed and any(term in lowered for term in ("test", "validate", "validation")))
+
+
+def heavy_graph_candidate(goal: str, tasks: list[str], risks: list[str]) -> bool:
+    if any(task in tasks for task in ("ci-sonar", "qa", "review", "dependency", "security")):
+        return True
+    if any(risk in risks for risk in ("ci/sonar", "vulnerability scan", "dependency", "multi-file", "production", "regulated")):
+        return True
+    return any(term in goal.lower() for term in ("heavy read", "full code scan", "before pr", "broad review"))
+
+
+def quoted(value: str) -> str:
+    return json.dumps(value)
+
+
+def cross_repo_reference_requested(goal: str) -> bool:
+    lowered = goal.lower()
+    return any(term in lowered for term in CROSS_REPO_REFERENCE_TERMS)
+
+
+def labeled_path(goal: str, labels: tuple[str, ...]) -> str | None:
+    label_pattern = "|".join(re.escape(label) for label in labels)
+    stop_labels = "target|target repo|target repository|reference|reference repo|reference repository|ref repo|other repo|other repository|goal"
+    pattern = re.compile(rf"(?:{label_pattern})\s*[:=]\s*(.+?)(?=\s+(?:{stop_labels})\s*[:=]|\n|,|;|$)", re.IGNORECASE)
+    match = pattern.search(goal)
+    if not match:
+        return None
+    value = match.group(1).strip().strip("`'\"")
+    return value or None
+
+
+def cross_repo_reference_plan(goal: str, root: Path, command_prefix: str) -> dict[str, object] | None:
+    if not cross_repo_reference_requested(goal):
+        return None
+    target = labeled_path(goal, ("target", "target repo", "target repository")) or root.as_posix()
+    reference = labeled_path(goal, ("reference", "reference repo", "reference repository", "ref repo", "other repo", "other repository"))
+    command = f"{command_prefix} reference --target {quoted(target)} --reference "
+    if reference:
+        command += f"{quoted(reference)} --goal {quoted(goal)}"
+    else:
+        command += f"{quoted('/path/to/reference-repo')} --goal {quoted(goal)}"
+    return {
+        "target": target,
+        "reference": reference or "not parsed from prompt",
+        "command": command,
+        "boundaries": [
+            "Only the target repo is editable.",
+            "Reference repos are read-only pattern sources.",
+            "Use conventions and architecture intent; do not copy source code verbatim.",
+            "If the reference path is outside the active workspace, the assistant may need the parent workspace opened or a generated reference summary.",
+        ],
+    }
+
+
+def capture_mode(goal: str) -> str:
+    lowered = goal.lower()
+    if any(term in lowered for term in REJECTION_TERMS):
+        return "rejected"
+    if any(term in lowered for term in REVISION_TERMS):
+        return "revised"
+    return "accepted"
+
+
+def normalized_learning_tags(tasks: list[str], risks: list[str]) -> list[str]:
+    tags = tasks + [risk.replace("/", "-").replace(" ", "-") for risk in risks]
+    return sorted(dict.fromkeys(tag for tag in tags if tag))

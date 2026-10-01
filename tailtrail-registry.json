@@ -1,0 +1,3319 @@
+{
+  "schema_version": "1",
+  "features": [
+    {
+      "id": "debug-harness",
+      "title": "Debug Harness Prototype (Code/Architecture/Database/API-integration)",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Debug Harness Prototype",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail debug",
+        "tailtrail debug reproduction",
+        "tailtrail debug orientation",
+        "tailtrail debug hypothesis",
+        "tailtrail debug correction",
+        "tailtrail debug convergence",
+        "tailtrail debug governance",
+        "tailtrail debug evaluation",
+        "tailtrail debug completion-report"
+      ],
+      "docs": [
+        "DEBUG-HARNESS.md",
+        "benchmarks/debug-harness/scenarios-v1.json",
+        "schemas/debug-orientation.schema.json",
+        "schemas/debug-reproduction-attempt.schema.json",
+        "schemas/debug-reproduction-attempt-status.schema.json",
+        "schemas/debug-correction-packet.schema.json",
+        "schemas/debug-harness-convergence.schema.json",
+        "schemas/debug-completion-report.schema.json",
+        "schemas/debug-governance.schema.json",
+        "schemas/debug-experiment-proposal.schema.json",
+        "schemas/debug-hypothesis-ranking.schema.json",
+        "schemas/debug-evaluation-report.schema.json",
+        "schemas/debug-release-gate.schema.json",
+        "schemas/debug-host-diagnosis.schema.json",
+        "schemas/debug-preflight.schema.json"
+      ],
+      "scripts": [
+        "scripts/debug-intake.py",
+        "scripts/debug-preflight.py",
+        "scripts/debug-reproduction.py",
+        "scripts/debug-orientation.py",
+        "scripts/debug-hypothesis.py",
+        "scripts/debug-correction.py",
+        "scripts/debug-harness-convergence.py",
+        "scripts/debug-completion.py",
+        "scripts/debug-privacy.py",
+        "scripts/debug-governance.py",
+        "scripts/debug-evaluation.py",
+        "scripts/debug-host-diagnosis.py"
+      ],
+      "tests": [
+        "tests/test_debug_harness.py",
+        "tests/test_navigator_debug_routing.py",
+        "tests/test_debug_start_planning.py",
+        "tests/test_debug_orientation.py",
+        "tests/test_debug_hypothesis_integration.py",
+        "tests/test_debug_correction_integration.py",
+        "tests/test_debug_governance.py",
+        "tests/test_debug_host_integration.py",
+        "tests/test_debug_evaluation.py"
+      ],
+      "mcp_tools": [
+        "debug_intake_show",
+        "debug_reproduction_show",
+        "debug_reproduction_attempt_show",
+        "debug_orientation_show",
+        "debug_hypothesis_ledger_show",
+        "debug_correction_show",
+        "debug_governance_show",
+        "debug_evaluation_report",
+        "debug_release_gate",
+        "debug_harness_convergence_show",
+        "debug_completion_report_show",
+        "debug_preflight",
+        "debug_start",
+        "debug_reproduction_draft",
+        "debug_reproduction_revise",
+        "debug_reproduction_reopen",
+        "debug_reproduction_approve",
+        "debug_reproduction_attempt_record",
+        "debug_orientation_create",
+        "debug_hypothesis_add",
+        "debug_hypothesis_reprioritize",
+        "debug_experiment_propose",
+        "debug_experiment_record",
+        "debug_root_cause_prove",
+        "debug_correction_propose",
+        "debug_correction_approve",
+        "debug_correction_scope_check",
+        "debug_harness_convergence_finalize",
+        "debug_closure_finalize",
+        "debug_evaluation_run"
+      ],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "planning-lock"
+      ],
+      "since_version": "0.6.0",
+      "deprecated_in_version": null,
+      "integration_contract": {
+        "status": "prototype-implemented",
+        "implemented_capabilities": [
+          "local failure intake and sanitized fingerprinting",
+          "reproduction approval artifacts",
+          "append-only hypothesis and experiment records",
+          "bounded correction approval",
+          "canonical Debug closure evidence consumed by the canonical Completion Report",
+          "complete approval-gated CLI and MCP control plane",
+          "native Navigator build-versus-debug classification with conservative overrides",
+          "canonical persisted Debug Start Plan and Planning Lock",
+          "revision-specific reproduction contract, immutable investigation anchor, and investigation-only handoff",
+          "native Durable Workflow Runtime debug-investigation template with ten named stages, replay, resume, freshness, and scoped investigation authority",
+          "versioned project orientation that reuses fresh Code Graph evidence, separates confirmed paths from heuristic relationships, and proposes rather than runs bounded refresh",
+          "three-cycle evidence-driven hypothesis loop with requirement and failure identity, duplicate-probe prevention, continuity reminders, and history-preserving Recovery/Replan",
+          "correction-to-implementation bridge with proven-cause evidence, immutable file/symbol scope, D-08 write authority, Git recovery posture, and requirement-linked drift comparison",
+          "typed per-requirement Harness convergence with deterministic feature selection, fail-closed missing evidence, and no arbitrary textual pass shortcut",
+          "canonical closure integration with one overall delivery result, separate domain-capped debug confidence, seven typed debug controls, and correction/replan routing for incomplete evidence",
+          "DI-10 run-local privacy classification, sanitized portable fingerprints, exactness-aware token posture, continuity deduplication, and acceptance-gated candidate-only Debug learning",
+          "DI-11 complete approval-gated MCP lifecycle, shared DWR resume/replay, canonical closure delegation, and equivalent Codex/Copilot/Claude host contract",
+          "DI-12 ten-scenario deterministic evaluation, calibrated metrics, sensitive-data negative assurance, genuine-host vertical-run validation, and fail-closed release gate",
+          "factual pre-fix and post-fix reproduction attempts linked to requirement-owned command evidence, bounded retry dimensions, sanitized awaiting-user-input recovery, same-run revision reopening, and Completion Report proof",
+          "hash-bound host-assisted pre-plan diagnosis with managed-state exclusion, typed repository roles, concrete test cases, source-slice token accounting, and preserved reproduction/correction gates"
+        ],
+        "remaining_integration": [
+          "genuine passing Codex, Copilot, and Claude runtime receipts linked to accepted evidence-complete Debug vertical runs"
+        ],
+        "deferred_domains": [
+          "cloud-infrastructure",
+          "security",
+          "network"
+        ],
+        "future_scope": [
+          "production telemetry ingestion",
+          "distributed tracing",
+          "live-service debugging",
+          "IDE protocol integration",
+          "autonomous multi-agent debugging"
+        ],
+        "canonical_owners": {
+          "intent_and_routing": "Navigator",
+          "approved_investigation_boundary": "Planning Lock and approved debug anchor",
+          "lifecycle_state": "Durable Workflow Runtime",
+          "execution_evidence": "Execution Evidence stream",
+          "requirement_and_drift_status": "Harness checkpoint and drift ledger",
+          "delivery_closure": "Canonical Completion Report",
+          "learning_and_evaluation": "Learning Governance and Evaluation Harness"
+        }
+      }
+    },
+    {
+      "id": "self-contained-package",
+      "title": "Self-Contained Package Kernel, Integrity, Compatibility, And Artifact Proof",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Enterprise Stabilization E2",
+      "owner": "tailtrail-packaging",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail package-info",
+        "tailtrail version",
+        "tailtrail doctor"
+      ],
+      "docs": [
+        "PACKAGE-CONTRACT.md",
+        "INSTALL.md",
+        "SUPPORT.md",
+        "VERSIONING.md",
+        "package-manifest.json",
+        "package-manifest.schema.json"
+      ],
+      "scripts": [
+        "scripts/__init__.py",
+        "scripts/package-release-proof.py"
+      ],
+      "tests": [
+        "tests/test_self_contained_package.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "command-surface",
+        "planning-lock"
+      ],
+      "since_version": "0.6.0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "transactional-installer-lifecycle",
+      "title": "Transactional Host Installer Lifecycle",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Enterprise Stabilization E3",
+      "owner": "tailtrail-install",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail setup",
+        "tailtrail install",
+        "tailtrail verify",
+        "tailtrail doctor --host",
+        "tailtrail status",
+        "tailtrail update",
+        "tailtrail repair",
+        "tailtrail recover",
+        "tailtrail rollback",
+        "tailtrail uninstall",
+        "tailtrail upgrade"
+      ],
+      "docs": [
+        "INSTALLER-LIFECYCLE.md",
+        "INSTALL.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/install-plan.schema.json",
+        "schemas/install-ownership-manifest.schema.json",
+        "schemas/install-journal-event.schema.json"
+      ],
+      "scripts": [
+        "scripts/installer.py",
+        "scripts/upgrade-tailtrail.py"
+      ],
+      "tests": [
+        "tests/test_transactional_installer.py",
+        "tests/test_install_profiles.py",
+        "tests/test_installation_experience.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "self-contained-package"
+      ],
+      "since_version": "0.6.0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "cross-platform-supply-chain",
+      "title": "Cross-Platform Artifact Qualification And Release Supply Chain",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Enterprise Stabilization E5",
+      "owner": "tailtrail-release",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail release",
+        "tailtrail qualify"
+      ],
+      "docs": [
+        "SUPPLY-CHAIN.md",
+        "INSTALL.md",
+        "SUPPORT.md",
+        "RELEASE-CHECKLIST.md",
+        "PUBLIC-RELEASE-METADATA.md",
+        "platform-release-contract.json",
+        "release-build-lock.json",
+        "release-channel-v1.json",
+        "schemas/platform-qualification-receipt.schema.json",
+        "schemas/release-evidence.schema.json",
+        "schemas/release-channel.schema.json",
+        "schemas/release-publication-receipt.schema.json"
+      ],
+      "scripts": [
+        "scripts/platform-qualification.py",
+        "scripts/supply-chain.py",
+        "scripts/release-info.py",
+        "scripts/release-publication.py",
+        "scripts/installation-qualification.py"
+      ],
+      "tests": [
+        "tests/test_cross_platform_supply_chain.py",
+        "tests/test_installation_experience.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "self-contained-package",
+        "enterprise-host-adapters"
+      ],
+      "since_version": "0.6.0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "enterprise-host-adapters",
+      "title": "Codex, GitHub Copilot, And Claude Adapter Contracts",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Enterprise Stabilization E4",
+      "owner": "tailtrail-hosts",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail install --host",
+        "tailtrail doctor --host",
+        "tailtrail adapters conformance",
+        "tailtrail adapters runtime prepare"
+      ],
+      "docs": [
+        "HOST-ADAPTERS.md",
+        "ASSISTANT-COMPATIBILITY.md",
+        "adapters/host-compatibility-v1.json",
+        "schemas/host-adapter-contract.schema.json",
+        "docs/hosts/codex.md",
+        "docs/hosts/copilot.md",
+        "docs/hosts/claude.md"
+      ],
+      "scripts": [],
+      "tests": [
+        "tests/test_enterprise_host_adapters.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "transactional-installer-lifecycle"
+      ],
+      "since_version": "0.6.0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "repository-ci-enforcement",
+      "title": "Repository And CI Enforcement Product",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Enterprise Stabilization E6",
+      "owner": "tailtrail-governance",
+      "governance_class": "governance",
+      "commands": ["tailtrail enforce validate", "tailtrail enforce check", "tailtrail enforce migrate"],
+      "docs": ["REPOSITORY-ENFORCEMENT.md", "GUARDRAILS.md", "DEPENDENCY-GATE.md", "tailtrail-enforcement-policy.json", "tailtrail-enforcement-baseline.json", "tailtrail-enforcement-suppressions.json", "schemas/repository-enforcement-policy.schema.json", "schemas/repository-enforcement-report.schema.json", "schemas/repository-enforcement-suppression.schema.json"],
+      "scripts": ["scripts/repository-enforcement.py"],
+      "tests": ["tests/test_repository_enforcement.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": ["cross-platform-supply-chain", "guardrails"],
+      "since_version": "0.6.0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "public-evidence-portfolio",
+      "title": "Release 5 Public Benchmark Fixtures And Sanitized Model-Run Capture",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Improvement Plan Release 5 — Evidence",
+      "owner": "tailtrail-core",
+      "governance_class": "telemetry",
+      "commands": [
+        "tailtrail benchmark run-public",
+        "tailtrail benchmark public list|run|report",
+        "tailtrail benchmark capture-model-run --approved"
+      ],
+      "docs": [
+        "benchmarks/README.md",
+        "benchmarks/public/README.md",
+        "benchmarks/results/public-benchmark-2026-08.json",
+        "PUBLIC-CLAIMS.md",
+        "IMPROVEMENT-PLAN.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/public-benchmark.py"
+      ],
+      "tests": [
+        "tests/test_public_benchmark.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "evaluation-harness",
+        "token-harness"
+      ],
+      "since_version": "release-5",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "planning-lock",
+      "title": "Planning Lock",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Planning Lock",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail start", "tailtrail planning start", "tailtrail planning approve", "tailtrail planning show", "tailtrail planning assert-write"],
+      "docs": ["tailtrail-automation-guide.md", "USER-GUIDE.md", "TAILTRAIL-COMMANDS.md", "schemas/planning-lock.schema.json"],
+      "scripts": ["scripts/planning_lock.py"],
+      "tests": ["tests/test_planning_lock.py", "tests/test_mcp_server.py", "tests/test_navigator_core.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "navigator"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "interactive-plan-mode-ip0",
+      "title": "Interactive Plan Mode IP-0/IP-5: Explanation, Expert Plan Customization, Revision Approval, AIDLC Mode Switch, Authority Routing, and Host UX",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Interactive Plan Mode",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail planning discuss", "tailtrail planning explain", "tailtrail planning discussion-show", "tailtrail planning decision-show", "tailtrail planning investigate", "tailtrail planning investigation-show", "tailtrail planning revise", "tailtrail planning revision-show", "tailtrail planning revision-approve", "tailtrail planning aidlc-standard", "tailtrail planning aidlc-standard-approve", "tailtrail planning feature-controls-show", "tailtrail planning feature-controls-propose", "tailtrail planning feature-controls-approve", "tailtrail planning authority-show"],
+      "docs": ["tailtrail-interactive-plan-mode.md", "tailtrail-aidlc-integration.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md", "schemas/planning-conversation.schema.json", "schemas/planning-investigation.schema.json", "schemas/planning-revision.schema.json", "schemas/planning-aidlc-mode-switch.schema.json", "schemas/planning-authority-route.schema.json"],
+      "scripts": ["scripts/planning-discussion.py", "scripts/planning-aidlc-question.py", "scripts/planning-investigation.py", "scripts/planning-revision.py", "scripts/planning-feature-controls.py", "scripts/execution-evidence.py"],
+      "tests": ["tests/test_planning_discussion.py", "tests/test_planning_aidlc_question.py", "tests/test_planning_investigation.py", "tests/test_planning_revision.py", "tests/test_planning_feature_controls.py", "tests/test_execution_evidence.py", "tests/test_mcp_server.py"],
+      "mcp_tools": ["planning_decision_show", "planning_investigation_show", "planning_investigate", "planning_revision_show", "planning_revision_propose", "planning_revision_approve", "planning_aidlc_standard_propose", "planning_aidlc_standard_approve", "planning_aidlc_question_show", "planning_aidlc_question_clarify", "planning_aidlc_question_challenge", "planning_aidlc_question_record", "planning_aidlc_question_approve", "planning_authority_show"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["planning-lock", "canonical-local-state"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "target-workspace-resolver",
+      "title": "Enterprise Target Workspace Resolver, Lock Identity, Input Roles, Host Adapters, and Policy V1-V5",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Enterprise target workspace resolution",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail target resolve", "tailtrail target roles", "tailtrail target host-workspace", "tailtrail target policy"],
+      "docs": ["tailtrail-enterprise-target-workspace.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md", "schemas/input-role-registry.schema.json", "schemas/host-workspace-resolution.schema.json", "schemas/enterprise-target-policy.schema.json", "schemas/target-resolution-receipt.schema.json"],
+      "scripts": ["scripts/target_workspace.py", "scripts/host-workspace-adapter.py", "scripts/enterprise-target-policy.py"],
+      "tests": ["tests/test_target_workspace.py", "tests/test_host_workspace_adapter.py", "tests/test_enterprise_target_policy.py", "tests/test_navigator_core.py", "tests/test_planning_lock.py"],
+      "mcp_tools": ["enterprise_target_policy_inspect"],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": ["navigator", "planning-lock"],
+      "since_version": "tw-5",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "context-continuity-harness",
+      "title": "Context Continuity Harness V1-V3",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Context Continuity Harness V1-V3",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness continuity render", "tailtrail harness continuity show", "tailtrail harness continuity calibrate", "tailtrail harness continuity advise", "tailtrail harness continuity advisory-show"],
+      "docs": ["context-continuity-harness.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md", "schemas/context-continuity-state.schema.json", "schemas/context-continuity-policy.schema.json", "schemas/context-continuity-intervention.schema.json", "schemas/context-continuity-calibration.schema.json", "schemas/context-continuity-selector-policy.schema.json", "schemas/context-continuity-advisory.schema.json", "templates/context-continuity-policy.example.json", "templates/context-continuity-selector-policy.example.json", "templates/context-continuity-advisory-proposal.example.json"],
+      "scripts": ["scripts/context-continuity.py"],
+      "tests": ["tests/test_context_continuity.py"],
+      "mcp_tools": ["context_continuity_show", "context_continuity_render", "context_continuity_advisory_show"],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "requirement-completion-harness"],
+      "since_version": "v3",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "advanced-runtime-boundaries",
+      "title": "Advanced Runtime Boundaries",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Global deferred items",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness advanced graph", "tailtrail harness advanced cloud", "tailtrail harness advanced live-eval", "tailtrail harness advanced claims"],
+      "docs": ["tailtrail-implementation-backlog.md", "harness-engineering.md", "tailtrail-mcp.md", "TAILTRAIL-COMMANDS.md"],
+      "scripts": ["scripts/advanced-runtime.py"],
+      "tests": ["tests/test_advanced_runtime.py"],
+      "mcp_tools": ["source_patch_apply"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "evidence-aware-testing",
+      "title": "Evidence-Aware Testing",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 3",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness testing-profile", "tailtrail harness validation-receipt", "tailtrail harness requirement-completion", "tailtrail harness tier-select", "tailtrail harness ci-ingest", "tailtrail harness flaky", "tailtrail harness evidence-metrics"],
+      "docs": ["README.md", "USER-GUIDE.md", "TAILTRAIL-COMMANDS.md", "tailtrail-implementation-backlog.md", "schemas/testing-profile.schema.json", "schemas/validation-evidence-receipt.schema.json", "templates/testing-profile.example.yml"],
+      "scripts": ["scripts/testing-profile.py", "scripts/validation-receipt.py", "scripts/requirement-completion.py", "scripts/test-tier-selector.py", "scripts/ci-evidence-ingest.py", "scripts/flaky-test-tracker.py", "scripts/evidence-metrics.py", "scripts/evidence-tiers.py"],
+      "tests": ["tests/test_testing_profile.py", "tests/test_validation_receipt.py", "tests/test_evidence_aware_testing_v2_v5.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "higher-tier-testing-release-confidence",
+      "title": "Higher-Tier Testing And Release Confidence",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 8",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness higher-tier", "tailtrail harness release-confidence", "tailtrail harness phase8 journey", "tailtrail harness phase8 contracts", "tailtrail harness phase8 lifecycle", "tailtrail harness phase8 deployment", "tailtrail harness phase8 release-policy", "tailtrail harness phase8 calibration"],
+      "docs": ["testing-confidence.md", "harness-engineering.md", "tailtrail-implementation-backlog.md", "TAILTRAIL-COMMANDS.md", "schemas/testing-profile.schema.json", "schemas/validation-evidence-receipt.schema.json"],
+      "scripts": ["scripts/higher-tier-testing.py", "scripts/release-confidence.py", "scripts/phase8-advanced.py"],
+      "tests": ["tests/test_higher_tier_testing.py", "tests/test_phase8_advanced.py"],
+      "mcp_tools": ["release_confidence_show"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["evidence-aware-testing", "requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "mode-b-recovery-and-diagnosis",
+      "title": "Mode B Recovery And Recovery Diagnostician",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 6",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness mode-b", "tailtrail harness diagnose"],
+      "docs": ["harness-engineering.md", "tailtrail-implementation-backlog.md", "TAILTRAIL-COMMANDS.md", "schemas/requirement-recovery-manifest.schema.json"],
+      "scripts": ["scripts/requirement-recovery-manifest.py", "scripts/recovery-diagnostician.py"],
+      "tests": ["tests/test_requirement_recovery_manifest.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "program-delivery-orchestrator",
+      "title": "Program Delivery Harness And Deterministic Orchestrator",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 7",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness program", "tailtrail harness program-checkpoint", "tailtrail harness orchestrate"],
+      "docs": ["program-delivery-harness.md", "tailtrail-implementation-backlog.md", "TAILTRAIL-COMMANDS.md", "schemas/program-plan.schema.json", "schemas/program-state.schema.json"],
+      "scripts": ["scripts/program-plan.py", "scripts/program-checkpoint.py", "scripts/delivery-orchestrator.py"],
+      "tests": ["tests/test_program_delivery.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "behavior-harness",
+      "title": "Behaviour Harness",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 6",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness behavior"],
+      "docs": ["harness-engineering.md", "tailtrail-implementation-backlog.md", "TAILTRAIL-COMMANDS.md", "schemas/behavior-harness.schema.json"],
+      "scripts": ["scripts/behaviour_planning.py", "scripts/behavior-harness.py"],
+      "tests": ["tests/test_behaviour_planning.py", "tests/test_behavior_harness.py"],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "evidence-aware-testing"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "ui-consistency-guardrail",
+      "title": "UI Consistency Guardrail",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Navigator UI Consistency Guardrail",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail ui discover"],
+      "docs": ["tailtrail-automation-guide.md", "TAILTRAIL-COMMANDS.md"],
+      "scripts": ["scripts/ui-consistency.py", "scripts/ui_planning.py"],
+      "tests": ["tests/test_ui_consistency.py"],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": ["navigator", "bootstrap-snapshot"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "architecture-fitness-harness",
+      "title": "Architecture Fitness Harness",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 6",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness architecture"],
+      "docs": ["harness-engineering.md", "tailtrail-implementation-backlog.md", "TAILTRAIL-COMMANDS.md", "schemas/architecture-fitness.schema.json"],
+      "scripts": ["scripts/architecture_planning.py", "scripts/architecture-fitness.py"],
+      "tests": ["tests/test_architecture_planning.py", "tests/test_architecture_fitness.py"],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "maintainability-harness",
+      "title": "Maintainability Harness",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 6",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness maintainability"],
+      "docs": ["harness-engineering.md", "tailtrail-implementation-backlog.md", "TAILTRAIL-COMMANDS.md", "schemas/maintainability-baseline.schema.json", "schemas/maintainability-harness.schema.json"],
+      "scripts": ["scripts/maintainability_planning.py", "scripts/maintainability-harness.py"],
+      "tests": ["tests/test_maintainability_planning.py", "tests/test_maintainability_harness.py"],
+      "mcp_tools": ["maintainability_assessment_show"],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "safe-git-checkpoints-and-recovery",
+      "title": "Safe Git Checkpoints And Recovery",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 4",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness git-readiness", "tailtrail harness boundary", "tailtrail harness recovery", "tailtrail harness reconcile"],
+      "docs": ["README.md", "USER-GUIDE.md", "TAILTRAIL-COMMANDS.md", "tailtrail-implementation-backlog.md", "schemas/git-readiness.schema.json", "schemas/task-recovery-boundary.schema.json", "schemas/task-recovery-plan.schema.json", "schemas/recovery-reconciliation.schema.json"],
+      "scripts": ["scripts/git-readiness.py", "scripts/task-recovery-boundary.py", "scripts/task-recovery.py", "scripts/recovery-reconcile.py"],
+      "tests": ["tests/test_git_readiness.py", "tests/test_task_recovery.py"],
+      "mcp_tools": ["recovery_reconciliation_show"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state", "requirement-completion-harness"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "requirement-completion-harness",
+      "title": "Requirement Completion Harness V1-V4",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 2",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail harness plan", "tailtrail harness check", "tailtrail harness checkpoint", "tailtrail harness completion-review", "tailtrail harness completion-report", "tailtrail completion-report", "tailtrail closure validate", "tailtrail closure record", "tailtrail closure finalize", "tailtrail closure correct", "tailtrail closure close", "tailtrail closure learn", "tailtrail closure evaluate", "tailtrail harness dashboard", "tailtrail harness feedback", "tailtrail harness impact-map", "tailtrail harness converge", "tailtrail harness template", "tailtrail failure"],
+      "docs": ["README.md", "USER-GUIDE.md", "TAILTRAIL-COMMANDS.md", "tailtrail-automation-guide.md", "harness-engineering-workflow.md", "tailtrail-implementation-backlog.md", "tailtrail-closure-learning-automation-plan.md", "schemas/harness-control.schema.json", "schemas/harness-result.schema.json", "schemas/harness-checkpoint.schema.json", "schemas/completion-report.schema.json", "schemas/execution-receipt.schema.json", "schemas/closure-record.schema.json", "schemas/closure-finalizer.schema.json", "schemas/closure-correction.schema.json", "schemas/closure-positive-learning.schema.json", "schemas/closure-evaluation.schema.json", "schemas/workflow-dashboard.schema.json", "schemas/requirement-impact-map.schema.json", "schemas/harness-convergence.schema.json", "schemas/harness-template-selection.schema.json", "templates/harness-checkpoint.md", "templates/harness-feedback.md", "templates/harness-templates.example.json"],
+      "scripts": ["scripts/harness-controls.py", "scripts/harness-checkpoint.py", "scripts/completion-review.py", "scripts/completion-report.py", "scripts/closure-contract.py", "scripts/closure-recorder.py", "scripts/closure-finalizer.py", "scripts/closure-correction.py", "scripts/closure-close.py", "scripts/closure-learning.py", "scripts/closure-evaluation.py", "scripts/workflow-dashboard.py", "scripts/harness-feedback.py", "scripts/requirement-impact-map.py", "scripts/harness-convergence.py", "scripts/harness-template.py", "scripts/execution-failure.py"],
+      "tests": ["tests/test_harness_controls.py", "tests/test_harness_checkpoint.py", "tests/test_harness_feedback.py", "tests/test_completion_review.py", "tests/test_completion_report.py", "tests/test_closure_contract.py", "tests/test_closure_recorder.py", "tests/test_closure_finalizer.py", "tests/test_closure_correction.py", "tests/test_closure_learning.py", "tests/test_workflow_dashboard.py", "tests/test_requirement_harness_v2_v4.py"],
+      "mcp_tools": ["completion_report_show", "workflow_dashboard_show"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["canonical-local-state"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "canonical-local-state",
+      "title": "Canonical Local State And Requirements",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Harness Engineering Phase 1",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail ledger", "tailtrail anchor"],
+      "docs": ["README.md", "USER-GUIDE.md", "TAILTRAIL-COMMANDS.md", "tailtrail-implementation-backlog.md", "schemas/run-event.schema.json", "schemas/change-intent-anchor.schema.json", "schemas/requirement-evidence.schema.json", "templates/change-intent-anchor.md"],
+      "scripts": ["scripts/run-ledger.py", "scripts/change-intent-anchor.py"],
+      "tests": ["tests/test_run_ledger.py", "tests/test_change_intent_anchor.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["navigator"],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "navigator",
+      "title": "Navigator And Task Start",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Phase 8 + V3.6",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail start",
+        "tailtrail do",
+        "tailtrail run",
+        "tailtrail guide",
+        "tailtrail navigator",
+        "tailtrail navigator scope",
+        "tailtrail next",
+        "tailtrail intent",
+        "tailtrail intent resolve",
+        "tailtrail eval scope validate|report|capture-negative|migration|release-proof|rollback-status|rollback-enable|rollback-disable",
+        "tailtrail expand"
+      ],
+      "docs": [
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md",
+        "context/navigator.md",
+        "context/intent-aliases.md",
+        "NAVIGATOR-TEST-SCENARIOS.md",
+        "tailtrail-automation-guide.md",
+        "harness-engineering-workflow.md",
+        "schemas/intent-envelope.schema.json",
+        "schemas/navigator-scope-baseline.schema.json",
+        "schemas/navigator-scope-evidence.schema.json",
+        "schemas/navigator-host-scope-proposal.schema.json",
+        "schemas/navigator-scope-quality.schema.json",
+        "schemas/navigator-scope-calibration-catalog.schema.json",
+        "schemas/navigator-scope-calibration-report.schema.json",
+        "schemas/navigator-scope-release-policy.schema.json",
+        "schemas/navigator-scope-migration-report.schema.json",
+        "schemas/navigator-scope-release-proof.schema.json",
+        "schemas/navigator-installed-release-proof.schema.json",
+        "schemas/requirement-interpretation.schema.json",
+        "benchmarks/evaluation/navigator-scope/v1.json",
+        "benchmarks/evaluation/navigator-scope/fsr6-v1.json",
+        "benchmarks/evaluation/navigator-scope/language-profiles-v1.json",
+        "benchmarks/evaluation/navigator-scope/release-v1.json",
+        "NAVIGATOR-FALSE-STOP-REMEDIATION-PLAN.md",
+        "tailtrail-meta/navigator-scope-baseline-v1.json"
+      ],
+      "scripts": [
+        "scripts/navigator.py",
+        "scripts/navigator-scope.py",
+        "scripts/code_relationships.py",
+        "scripts/navigator_core.py",
+        "scripts/navigator_discovery.py",
+        "scripts/navigator_render.py",
+        "scripts/navigator_scope.py",
+        "scripts/module_resolution.py",
+        "scripts/navigator-scope-calibration.py",
+        "scripts/navigator-scope-release.py",
+        "scripts/navigator-installed-release-proof.py",
+        "scripts/requirement_discovery.py",
+        "scripts/requirement-interpretation-draft.py",
+        "scripts/requirement-interpretation-scaffold.py",
+        "scripts/start_posture.py",
+        "scripts/task-start.py",
+        "scripts/task-next.py",
+        "scripts/expand-intent.py",
+        "scripts/pipeline_judge.py",
+        "scripts/pipeline_manager.py",
+        "scripts/pipeline_orchestrator.py",
+        "scripts/write_guardian.py",
+        "scripts/drift_analysis.py",
+        "scripts/plan_render.py",
+        "scripts/test_scope.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py",
+        "tests/test_expand_intent.py",
+        "tests/test_mcp_server.py",
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_requirement_discovery.py",
+        "tests/test_navigator_scope.py",
+        "tests/test_module_resolution.py",
+        "tests/test_navigator_scope_calibration.py",
+        "tests/test_navigator_scope_release.py",
+        "tests/test_navigator_installed_release.py",
+        "tests/test_release4_maintainability.py"
+      ],
+      "mcp_tools": [
+        "navigator_plan",
+        "navigator_scope_proposal_record",
+        "intent_resolve",
+        "start_report"
+      ],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "guardrails"
+      ],
+      "scope_ownership": {
+        "scope_decision": "Navigator",
+        "target_identity": "Target Workspace",
+        "relationship_evidence": "Code Graph",
+        "validated_persistence": "Planning Lock"
+      },
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "bootstrap-snapshot",
+      "title": "Environment Bootstrap Snapshot",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Meta-Harness Pre-Layer",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail bootstrap snapshot",
+        "tailtrail bootstrap status",
+        "tailtrail bootstrap refresh"
+      ],
+      "docs": [
+        "README.md",
+        "TAILTRAIL-COMMANDS.md",
+        "USER-GUIDE.md"
+      ],
+      "scripts": [
+        "scripts/bootstrap-snapshot.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "navigator"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "aidlc",
+      "title": "Portable AIDLC Pack",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Phase 2",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail aidlc init",
+        "tailtrail aidlc check"
+      ],
+      "docs": [
+        "AIDLC.md",
+        "USER-GUIDE.md",
+        "aidlc/stages/README.md"
+      ],
+      "scripts": [
+        "scripts/aidlc-init.py",
+        "scripts/aidlc-check.py",
+        "scripts/aidlc-requirements.py",
+        "scripts/metrics_extractor.py",
+        "scripts/_resume_check_extractor.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "guardrails"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "requirement-intake",
+      "title": "Evidence-Assisted Durable Pre-Lock Requirement Intake",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Requirement routing Phases 4-9",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail requirements show --intake-id <intake-id>",
+        "tailtrail requirements answer --intake-id <intake-id> --answers <json>",
+        "tailtrail start <goal> --requirement-intake-id <intake-id>"
+      ],
+      "docs": [
+        "schemas/requirement-evidence-assistance.schema.json",
+        "schemas/requirement-intake.schema.json",
+        "schemas/requirement-sufficiency.schema.json",
+        "schemas/host-requirement-routing-conformance.schema.json",
+        "adapters/requirement-routing-scenarios-v1.json"
+      ],
+ "scripts": [
+  "scripts/requirement_evidence.py",
+  "scripts/requirement_intake.py",
+  "scripts/visual_requirement.py"
+ ],
+ "tests": [
+  "tests/test_requirement_routing_phase0.py",
+  "tests/test_mcp_server.py",
+  "tests/test_visual_requirement.py"
+ ],
+      "mcp_tools": [
+        "requirement_intake_show",
+        "requirement_intake_answer"
+      ],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "navigator"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "question-orchestrator",
+      "title": "AIDLC Question Orchestrator",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Official AI-DLC integration - Question Orchestrator",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail planning question-context --run-id <run-id>"
+      ],
+      "docs": [
+        "tailtrail-aidlc-integration.md",
+        "ROADMAP.md",
+        "MCP-SERVER.md",
+        "schemas/question-context.schema.json",
+        "schemas/orchestrated-question-set.schema.json"
+      ],
+      "scripts": [
+        "scripts/question-orchestrator.py"
+      ],
+      "tests": [
+        "tests/test_question_orchestrator.py",
+        "tests/test_aidlc_requirements.py",
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_mcp_server.py"
+      ],
+      "mcp_tools": [
+        "planning_question_context_show"
+      ],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "navigator",
+        "aidlc",
+        "planning-lock"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "official-aidlc-compatibility",
+      "title": "Official AI-DLC Compatibility Foundation",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Official AI-DLC integration Phase A",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail aidlc official status"
+      ],
+      "docs": [
+        "tailtrail-aidlc-integration.md",
+        "TAILTRAIL-COMMANDS.md",
+        "USER-GUIDE.md",
+        "MCP-SERVER.md"
+      ],
+      "scripts": [
+        "scripts/aidlc-official-detect.py",
+        "scripts/aidlc-official-host.py",
+        "scripts/aidlc-official-install.py"
+      ],
+      "tests": [
+        "tests/test_aidlc_official_detect.py",
+        "tests/test_aidlc_official_host.py",
+        "tests/test_aidlc_official_install.py",
+        "tests/test_mcp_server.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [
+        "aidlc_official_status"
+      ],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "aidlc",
+        "mcp",
+        "registry"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "official-aidlc-bridge",
+      "title": "Official AI-DLC Bridge, Requirements, Evidence, State, Sanitization, and Runtime Adapter",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Official AI-DLC integration Phases B-I",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail start --aidlc lite",
+        "tailtrail start --aidlc standard",
+        "tailtrail start --aidlc full",
+        "tailtrail start --aidlc off",
+        "tailtrail aidlc official bridge show",
+        "tailtrail aidlc official state show",
+        "tailtrail aidlc official state validate",
+        "tailtrail aidlc official sanitize validate",
+        "tailtrail aidlc official runtime attach",
+        "tailtrail aidlc official runtime status",
+        "tailtrail aidlc official runtime import-transition",
+        "tailtrail aidlc official runtime resume",
+        "tailtrail aidlc official runtime redo",
+        "tailtrail aidlc official runtime jump",
+        "tailtrail aidlc official runtime recovery"
+      ],
+      "docs": [
+        "tailtrail-aidlc-integration.md",
+        "TAILTRAIL-COMMANDS.md",
+        "USER-GUIDE.md",
+        "MCP-SERVER.md"
+      ],
+      "scripts": [
+        "scripts/aidlc-official-bridge.py",
+        "scripts/official-aidlc-requirements.py",
+        "scripts/official-aidlc-checkpoint.py",
+        "scripts/official-aidlc-state.py",
+        "scripts/official-aidlc-sanitize.py",
+        "scripts/official-aidlc-runtime.py"
+      ],
+      "tests": [
+        "tests/test_aidlc_official_bridge.py",
+        "tests/test_official_aidlc_state.py",
+        "tests/test_official_aidlc_sanitize.py",
+        "tests/test_official_aidlc_runtime.py",
+        "tests/test_mcp_server.py",
+        "tests/test_planning_lock.py"
+      ],
+      "mcp_tools": [
+        "aidlc_official_bridge_show",
+        "aidlc_official_state_show",
+        "aidlc_official_sanitize_validate",
+        "aidlc_official_session_status"
+      ],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "official-aidlc-compatibility",
+        "question-orchestrator",
+        "planning-lock",
+        "mcp",
+        "registry"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "host-runtime-conformance",
+      "title": "Real Host Runtime Conformance",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Official AI-DLC integration Phase J",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail adapters runtime prepare",
+        "tailtrail adapters runtime record",
+        "tailtrail adapters runtime report",
+        "tailtrail presentation"
+      ],
+      "docs": [
+        "tailtrail-aidlc-integration.md",
+        "TAILTRAIL-COMMANDS.md",
+        "USER-GUIDE.md",
+        "MCP-SERVER.md",
+        "ASSISTANT-COMPATIBILITY.md",
+        "adapters/README.md"
+      ],
+      "scripts": [
+        "scripts/host-runtime-conformance.py",
+        "scripts/presentation.py"
+      ],
+      "tests": [
+        "tests/test_host_adapter_conformance.py",
+        "tests/test_host_runtime_conformance.py",
+        "tests/test_presentation_conformance.py",
+        "tests/test_mcp_server.py",
+        "tests/test_cli_dispatch.py",
+        "tests/test_install_profiles.py"
+      ],
+      "mcp_tools": [
+        "host_conformance_report",
+        "presentation_conformance"
+      ],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "official-aidlc-bridge",
+        "mcp",
+        "registry"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "guardrails",
+      "title": "Guardrail Enforcement",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "V3.0 + BL-5 + BL-7",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail guard check",
+        "tailtrail guardrail precision",
+        "tailtrail dependency validate",
+        "tailtrail dependency check",
+        "tailtrail governance check"
+      ],
+      "docs": [
+        "GUARDRAILS.md",
+        "GOVERNANCE.md",
+        "DEPENDENCY-GATE.md",
+        "schemas/dependency-decision.schema.json",
+        "templates/dependency-decision.example.json",
+        "context/guardrail-layers.md"
+      ],
+      "scripts": [
+        "scripts/guardrail-check.py",
+        "scripts/guardrail-precision.py",
+        "scripts/dependency-decision.py",
+        "scripts/sync-governance.py"
+      ],
+      "tests": [
+        "tests/test_dependency_decision.py",
+        "tests/test_guardrail_precision.py",
+        "tests/test_governance_sync.py"
+      ],
+      "mcp_tools": [
+        "guardrail_check"
+      ],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "review",
+      "title": "Navigator-Led Review",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "V3.10",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail review"
+      ],
+      "docs": [
+        "TAILTRAIL-COMMANDS.md",
+        "context/review-lenses.md",
+        "USEFUL-PROMPTS.md"
+      ],
+      "scripts": [
+        "scripts/review-run.py",
+        "scripts/review-graph.py"
+      ],
+      "tests": [
+        "tests/test_review_scope.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "guardrails"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "testing",
+      "title": "Test Precision",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Testing Feature",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail test plan",
+        "tailtrail test summarize",
+        "tailtrail test run"
+      ],
+      "docs": [
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/test-precision.py",
+        "scripts/run-tests.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py",
+        "tests/test_parallel_test_runner.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "review"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "quality-signals",
+      "title": "Quality, CI, And Sonar Signals",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Phase 8.5 + Phase 8.6",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail ci summarize",
+        "tailtrail sonar summarize",
+        "tailtrail validation summarize",
+        "tailtrail quality scan",
+        "tailtrail quality run",
+        "tailtrail quality-loop"
+      ],
+      "docs": [
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md",
+        "context/quality-loop.md"
+      ],
+      "scripts": [
+        "scripts/ci-summary.py",
+        "scripts/sonar-summary.py",
+        "scripts/validation-summary.py",
+        "scripts/quality-scan.py",
+        "scripts/quality-run.py",
+        "scripts/quality-loop.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "guardrails"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "security-vulnerability",
+      "title": "Security And Vulnerability Intelligence",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Phase 8.7",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail vulnerability summarize",
+        "tailtrail vulnerability scan",
+        "tailtrail vulnerability run"
+      ],
+      "docs": [
+        "SECURITY.md",
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/vulnerability-summary.py",
+        "scripts/vulnerability-scan.py",
+        "scripts/vulnerability-run.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "guardrails",
+        "quality-signals"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "code-graph-mapper",
+      "title": "Code Graph Mapper",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Phase 8.8 + V2.7",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail graph",
+        "tailtrail graph ast",
+        "tailtrail graph overlay",
+        "tailtrail graph map",
+        "tailtrail graph status",
+        "tailtrail graph refresh"
+      ],
+      "docs": [
+        "context/code-graph-mapper.md",
+        "TAILTRAIL-COMMANDS.md",
+        "USER-GUIDE.md"
+      ],
+      "scripts": [
+        "scripts/code-graph-mapper.py",
+        "scripts/ast-map.py",
+        "scripts/scanner-graph-overlay.py",
+        "scripts/cache-summary.py",
+        "scripts/graph-learning.py",
+        "scripts/code_graph_inventory.py",
+        "scripts/navigator_graph_lifecycle.py",
+        "scripts/graph_builder.py",
+        "scripts/code_graph_cache.py",
+        "scripts/capture_hooks.py",
+        "scripts/commit_prompt.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py",
+        "tests/test_navigator_graph_lifecycle.py"
+      ],
+      "mcp_tools": [
+        "graph_map"
+      ],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "navigator"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "learning",
+      "title": "Learning V3 Governance, Retrieval, Receipts, Calibration, And Negative Assurance",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Product Maturity Improvement Track / PM-L5",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail learn",
+        "tailtrail learn review",
+        "tailtrail learn govern",
+        "tailtrail learn graph",
+        "tailtrail learn refresh",
+        "tailtrail learn retrieve",
+        "tailtrail learn receipt record|attribute|show|validate",
+        "tailtrail learn governance state|validate|challenge|challenge-resolve|conflict|conflict-resolve|revalidate|negative-scan|negative-resolve",
+        "tailtrail learn calibration evaluate|validate|apply|meta-feed",
+        "tailtrail eval learning evaluate|validate|apply|meta-feed",
+        "tailtrail learn v3 validate|state|migrate|amend|revalidate|supersede|revoke",
+        "tailtrail learnings"
+      ],
+      "docs": [
+        "LEARNING-GOVERNANCE.md",
+        "PRODUCT-MATURITY-IMPROVEMENT-PLAN.md",
+        "schemas/learning-v3-record.schema.json",
+        "schemas/learning-use-proposal.schema.json",
+        "schemas/learning-use-receipt-event.schema.json",
+        "schemas/learning-governance-event.schema.json",
+        "schemas/learning-calibration-catalog.schema.json",
+        "schemas/learning-calibration-report.schema.json",
+        "schemas/learning-calibration-projection.schema.json",
+        "aidlc-docs/phase-pm-l1-requirements.md",
+        "aidlc-docs/phase-pm-l1-design.md",
+        "aidlc-docs/phase-pm-l2-requirements.md",
+        "aidlc-docs/phase-pm-l2-design.md",
+        "aidlc-docs/phase-pm-l3-requirements.md",
+        "aidlc-docs/phase-pm-l3-design.md",
+        "aidlc-docs/phase-pm-l4-requirements.md",
+        "aidlc-docs/phase-pm-l4-design.md",
+        "aidlc-docs/phase-pm-l5-requirements.md",
+        "aidlc-docs/phase-pm-l5-design.md",
+        "context/learning-agent.md",
+        "context/learning-refresh.md"
+      ],
+      "scripts": [
+        "scripts/learning-agent.py",
+        "scripts/learning-v3.py",
+        "scripts/learning-retrieval.py",
+        "scripts/learning-use-receipt.py",
+        "scripts/learning-governance.py",
+        "scripts/learning-calibration.py",
+        "scripts/learning-review.py",
+        "scripts/learning-refresh.py",
+        "scripts/learnings.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py",
+        "tests/test_learning_v3.py",
+        "tests/test_learning_retrieval.py",
+        "tests/test_learning_use_receipt.py",
+        "tests/test_learning_governance.py",
+        "tests/test_learning_calibration.py",
+        "tests/test_closure_learning.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "guardrails"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "meta-harness",
+      "title": "Meta-Harness Review",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Phase 9.8",
+      "owner": "tailtrail-core",
+      "governance_class": "telemetry",
+      "commands": [
+        "tailtrail harness quick",
+        "tailtrail harness review",
+        "tailtrail harness confidence",
+        "tailtrail harness recommendations",
+        "tailtrail harness export-summary",
+        "tailtrail harness shared-summary",
+        "tailtrail harness shared-status",
+        "tailtrail harness shared-sanitize",
+        "tailtrail harness aggregate-shared",
+        "tailtrail harness analyze",
+        "tailtrail harness readiness",
+        "tailtrail harness propose",
+        "tailtrail harness proposal-status",
+        "tailtrail harness proposal-record"
+      ],
+      "docs": [
+        "META-HARNESS-IMPLEMENTATION.md",
+        "TAILTRAIL-PITCH.md",
+        "tailtrail-meta/README.md"
+      ],
+      "scripts": [
+        "scripts/harness-review.py",
+        "scripts/meta-harness-analyze.py",
+        "scripts/meta-harness-propose.py"
+      ],
+      "tests": [
+        "tests/test_meta_harness.py",
+        "tests/test_meta_harness_token_feedback.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "navigator",
+        "reporting"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "token-harness",
+      "title": "Token Harness And Budgeting",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "BL-10",
+      "owner": "tailtrail-core",
+      "governance_class": "telemetry",
+      "commands": [
+        "tailtrail route",
+        "tailtrail token",
+        "tailtrail token route",
+        "tailtrail token-harness",
+        "tailtrail token-harness ledger append",
+        "tailtrail token-harness ledger summary",
+        "tailtrail token-harness ledger validate",
+        "tailtrail token-harness proof holdout",
+        "tailtrail token-harness proof report",
+        "tailtrail token-harness bridge plan",
+        "tailtrail token-harness bridge input",
+        "tailtrail token-harness bridge validate-output",
+        "tailtrail token-harness bridge run",
+        "tailtrail token-harness reduce",
+        "tailtrail token-harness route",
+        "tailtrail budget",
+        "tailtrail profile",
+        "tailtrail receipt",
+        "tailtrail telemetry",
+        "tailtrail savings"
+      ],
+      "docs": [
+        "TOKEN-HARNESS.md",
+        "TOKEN-SLICER.md",
+        "TOKEN-AUTOPILOT.md"
+      ],
+      "scripts": [
+        "scripts/route-context.py",
+        "scripts/token-auto.py",
+        "scripts/token-harness.py",
+        "scripts/token-harness-bridge.py",
+        "scripts/token-harness-ledger.py",
+        "scripts/token-harness-proof.py",
+        "scripts/token-harness-reduce.py",
+        "scripts/token-budget-coach.py",
+        "scripts/prompt-profile.py",
+        "scripts/context-receipt.py",
+        "scripts/token-telemetry.py",
+        "scripts/token-savings.py",
+        "scripts/slice-context.py",
+        "scripts/prune-context.py",
+        "scripts/context_receipt.py",
+        "scripts/prompt_profile.py",
+        "scripts/token_budget_coach.py",
+        "scripts/token_telemetry.py"
+      ],
+      "tests": [
+        "tests/test_token_telemetry.py",
+        "tests/test_token_harness_proof.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "estimated",
+      "depends_on": [
+        "navigator"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "reporting",
+      "title": "Value Reporting And Outcome Telemetry",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Phase 9.7 + V3.8",
+      "owner": "tailtrail-core",
+      "governance_class": "telemetry",
+      "commands": [
+        "tailtrail report",
+        "tailtrail report value",
+        "tailtrail report trend",
+        "tailtrail report pr",
+        "tailtrail outcome"
+      ],
+      "docs": [
+        "ENTERPRISE-REVIEW.md",
+        "TAILTRAIL-PITCH.md",
+        "USER-GUIDE.md"
+      ],
+      "scripts": [
+        "scripts/tailtrail-report.py",
+        "scripts/outcome-telemetry.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "token-harness"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "install-surfaces",
+      "title": "Install Surfaces And Updates",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "BL-8 + V2.1 + V2.2",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail install",
+        "tailtrail install codex",
+        "tailtrail first-run",
+        "tailtrail update",
+        "tailtrail setup-scan",
+        "tailtrail team-init"
+      ],
+      "docs": [
+        "QUICKSTART.md",
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/install-copilot.py",
+        "scripts/install-local.py",
+        "scripts/first-run.py",
+        "scripts/install-launcher.py",
+        "scripts/install_surfaces.py",
+        "scripts/update-tailtrail.py",
+        "scripts/update-copilot.py",
+        "scripts/setup-scan.py",
+        "scripts/team-init.py"
+      ],
+      "tests": [
+        "tests/test_install_profiles.py",
+        "tests/test_first_run.py"
+      ],
+      "mcp_tools": [
+        "install_status"
+      ],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "governance"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "mcp",
+      "title": "Thin MCP Inspection And Controlled Execution",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Harness Engineering Phase 5",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail mcp serve",
+        "tailtrail mcp tools",
+        "tailtrail mcp doctor"
+      ],
+      "docs": [
+        "MCP-SERVER.md",
+        "TAILTRAIL-COMMANDS.md",
+        "USER-GUIDE.md",
+        "tailtrail-mcp.md",
+        "tailtrail-implementation-backlog.md"
+      ],
+      "scripts": [
+        "scripts/mcp-server.py"
+      ],
+      "tests": [
+        "tests/test_mcp_server.py"
+      ],
+      "mcp_tools": ["ledger_state", "anchor_show", "harness_checkpoint_show", "completion_feedback_show", "planning_lock_show", "planning_lock_start", "planning_lock_approve", "tailtrail_start", "profile_view", "validation_receipt_show", "git_readiness", "recovery_boundary_show", "architecture_assessment_show", "completion_report_show", "execution_evidence_show", "execution_evidence_record", "execution_evidence_run", "workflow_dashboard_show", "harness_control_check"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "navigator",
+        "guardrails",
+        "canonical-local-state",
+        "requirement-completion-harness",
+        "evidence-aware-testing",
+        "safe-git-checkpoints-and-recovery"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "governance",
+      "title": "Governance And Policy",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "BL-6 + Phase 3 + Phase 3.5",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail governance",
+        "tailtrail policy"
+      ],
+      "docs": [
+        "GOVERNANCE.md",
+        "tailtrail-policy.example.md",
+        "PUBLIC-CLAIMS.md"
+      ],
+      "scripts": [
+        "scripts/policy-check.py",
+        "scripts/public-doc-audit.py"
+      ],
+      "tests": [
+        "tests/test_governance_sync.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "benchmark-efficacy",
+      "title": "Benchmark And Efficacy Harness",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Phase 7 + V3.5 + BL-1",
+      "owner": "tailtrail-core",
+      "governance_class": "benchmark",
+      "commands": [
+        "tailtrail benchmark",
+        "tailtrail efficacy",
+        "tailtrail analyze"
+      ],
+      "docs": [
+        "benchmarks/README.md",
+        "benchmarks/efficacy/README.md",
+        "TAILTRAIL-PITCH.md"
+      ],
+      "scripts": [
+        "scripts/benchmark-tailtrail.py",
+        "scripts/efficacy-benchmark.py",
+        "scripts/efficacy-run.py",
+        "scripts/analyze-benchmark.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "benchmark-measured",
+      "depends_on": [
+        "guardrails",
+        "reporting"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "release-admin",
+      "title": "Release And Admin Packaging",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Public Release Features + Release Mode Separation",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail release-check",
+        "tailtrail admin export"
+      ],
+      "docs": [
+        "ADMIN-RELEASE-MODES.md",
+        "RELEASE-CHECKLIST.md",
+        "PUBLIC-RELEASE-METADATA.md",
+        "release-manifest.json",
+        "release-manifest.schema.json"
+      ],
+      "scripts": [
+        "scripts/release-check.py",
+        "scripts/release_manifest.py",
+        "scripts/export-release.py",
+        "scripts/smoke-test.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py",
+        "tests/test_release_truth.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "install-surfaces",
+        "governance"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "command-surface",
+      "title": "Command Surface And Source Doctor",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "BL-2 + BL-3 + BL-11",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+      "commands": [
+        "tailtrail help",
+        "tailtrail commands",
+        "tailtrail hello",
+        "tailtrail version",
+        "tailtrail doctor",
+        "tailtrail flow",
+        "tailtrail discuss",
+        "tailtrail approve",
+        "tailtrail continue",
+        "tailtrail close"
+      ],
+      "docs": [
+        "README.md",
+        "TAILTRAIL-COMMANDS.md",
+        "QUICKSTART.md"
+      ],
+      "scripts": [
+        "scripts/tailtrail.py",
+        "scripts/check-tailtrail.py",
+        "scripts/sync-adapters.py",
+        "scripts/orchestration_facade.py",
+        "scripts/host-decision.py"
+      ],
+      "tests": [
+        "tests/test_cli_dispatch.py",
+        "tests/test_orchestration_facade.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "governance"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "assistant-adapters",
+      "title": "Validated and Composed Assistant Adapters",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Phase 6 + Official AI-DLC Phase F",
+      "owner": "tailtrail-core",
+      "governance_class": "dev-experience",
+ "commands": [
+  "tailtrail adapters check",
+  "tailtrail adapters sync",
+  "tailtrail adapters conformance",
+  "tailtrail host-reply score"
+ ],
+      "docs": [
+        "ASSISTANT-COMPATIBILITY.md",
+        "adapters/README.md",
+        "README.md",
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+ "scripts": [
+  "scripts/host-adapter-conformance.py",
+  "scripts/host-reply-validate.py",
+  "scripts/shell_quote.py"
+ ],
+ "tests": [
+  "tests/test_cli_dispatch.py",
+  "tests/test_host_adapter_conformance.py",
+  "tests/test_host_reply_validate.py",
+  "tests/test_shell_quote.py"
+ ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "governance",
+        "command-surface"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "evaluation-harness",
+      "title": "Evaluation Harness",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Evaluation Harness Consolidation Track / EH-0-EH-2",
+      "owner": "tailtrail-core",
+      "governance_class": "telemetry",
+      "commands": [
+        "tailtrail eval audit",
+        "tailtrail eval portfolio run",
+        "tailtrail eval portfolio report",
+        "tailtrail eval guardrails precision",
+        "tailtrail eval outcome capture",
+        "tailtrail eval outcome summarize",
+        "tailtrail eval workflow capture",
+        "tailtrail eval workflow review",
+        "tailtrail eval meta quick",
+        "tailtrail eval meta review",
+        "tailtrail eval meta readiness",
+        "tailtrail eval meta analyze",
+        "tailtrail eval meta propose",
+        "tailtrail eval tokens route",
+        "tailtrail eval tokens reduce",
+        "tailtrail eval tokens receipt",
+        "tailtrail eval tokens ledger",
+        "tailtrail eval tokens proof",
+        "tailtrail eval tokens telemetry",
+        "tailtrail eval tokens savings",
+        "tailtrail eval tokens budget",
+        "tailtrail eval report value",
+        "tailtrail eval artifact analyze",
+        "tailtrail eval artifact benchmark",
+        "tailtrail eval scenario list",
+        "tailtrail eval scenario run",
+        "tailtrail eval scenario compare",
+        "tailtrail eval scenario report",
+        "tailtrail eval normalize",
+        "tailtrail eval validate-events",
+        "tailtrail eval dataset list|validate|report",
+        "tailtrail eval real-portfolio validate|prepare|grade|unblind|report",
+        "tailtrail eval adoption validate|template|record|report|gate|propose|decide",
+        "tailtrail eval scope validate|report|capture-negative"
+      ],
+      "docs": [
+        "EVALUATION-HARNESS.md",
+        "ROADMAP.md",
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md",
+        "benchmarks/evaluation/README.md",
+        "benchmarks/evaluation/delivery-dataset/v1.json",
+        "schemas/evaluation-harness-event.schema.json",
+        "schemas/evaluation-delivery-dataset.schema.json",
+        "schemas/real-evaluation-portfolio.schema.json",
+        "benchmarks/evaluation/real-portfolio/v1.json",
+        "benchmarks/evaluation/adoption/v1.json",
+        "schemas/adoption-validation-catalog.schema.json",
+        "schemas/adoption-validation-trial.schema.json",
+        "schemas/adoption-validation-report.schema.json",
+        "schemas/adoption-improvement-decision.schema.json",
+        "schemas/navigator-scope-calibration-catalog.schema.json",
+        "schemas/navigator-scope-calibration-report.schema.json",
+        "benchmarks/evaluation/navigator-scope/v1.json",
+        "benchmarks/evaluation/navigator-scope/fsr6-v1.json",
+        "benchmarks/evaluation/navigator-scope/language-profiles-v1.json",
+        "aidlc-docs/phase-pm-7-requirements.md",
+        "aidlc-docs/phase-pm-7-design.md",
+        "templates/evaluation-result.md"
+      ],
+      "scripts": [
+        "scripts/evaluation-audit.py",
+        "scripts/evaluation-harness.py",
+        "scripts/evaluation-dataset.py",
+        "scripts/real-evaluation-portfolio.py",
+        "scripts/adoption-validation.py"
+      ],
+      "tests": [
+        "tests/test_evaluation_audit.py",
+        "tests/test_evaluation_harness_router.py",
+        "tests/test_evaluation_harness_scenarios.py",
+        "tests/test_evaluation_dataset.py",
+        "tests/test_real_evaluation_portfolio.py",
+        "tests/test_adoption_validation.py"
+      ],
+      "mcp_tools": [
+        "eval_scenario_list",
+        "eval_scenario_report",
+        "real_evaluation_portfolio_report",
+        "adoption_validation_report"
+      ],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "registry",
+        "command-surface",
+        "token-harness",
+        "meta-harness"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "registry",
+      "title": "TailTrail Feature Registry",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "BL-11 Phase 11.1 + Phase 11.2 + Phase 11.3 + Phase 11.5",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail registry list",
+        "tailtrail registry show",
+        "tailtrail registry surfaces",
+        "tailtrail registry validate",
+        "tailtrail registry drift",
+        "tailtrail registry workflow",
+        "tailtrail registry mcp"
+      ],
+      "docs": [
+        "ROADMAP.md",
+        "META-HARNESS-IMPLEMENTATION.md",
+        "README.md",
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md",
+        "CONTRIBUTING.md",
+        "GOVERNANCE.md"
+      ],
+      "scripts": [
+        "scripts/tailtrail-registry.py",
+        "scripts/registry-drift.py"
+      ],
+      "tests": [
+        "tests/test_tailtrail_registry.py",
+        "tests/test_registry_drift.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "governance"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "context-engine",
+      "title": "Context Engine Helpers",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "V2.7 Engine Deepening",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail engine"
+      ],
+      "docs": [
+        "TOKEN-SLICER.md",
+        "context/slices.md",
+        "context/prune-rules.md"
+      ],
+      "scripts": [
+        "scripts/summarize-output.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "token-harness"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-bridge-contract",
+      "title": "Spec Kit Bridge Product Contract And Security Boundary",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-0",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge policy check",
+        "tailtrail intent-bridge policy init",
+        "tailtrail intent-bridge policy contracts"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/spec-kit-source.schema.json",
+        "schemas/spec-kit-import.schema.json",
+        "schemas/spec-kit-mapping.schema.json",
+        "schemas/spec-kit-amendment.schema.json",
+        "schemas/spec-kit-convergence.schema.json",
+        "templates/spec-kit-bridge-policy.example.json"
+      ],
+      "scripts": [
+        "scripts/spec-kit-policy.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_policy.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "governance",
+        "canonical-local-state"
+      ],
+      "since_version": "sk-0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-read-only-detection",
+      "title": "Spec Kit Read-Only Workspace Detection And Compatibility",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-1",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge detect",
+        "tailtrail intent-bridge status",
+        "tailtrail intent-bridge inspect"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-detect.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_detect.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-bridge-contract"
+      ],
+      "since_version": "sk-1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-canonical-import",
+      "title": "Spec Kit Canonical Import And Versioned Source Snapshots",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-2",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge import"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/spec-kit-source.schema.json",
+        "schemas/spec-kit-import.schema.json"
+      ],
+      "scripts": [
+        "scripts/spec-kit-import.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_import.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-bridge-contract",
+        "spec-kit-read-only-detection"
+      ],
+      "since_version": "sk-2",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-navigator-integration",
+      "title": "Spec Kit Navigator And Requirement-Gathering Integration",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-3",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail start --intent-feature",
+        "tailtrail intent-bridge bridge"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-bridge.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_navigator_bridge.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-canonical-import"
+      ],
+      "since_version": "sk-3",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-anchor-task-slice-bridge",
+      "title": "Spec Kit Approved Anchor And Task-Slice Bridge",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-4",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge slices show",
+        "tailtrail intent-bridge slices assert-active",
+        "tailtrail intent-bridge slices advance"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-slices.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_slices.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-navigator-integration"
+      ],
+      "since_version": "sk-4",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-harness-evidence-integration",
+      "title": "Spec Kit Harness And Evidence Integration",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-5",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge evidence plan",
+        "tailtrail intent-bridge evidence record"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-evidence.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_evidence.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-anchor-task-slice-bridge"
+      ],
+      "since_version": "sk-5",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-amendment-drift-recovery",
+      "title": "Spec Kit Amendment, Drift, Correction, And Recovery",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-6",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge amendment check",
+        "tailtrail intent-bridge amendment propose",
+        "tailtrail intent-bridge amendment approve",
+        "tailtrail intent-bridge amendment recovery"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-amendment.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_amendment.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-harness-evidence-integration"
+      ],
+      "since_version": "sk-6",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-closure-convergence",
+      "title": "Spec Kit Closure Convergence",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-7",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge converge"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-converge.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_converge.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-amendment-drift-recovery"
+      ],
+      "since_version": "sk-7",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-mcp-host-ci-integration",
+      "title": "Spec Kit MCP, Host, And CI Integration",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-8",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail mcp serve",
+        "tailtrail intent-bridge ci-ingest"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-integration.py"
+      ],
+      "tests": [
+        "tests/test_mcp_server.py",
+        "tests/test_spec_kit_converge.py"
+      ],
+      "mcp_tools": [
+        "spec_kit_detect",
+        "spec_kit_mapping_show",
+        "spec_kit_convergence_show",
+        "spec_kit_import",
+        "spec_kit_amendment_propose",
+        "spec_kit_anchor_approve",
+        "spec_kit_convergence_record",
+        "spec_kit_ci_ingest"
+      ],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-closure-convergence"
+      ],
+      "since_version": "sk-8",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "spec-kit-evaluation-governance-release",
+      "title": "Spec Kit Evaluation, Observability, Governance, And Release",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "TailTrail and GitHub Spec Kit: Enterprise Integration Plan / SK-9",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail intent-bridge observe",
+        "tailtrail intent-bridge release",
+        "tailtrail intent-bridge governance",
+        "tailtrail intent-bridge evaluate",
+        "tailtrail intent-bridge ci-gate"
+      ],
+      "docs": [
+        "tailtrail-spec-kit-integration.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/spec-kit-observability.py",
+        "scripts/spec-kit-ci-gate.py"
+      ],
+      "tests": [
+        "tests/test_spec_kit_observability.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "spec-kit-mcp-host-ci-integration"
+      ],
+      "since_version": "sk-9",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-ownership-dwr-a",
+      "title": "Durable Workflow Runtime DWR-A: Canonical Ownership Contract",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-A",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow bind",
+        "tailtrail workflow show",
+        "tailtrail workflow validate"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-ownership.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow-runtime.py",
+        "scripts/workflow_runtime/ownership.py"
+      ],
+      "tests": [
+        "tests/test_workflow_ownership.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "planning-lock",
+        "canonical-local-state",
+        "target-workspace-resolver"
+      ],
+      "since_version": "dwr-a",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-capability-bridge-dwr-b",
+      "title": "Durable Workflow Runtime DWR-B: Declarative Capability And Approval Bridge",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-B",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow capabilities propose",
+        "tailtrail workflow capabilities show",
+        "tailtrail workflow capabilities validate",
+        "tailtrail workflow capabilities preapprove",
+        "tailtrail workflow capabilities preapproval-show",
+        "tailtrail workflow capabilities preapproval-validate"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-capability-plan.schema.json",
+        "schemas/workflow-preapproval.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/capabilities.py"
+      ],
+      "tests": [
+        "tests/test_workflow_ownership.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-ownership-dwr-a",
+        "planning-lock",
+        "canonical-local-state"
+      ],
+      "since_version": "dwr-b",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-task-scope-dwr-c",
+      "title": "Durable Workflow Runtime DWR-C: Task-Scoped Identity, Reservation Locking, And Freshness",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-C",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow task scope-init",
+        "tailtrail workflow task scope-show",
+        "tailtrail workflow task freshness",
+        "tailtrail workflow task acquire",
+        "tailtrail workflow task lock-show",
+        "tailtrail workflow task diagnose"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-task-scope.schema.json",
+        "schemas/workflow-code-change-reservation.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/task_scope.py"
+      ],
+      "tests": [
+        "tests/test_workflow_ownership.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-ownership-dwr-a",
+        "durable-workflow-capability-bridge-dwr-b",
+        "target-workspace-resolver"
+      ],
+      "since_version": "dwr-c",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-storage-dwr-minus",
+      "title": "Durable Workflow Runtime DWR-minus: Append-Only Storage Proof",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-minus",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow storage init",
+        "tailtrail workflow storage capture",
+        "tailtrail workflow storage status",
+        "tailtrail workflow storage replay",
+        "tailtrail workflow storage validate"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-storage-event.schema.json",
+        "schemas/workflow-projection.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/storage.py"
+      ],
+      "tests": [
+        "tests/test_workflow_storage.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-ownership-dwr-a"
+      ],
+      "since_version": "dwr-minus",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-state-engine-dwr-1",
+      "title": "Durable Workflow Runtime DWR-1: Local State Engine",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-1",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow state create",
+        "tailtrail workflow state list",
+        "tailtrail workflow state show",
+        "tailtrail workflow state status",
+        "tailtrail workflow state pause",
+        "tailtrail workflow state resume",
+        "tailtrail workflow state cancel",
+        "tailtrail workflow state replay",
+        "tailtrail workflow state doctor"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-storage-event.schema.json",
+        "schemas/workflow-projection.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/state.py"
+      ],
+      "tests": [
+        "tests/test_workflow_state.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-ownership-dwr-a",
+        "durable-workflow-storage-dwr-minus",
+        "durable-workflow-task-scope-dwr-c"
+      ],
+      "since_version": "dwr-1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-compiler-dwr-1-5",
+      "title": "Durable Workflow Runtime DWR-1.5: Deterministic Compiler",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-1.5",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow compile plan",
+        "tailtrail workflow compile show",
+        "tailtrail workflow compile validate"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-compiler-plan.schema.json",
+        "schemas/workflow-compiler-policy.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/compiler.py",
+        "scripts/workflow_runtime/templates.py"
+      ],
+      "tests": [
+        "tests/test_workflow_compiler.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-ownership-dwr-a",
+        "durable-workflow-capability-bridge-dwr-b",
+        "durable-workflow-state-engine-dwr-1"
+      ],
+      "since_version": "dwr-1.5",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-start-integration-dwr-2",
+      "title": "Durable Workflow Runtime DWR-2: Controlled Start Integration",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-2",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail start --no-workflow",
+        "tailtrail workflow approvals show",
+        "tailtrail workflow approvals session",
+        "tailtrail workflow approvals validate"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-compiler-policy.schema.json",
+        "schemas/workflow-stage-approvals.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/start_integration.py"
+      ],
+      "tests": [
+        "tests/test_workflow_start_integration.py",
+        "tests/test_start_entrypoints.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-state-engine-dwr-1",
+        "durable-workflow-compiler-dwr-1-5",
+        "planning-lock"
+      ],
+      "since_version": "dwr-2",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-evidence-closure-dwr-3",
+      "title": "Durable Workflow Runtime DWR-3: Evidence, Resume, Correction, and Closure Bridge",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-3",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow evidence collect",
+        "tailtrail workflow evidence show",
+        "tailtrail workflow evidence refresh",
+        "tailtrail workflow evidence resume",
+        "tailtrail workflow evidence correction",
+        "tailtrail workflow evidence close",
+        "tailtrail workflow evidence validate"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-evidence.schema.json",
+        "schemas/workflow-completion-receipt.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/evidence.py"
+      ],
+      "tests": [
+        "tests/test_workflow_evidence.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-start-integration-dwr-2",
+        "evidence-aware-testing"
+      ],
+      "since_version": "dwr-3",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-proven-vertical-dwr-4",
+      "title": "Durable Workflow Runtime DWR-4: Proven Small-Change Vertical",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / DWR-4",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow vertical status",
+        "tailtrail workflow vertical finalize",
+        "tailtrail eval scenario run --scenario dwr-small-change-vertical"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "TAILTRAIL-COMMANDS.md",
+        "benchmarks/evaluation/scenarios/dwr-small-change-vertical/scenario.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/vertical.py"
+      ],
+      "tests": [
+        "tests/test_workflow_vertical.py",
+        "tests/test_workflow_evidence.py",
+        "tests/test_closure_finalizer.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-evidence-closure-dwr-3",
+        "requirement-completion-harness",
+        "evidence-aware-testing"
+      ],
+      "since_version": "dwr-4",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-documentation-phase-0",
+      "title": "Durable Workflow Runtime Deferred Phase 0: Documentation And Contract Reconciliation",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 0",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "TAILTRAIL-COMMANDS.md",
+        "ARCHITECTURE.md"
+      ],
+      "scripts": [],
+      "tests": [
+        "tests/test_workflow_documentation.py",
+        "tests/test_tailtrail_registry.py",
+        "tests/test_cli_dispatch.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-proven-vertical-dwr-4",
+        "registry"
+      ],
+      "since_version": "dwr-deferred-0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-contract-dwr-0",
+      "title": "Durable Workflow Runtime DWR-0: Complete Runtime Contract And Inventory",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 1",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "ARCHITECTURE.md",
+        "schemas/workflow-instance.schema.json",
+        "schemas/workflow-stage.schema.json",
+        "schemas/workflow-action.schema.json",
+        "schemas/workflow-transition.schema.json",
+        "schemas/workflow-transition-table-v1.json",
+        "schemas/workflow-approval-record.schema.json",
+        "schemas/workflow-evidence-record.schema.json",
+        "schemas/workflow-context-receipt.schema.json",
+        "schemas/workflow-completion-contract.schema.json",
+        "schemas/workflow-runtime-event.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/contracts.py",
+        "scripts/workflow_runtime/reason_codes.py",
+        "scripts/workflow_runtime/evidence_completion.py"
+      ],
+      "tests": [
+        "tests/test_workflow_contracts.py",
+        "tests/test_workflow_module_boundaries.py",
+        "tests/test_workflow_compiler.py",
+        "tests/test_workflow_storage.py",
+        "tests/test_workflow_evidence.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "durable-workflow-documentation-phase-0",
+        "durable-workflow-storage-dwr-minus"
+      ],
+      "since_version": "dwr-0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-2",
+      "title": "Durable Workflow Runtime Deferred Phase 2: Complete Workflow And Stage State Machine",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 2",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail workflow state transition",
+        "tailtrail workflow state stage",
+        "tailtrail workflow state events",
+        "tailtrail workflow state follow-up",
+        "tailtrail workflow state supersede"
+      ],
+      "docs": [
+        "DURABLE-WORKFLOW-RUNTIME-REVISED.md",
+        "ROADMAP.md",
+        "ARCHITECTURE.md",
+        "TAILTRAIL-COMMANDS.md",
+        "schemas/workflow-storage-event.schema.json",
+        "schemas/workflow-projection.schema.json"
+      ],
+      "scripts": [
+        "scripts/workflow_runtime/transitions.py",
+        "scripts/workflow_runtime/projection.py"
+      ],
+      "tests": [
+        "tests/test_workflow_transitions.py",
+        "tests/test_workflow_stage_replay.py",
+        "tests/test_workflow_state.py",
+        "tests/test_workflow_storage.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-contract-dwr-0"],
+      "since_version": "dwr-deferred-2",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-3",
+      "title": "Durable Workflow Runtime Deferred Phase 3: Complete Approval And Policy Enforcement",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 3",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail workflow approvals show", "tailtrail workflow approvals validate", "tailtrail workflow approvals session", "tailtrail workflow approvals session-end", "tailtrail workflow approvals decide", "tailtrail workflow approvals skip", "tailtrail workflow state stage --approval-id"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "ARCHITECTURE.md", "TAILTRAIL-COMMANDS.md", "schemas/workflow-approval-record.schema.json", "schemas/workflow-stage-approvals.schema.json"],
+      "scripts": ["scripts/workflow_runtime/approvals.py"],
+      "tests": ["tests/test_workflow_approvals.py", "tests/test_workflow_start_integration.py", "tests/test_workflow_contracts.py", "tests/test_workflow_transitions.py", "tests/test_workflow_documentation.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-2"],
+      "since_version": "dwr-deferred-3",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-4",
+      "title": "Durable Workflow Runtime Deferred Phase 4: Core Capability Adapters",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 4",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail workflow adapters list",
+        "tailtrail workflow adapters contract",
+        "tailtrail workflow adapters prepare",
+        "tailtrail workflow adapters record",
+        "tailtrail workflow adapters show",
+        "tailtrail workflow adapters validate"
+      ],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "ARCHITECTURE.md", "TAILTRAIL-COMMANDS.md", "schemas/workflow-adapter-input.schema.json", "schemas/workflow-adapter-output.schema.json"],
+      "scripts": ["scripts/workflow_runtime/adapter_catalog.py", "scripts/workflow_runtime/adapters.py"],
+      "tests": ["tests/test_workflow_adapters.py", "tests/test_workflow_compiler.py", "tests/test_workflow_approvals.py", "tests/test_workflow_contracts.py", "tests/test_workflow_documentation.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-3"],
+      "since_version": "dwr-deferred-4",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-5",
+      "title": "Durable Workflow Runtime Deferred Phase 5: Full Template Execution",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 5",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail workflow execute status",
+        "tailtrail workflow execute start",
+        "tailtrail workflow execute finish",
+        "tailtrail workflow execute skip"
+      ],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "ARCHITECTURE.md", "TAILTRAIL-COMMANDS.md", "schemas/workflow-template-execution.schema.json", "schemas/workflow-risk-authority.schema.json"],
+      "scripts": ["scripts/workflow_runtime/executor.py"],
+      "tests": ["tests/test_workflow_templates.py", "tests/test_workflow_template_execution.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-4"],
+      "since_version": "dwr-deferred-5",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-6",
+      "title": "Durable Workflow Runtime Deferred Phase 6: Freshness, Correction, And Recovery",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 6",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail workflow freshness show", "tailtrail workflow freshness capture", "tailtrail workflow freshness assess", "tailtrail workflow freshness apply", "tailtrail workflow retry show", "tailtrail workflow retry decide", "tailtrail workflow retry prepare", "tailtrail workflow retry record", "tailtrail workflow resume", "tailtrail workflow correction show", "tailtrail workflow correction route"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ARCHITECTURE.md", "TAILTRAIL-COMMANDS.md", "ROADMAP.md"],
+      "scripts": ["scripts/workflow_runtime/freshness.py", "scripts/workflow_runtime/retry.py", "scripts/workflow_runtime/resume.py", "scripts/workflow_runtime/correction.py"],
+      "tests": ["tests/test_workflow_freshness_recovery.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-5"],
+      "since_version": "dwr-deferred-6",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-7",
+      "title": "Durable Workflow Runtime Deferred Phase 7: Token, Learning, Evaluation, And Meta-Harness Adapters",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 7",
+      "owner": "tailtrail-core",
+      "governance_class": "telemetry",
+      "commands": ["tailtrail workflow context record", "tailtrail workflow context telemetry", "tailtrail workflow context resume-summary", "tailtrail workflow outcomes learning", "tailtrail workflow outcomes emit", "tailtrail workflow outcomes validate"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md"],
+      "scripts": ["scripts/workflow_runtime/context.py", "scripts/workflow_runtime/outcomes.py"],
+      "tests": ["tests/test_workflow_phase7.py"],
+      "mcp_tools": [],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-6"],
+      "since_version": "dwr-deferred-7",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-8",
+      "title": "Durable Workflow Runtime Deferred Phase 8: MCP And Host Conformance",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 8",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail mcp serve", "tailtrail mcp doctor", "tailtrail adapters conformance", "tailtrail adapters runtime prepare", "tailtrail adapters runtime record", "tailtrail adapters runtime report"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "MCP-SERVER.md", "adapters/README.md"],
+      "scripts": ["scripts/workflow_runtime/mcp_bridge.py"],
+      "tests": ["tests/test_workflow_mcp.py"],
+      "mcp_tools": ["workflow_list", "workflow_show", "workflow_status", "workflow_current", "workflow_compiler_show", "workflow_approvals_show", "workflow_freshness_show", "workflow_evidence_show", "workflow_resume", "workflow_doctor", "workflow_replay", "workflow_create", "workflow_approval_decide", "workflow_state_control", "workflow_adapter_record", "workflow_correction_request", "workflow_closure_finalize"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-7"],
+      "since_version": "dwr-deferred-8",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-9",
+      "title": "Durable Workflow Runtime Deferred Phase 9: Policy-Backed CI Continuation",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 9",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail workflow ci show", "tailtrail workflow ci ingest"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md", "schemas/workflow-ci-policy.schema.json", "schemas/workflow-ci-receipt.schema.json", "schemas/workflow-ci-continuation.schema.json"],
+      "scripts": ["scripts/workflow_runtime/ci.py"],
+      "tests": ["tests/test_workflow_ci_continuation.py"],
+      "mcp_tools": ["workflow_ci_show", "workflow_ci_ingest"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-8"],
+      "since_version": "dwr-deferred-9",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-10",
+      "title": "Durable Workflow Runtime Deferred Phase 10: Security, Privacy, Governance, And Negative Assurance",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 10",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail workflow assurance inspect", "tailtrail workflow assurance governance", "tailtrail workflow assurance denials", "tailtrail workflow retention show", "tailtrail workflow retention plan", "tailtrail workflow retention cleanup"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md", "schemas/workflow-denial-audit.schema.json", "schemas/workflow-retention-policy.schema.json", "schemas/workflow-retention-plan.schema.json", "schemas/workflow-retention-cleanup.schema.json", "schemas/workflow-assurance-report.schema.json"],
+      "scripts": ["scripts/workflow_runtime/assurance.py", "scripts/workflow_runtime/denials.py", "scripts/workflow_runtime/retention.py"],
+      "tests": ["tests/test_workflow_security.py", "tests/test_workflow_privacy.py", "tests/test_workflow_negative.py"],
+      "mcp_tools": ["workflow_assurance_inspect", "workflow_denials_show", "workflow_retention_show", "workflow_retention_plan", "workflow_retention_cleanup"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-9"],
+      "since_version": "dwr-deferred-10",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-11",
+      "title": "Durable Workflow Runtime Deferred Phase 11: Evaluation, Real-Run Proof, Migration, And Release Gate",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 11",
+      "owner": "tailtrail-core",
+      "governance_class": "benchmark",
+      "commands": ["tailtrail workflow release catalog", "tailtrail workflow release show", "tailtrail workflow release compatibility", "tailtrail workflow release evaluate", "tailtrail workflow release scenario-record", "tailtrail workflow release real-run-record", "tailtrail workflow release retire"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md", "CHANGELOG.md", "docs/workflow-release-migration.md", "schemas/workflow-release-scenario.schema.json", "schemas/workflow-real-run-proof.schema.json", "schemas/workflow-release-gate.schema.json", "schemas/workflow-compatibility-report.schema.json", "schemas/workflow-retirement-decision.schema.json"],
+      "scripts": ["scripts/workflow_runtime/release.py"],
+      "tests": ["tests/test_workflow_release_scenarios.py", "tests/test_workflow_real_runs.py", "tests/test_workflow_release_gate.py"],
+      "mcp_tools": ["workflow_release_catalog", "workflow_release_show", "workflow_release_compatibility", "workflow_release_evaluate", "workflow_release_scenario_record", "workflow_real_run_record", "workflow_release_retire"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-10"],
+      "since_version": "dwr-deferred-11",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "durable-workflow-deferred-phase-12",
+      "title": "Durable Workflow Runtime Deferred Phase 12: Optional Enterprise And Distributed Adapter",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Durable Workflow Runtime / Deferred Phase 12",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": ["tailtrail workflow enterprise policy-record", "tailtrail workflow enterprise entry", "tailtrail workflow enterprise activate", "tailtrail workflow enterprise show", "tailtrail workflow enterprise link", "tailtrail workflow enterprise lease-acquire", "tailtrail workflow enterprise lease-release", "tailtrail workflow enterprise ingest", "tailtrail workflow enterprise replay", "tailtrail workflow enterprise observe", "tailtrail workflow enterprise backup", "tailtrail workflow enterprise restore-validate", "tailtrail workflow enterprise migration-plan", "tailtrail workflow enterprise migrate", "tailtrail workflow enterprise rollback", "tailtrail workflow enterprise conformance"],
+      "docs": ["DURABLE-WORKFLOW-RUNTIME-REVISED.md", "ROADMAP.md", "TAILTRAIL-COMMANDS.md", "CHANGELOG.md", "docs/workflow-enterprise-adapter.md", "schemas/workflow-enterprise-policy.schema.json", "schemas/workflow-enterprise-binding.schema.json", "schemas/workflow-enterprise-lease.schema.json", "schemas/workflow-enterprise-event.schema.json", "schemas/workflow-enterprise-link.schema.json", "schemas/workflow-enterprise-backup.schema.json", "schemas/workflow-enterprise-migration.schema.json", "schemas/workflow-enterprise-conformance.schema.json", "schemas/workflow-enterprise-entry.schema.json", "schemas/workflow-enterprise-replay.schema.json", "schemas/workflow-enterprise-observability.schema.json", "schemas/workflow-enterprise-restore-validation.schema.json"],
+      "scripts": ["scripts/workflow_runtime/enterprise.py", "scripts/workflow_runtime/enterprise_transport.py", "scripts/workflow_runtime/enterprise_recovery.py"],
+      "tests": ["tests/test_workflow_enterprise_adapter.py", "tests/test_workflow_enterprise_transport.py", "tests/test_workflow_enterprise_recovery.py", "tests/test_workflow_enterprise_mcp.py"],
+      "mcp_tools": ["workflow_enterprise_entry", "workflow_enterprise_show", "workflow_enterprise_replay", "workflow_enterprise_observe", "workflow_enterprise_restore_validate", "workflow_enterprise_migration_plan", "workflow_enterprise_conformance", "workflow_enterprise_policy_record", "workflow_enterprise_activate", "workflow_enterprise_link", "workflow_enterprise_lease_acquire", "workflow_enterprise_lease_release", "workflow_enterprise_ingest", "workflow_enterprise_backup", "workflow_enterprise_migrate", "workflow_enterprise_rollback"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["durable-workflow-deferred-phase-11"],
+      "since_version": "dwr-deferred-12",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "enterprise-readiness-program",
+      "title": "Enterprise Readiness Baseline, Ownership, Inventory, And Closure Program",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "Enterprise Stabilization / Phase E0",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail enterprise-readiness validate",
+        "tailtrail enterprise-readiness status",
+        "tailtrail enterprise-readiness inventory --format json",
+        "tailtrail enterprise-readiness conformance",
+        "tailtrail enterprise-readiness offline-bundle --approved"
+      ],
+      "docs": [
+        "ENTERPRISE-READINESS-ASSESSMENT.md",
+        "enterprise-closure-registry.json",
+        "enterprise-closure-registry.schema.json",
+        "TAILTRAIL-COMMANDS.md",
+        "CHANGELOG.md",
+        "aidlc-docs/phase-e0-requirements.md",
+        "aidlc-docs/phase-e0-design.md",
+        "PRODUCT-MATURITY-IMPROVEMENT-PLAN.md",
+        "benchmarks/enterprise-conformance/v1.json",
+        "schemas/enterprise-conformance-report.schema.json"
+      ],
+      "scripts": [
+        "scripts/enterprise-readiness.py",
+        "scripts/enterprise-conformance.py"
+      ],
+      "tests": [
+        "tests/test_enterprise_readiness.py",
+        "tests/test_enterprise_conformance.py"
+      ],
+      "mcp_tools": ["enterprise_conformance_report"],
+      "requires_approval": true,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "registry"
+      ],
+      "since_version": "enterprise-e0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "product-maturity-pm0",
+      "title": "Product Maturity Baseline, Freeze, And Ownership Controls",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Product Maturity Improvement Track / PM-0 through PM-L0",
+      "owner": "tailtrail-core",
+      "governance_class": "governance",
+      "commands": [
+        "tailtrail maturity baseline",
+        "tailtrail maturity inventory",
+        "tailtrail maturity learning-inventory",
+        "tailtrail maturity maintainability inventory",
+        "tailtrail maturity maintainability validate",
+        "tailtrail maturity maintainability status",
+        "tailtrail maturity validate",
+        "tailtrail maturity status"
+      ],
+      "docs": [
+        "PRODUCT-MATURITY-IMPROVEMENT-PLAN.md",
+        "ROADMAP.md",
+        "tailtrail-meta/product-maturity-policy-v1.json",
+        "tailtrail-meta/product-maturity-baseline-v1.json",
+        "benchmarks/product-maturity/pm0-scenarios-v1.json",
+        "schemas/product-maturity-baseline.schema.json",
+        "schemas/product-maturity-learning-inventory.schema.json",
+        "schemas/maintainability-inventory.schema.json",
+        "tailtrail-meta/document-owners-v1.json",
+        "tailtrail-meta/maintainability-inventory-v1.json",
+        "tailtrail-meta/product-maturity-learning-inventory-v1.json",
+        "aidlc-docs/phase-pm-l0-requirements.md",
+        "aidlc-docs/phase-pm-l0-design.md"
+      ],
+      "scripts": [
+        "scripts/product-maturity.py",
+        "scripts/product-maintainability.py",
+        "scripts/orchestration/__init__.py",
+        "scripts/orchestration/run_resolution.py"
+      ],
+      "tests": [
+        "tests/test_product_maturity.py",
+        "tests/test_product_maintainability.py",
+        "tests/test_orchestration_facade.py"
+      ],
+      "mcp_tools": ["maintainability_inventory"],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "registry"
+      ],
+      "since_version": "pm-0",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "session-attachment-status",
+      "title": "TailTrail Session Attachment Status",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Stop, Detach, and Resume Control / SR-1",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail session status"
+      ],
+      "docs": [
+        "TAILTRAIL-STOP-RESUME-CONTROL-IMPLEMENTATION-PLAN.md",
+        "schemas/tailtrail-session-attachment.schema.json"
+      ],
+      "scripts": [
+        "scripts/session-control.py",
+        "scripts/session_control.py"
+      ],
+      "tests": [
+        "tests/test_session_control.py",
+        "tests/test_tailtrail_stop_resume.py"
+      ],
+      "mcp_tools": ["tailtrail_session_status"],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": ["planning-lock"],
+      "since_version": "sr-1",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "stop-resume-control",
+      "title": "TailTrail Common Stop, Detach, and Exact Resume Control",
+      "status": "implemented",
+      "surface": "core",
+      "roadmap_ref": "Stop, Detach, and Resume Control / SR-2 through SR-7",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail stop",
+        "tailtrail resume --run-id <exact-run-id>"
+      ],
+      "docs": [
+        "TAILTRAIL-STOP-RESUME-CONTROL-IMPLEMENTATION-PLAN.md",
+        "TAILTRAIL-COMMANDS.md",
+        "USER-GUIDE.md",
+        "MCP-SERVER.md",
+        "schemas/tailtrail-session-attachment.schema.json",
+        "schemas/intent-envelope.schema.json"
+      ],
+      "scripts": [
+      ],
+      "tests": [
+        "tests/test_tailtrail_stop_resume.py",
+        "tests/test_expand_intent.py",
+        "tests/test_mcp_server.py"
+      ],
+      "mcp_tools": ["tailtrail_stop", "tailtrail_resume"],
+      "requires_approval": false,
+      "read_only": false,
+      "evidence_label": "local-evidence",
+      "depends_on": ["planning-lock", "session-attachment-status", "durable-workflow-state-engine-dwr-1"],
+      "since_version": "sr-7",
+      "deprecated_in_version": null
+    },
+    {
+      "id": "cross-repo-reference",
+      "title": "Cross-Repo Reference Mode",
+      "status": "implemented",
+      "surface": "extended",
+      "roadmap_ref": "V3 Cross-Repo Reference",
+      "owner": "tailtrail-core",
+      "governance_class": "product",
+      "commands": [
+        "tailtrail reference"
+      ],
+      "docs": [
+        "context/cross-repo-reference.md",
+        "USER-GUIDE.md",
+        "TAILTRAIL-COMMANDS.md"
+      ],
+      "scripts": [
+        "scripts/cross-repo-reference.py"
+      ],
+      "tests": [
+        "tests/test_navigator_core.py"
+      ],
+      "mcp_tools": [],
+      "requires_approval": false,
+      "read_only": true,
+      "evidence_label": "local-evidence",
+      "depends_on": [
+        "guardrails"
+      ],
+      "since_version": "v1",
+      "deprecated_in_version": null
+    }
+  ]
+}

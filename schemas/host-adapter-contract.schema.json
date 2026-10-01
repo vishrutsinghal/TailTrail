@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tailtrail.dev/schemas/host-adapter-contract.schema.json",
+  "title": "TailTrail host adapter compatibility contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "type", "adapter_version", "precedence", "hosts", "conformance_scenarios", "runtime_scenarios", "runtime_receipt_schema", "scope_scenarios", "scope_scenario_schema", "scope_reasoning_scenarios", "scope_reasoning_scenario_schema", "requirement_routing_scenarios", "requirement_routing_scenario_schema", "boundary"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "type": {"const": "tailtrail-host-adapter-compatibility"},
+    "adapter_version": {"pattern": "^v[0-9]+$"},
+    "precedence": {"const": ["host safety", "user request", "official stage rules", "tailtrail assurance rules"]},
+    "hosts": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "display_name", "owner", "source", "generated", "qualification", "supported", "official_full_mode", "runtime_adapter", "runtime_status", "core_files", "composition_markers", "first_action", "reload", "version_detection", "capabilities", "migration"],
+        "properties": {
+          "id": {"enum": ["codex", "copilot", "claude"]}, "display_name": {"type": "string", "minLength": 1}, "owner": {"const": "tailtrail-hosts"},
+          "source": {"type": "string", "minLength": 1}, "generated": {"type": "string", "minLength": 1},
+          "qualification": {"enum": ["instruction-compatible", "contract-tested", "runtime-observed", "supported", "unknown", "not-validated"]}, "supported": {"type": "boolean"},
+          "official_full_mode": {"type": "string", "minLength": 1}, "runtime_adapter": {"const": "receipt-v1"}, "runtime_status": {"enum": ["passed", "failed", "not-validated", "stale", "incompatible"]},
+          "core_files": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["source", "destination"], "properties": {"source": {"type": "string", "minLength": 1}, "destination": {"type": "string", "minLength": 1}}}},
+          "composition_markers": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}},
+          "first_action": {"type": "object", "additionalProperties": false, "required": ["surface", "invocation", "result"], "properties": {"surface": {"type": "string", "minLength": 1}, "invocation": {"type": "string", "minLength": 1}, "result": {"type": "string", "minLength": 1}}},
+          "reload": {"type": "object", "additionalProperties": false, "required": ["required", "after", "instruction", "fallback"], "properties": {"required": {"const": true}, "after": {"const": ["install", "update", "repair", "upgrade"]}, "instruction": {"type": "string", "minLength": 1}, "fallback": {"type": "string", "minLength": 1}}},
+          "version_detection": {"type": "object", "additionalProperties": false, "required": ["kind", "command", "qualified_versions", "limitation"], "properties": {"kind": {"enum": ["command", "host-reported"]}, "command": {"type": "array", "items": {"type": "string", "minLength": 1}}, "qualified_versions": {"type": "array", "items": {"type": "string"}}, "limitation": {"type": "string", "minLength": 1}}},
+          "capabilities": {"type": "object", "additionalProperties": false, "required": ["instruction_loading", "workflow_execution", "policy_enforcement", "global_settings", "network_activity", "account_changes"], "properties": {"instruction_loading": {"enum": ["host-assisted", "enforced", "advisory"]}, "workflow_execution": {"enum": ["host-assisted", "enforced", "advisory"]}, "policy_enforcement": {"enum": ["ci-authoritative", "host-assisted", "advisory"]}, "global_settings": {"const": "approval-required"}, "network_activity": {"const": "approval-required"}, "account_changes": {"const": "approval-required"}}},
+          "migration": {"type": "object", "additionalProperties": false, "required": ["strategy", "compatible_from", "rollback"], "properties": {"strategy": {"const": "transactional-replace-owned-files"}, "compatible_from": {"type": "array", "minItems": 1, "items": {"pattern": "^v[0-9]+$"}}, "rollback": {"const": "E3 transaction backup"}}}
+        }
+      }
+    },
+    "conformance_scenarios": {"type": "array", "minItems": 6}, "runtime_scenarios": {"type": "string"}, "runtime_receipt_schema": {"type": "string"}, "scope_scenarios": {"const": "adapters/navigator-scope-scenarios-v2.json"}, "scope_scenario_schema": {"const": "schemas/host-scope-conformance.schema.json"}, "scope_reasoning_scenarios": {"const": "adapters/navigator-host-reasoning-scenarios-v1.json"}, "scope_reasoning_scenario_schema": {"const": "schemas/host-scope-reasoning-conformance.schema.json"}, "requirement_routing_scenarios": {"const": "adapters/requirement-routing-scenarios-v1.json"}, "requirement_routing_scenario_schema": {"const": "schemas/host-requirement-routing-conformance.schema.json"}, "boundary": {"type": "string", "minLength": 1}
+  }
+}

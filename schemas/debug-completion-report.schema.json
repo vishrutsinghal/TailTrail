@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TailTrail Debug Closure Section",
+  "type": "object",
+  "required": ["schema_version", "type", "run_id", "confidence_state", "domain_confidence_ceiling", "debug_status", "controls", "reproduction_proof", "authority", "boundary"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "type": {"const": "tailtrail-debug-closure-section"},
+    "run_id": {"type": "string", "minLength": 1},
+    "domain": {"enum": ["code", "architecture", "database", "api-integration", "unknown"]},
+    "domain_confidence_ceiling": {"type": "string"},
+    "confidence_state": {
+      "enum": [
+        "symptom-captured",
+        "reproduction-confirmed",
+        "hypothesis-supported",
+        "root-cause-proven",
+        "correction-proposed",
+        "correction-implemented",
+        "regression-validated",
+        "behavior-restored"
+      ]
+    },
+    "root_cause_statement": {"type": ["string", "null"]},
+    "correction_packet_ref": {"type": ["string", "null"]},
+    "harness_convergence_ref": {"type": ["string", "null"]},
+    "domains_investigated": {"type": "array", "items": {"type": "string"}},
+    "domains_eliminated": {"type": "array", "items": {"type": "string"}},
+    "domains_not_investigated": {"type": "array", "items": {"type": "string"}},
+    "debug_status": {"enum": ["pass", "evidence-incomplete"]},
+    "controls": {"type": "array", "items": {"type": "object"}},
+    "eliminated_competitors": {"type": "array", "items": {"type": "object"}},
+    "reproduction_proof": {"type": "object"},
+    "gaps": {"type": "array", "items": {"type": "string"}},
+    "authority": {"const": "section-only"},
+    "boundary": {"type": "string", "minLength": 1},
+    "governance": {"type": "object"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,1465 @@
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import os
+import sys
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, (ROOT / "scripts").as_posix())
+
+import navigator_core as core
+import navigator
+
+
+def load_script_module(name: str, relative: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load {relative}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+task_start = load_script_module("tailtrail_task_start_test", "scripts/task-start.py")
+task_next = load_script_module("tailtrail_task_next_test", "scripts/task-next.py")
+review_graph = load_script_module("tailtrail_review_graph_test", "scripts/review-graph.py")
+ast_map = load_script_module("tailtrail_ast_map_test", "scripts/ast-map.py")
+code_graph_mapper = load_script_module("tailtrail_code_graph_mapper_test", "scripts/code-graph-mapper.py")
+
+
+class NavigatorCoreTests(unittest.TestCase):
+    def test_learning_use_proposal_propagates_to_start_and_next_approval_gates(self) -> None:
+        proposal = {
+            "matches": [{"learning_id": "lrn-proposed"}],
+            "approval": {"required": True, "default": "do-not-use"},
+        }
+        plan = {"learning_use_proposal": proposal, "graph_learning": {"matches": [{"event": {"id": "legacy"}}]}}
+        with tempfile.TemporaryDirectory() as temp:
+            quality = task_start.learning_quality(Path(temp), plan)
+        actions = task_start.next_actions(plan)
+
+        self.assertEqual(quality["surfaced_matches"], 1)
+        self.assertTrue(quality["approval_required"])
+        self.assertTrue(task_next.learning_approval_pending(plan))
+        self.assertTrue(any(item["action"] == "learning-approval" and "default" in item["prompt"].lower() for item in actions))
+
+    def test_tailtrail_hello_smoke_check(self) -> None:
+        result = subprocess.run(
+            [sys.executable, (ROOT / "scripts" / "tailtrail.py").as_posix(), "hello"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Hello from TailTrail.", result.stdout)
+        self.assertIn("Installation check: passed", result.stdout)
+
+    def test_changed_file_discovery_excludes_managed_packs_and_bytecode(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tailtrail").mkdir()
+            (root / "tailtrail" / ".tailtrail-install.json").write_text("{}", encoding="utf-8")
+            self.assertFalse(navigator.is_actionable_changed_path(root, "tailtrail/scripts/navigator.py"))
+            self.assertFalse(navigator.is_actionable_changed_path(root, ".codex-plugin/plugin.json"))
+            self.assertFalse(navigator.is_actionable_changed_path(root, ".github/prompts/tailtrail-start.prompt.md"))
+            self.assertFalse(navigator.is_actionable_changed_path(root, "AGENTS.md"))
+            self.assertFalse(navigator.is_actionable_changed_path(root, "src/__pycache__/service.pyc"))
+            self.assertTrue(navigator.is_actionable_changed_path(root, "src/order_service/service.py"))
+
+    def test_start_discovers_goal_matched_source_and_test_before_git_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src" / "order_service").mkdir(parents=True)
+            (root / "tests" / "unit").mkdir(parents=True)
+            (root / "src" / "order_service" / "validation.py").write_text(
+                "def validate(quantity):\n    return quantity >= 0\n", encoding="utf-8"
+            )
+            (root / "src" / "order_service" / "service.py").write_text(
+                "def submit(quantity):\n    return quantity\n", encoding="utf-8"
+            )
+            (root / "tests" / "unit" / "test_validation.py").write_text(
+                "def test_zero_quantity():\n    assert True\n", encoding="utf-8"
+            )
+            report = navigator.decide(
+                "fix the zero quantity validation defect and add focused validation",
+                root,
+                [],
+                "tailtrail",
+                detect_git_changes=False,
+            )
+            paths = [item["path"] for item in report["likely_impacted_files"]]
+            self.assertEqual(report["target_origin"], "goal-discovery")
+            self.assertIn("src/order_service/validation.py", paths)
+            self.assertIn("tests/unit/test_validation.py", paths)
+            self.assertNotIn("src/order_service/service.py", paths)
+            self.assertEqual(len(paths), len(set(paths)))
+            self.assertIn("Code Graph Mapper", {item["name"] for item in report["selected_features"]})
+
+    def test_non_review_start_does_not_adopt_unrelated_git_changes_when_goal_discovery_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original_discovery = navigator.goal_discovered_paths
+            original_git_changed = navigator.git_changed
+            try:
+                navigator.goal_discovered_paths = lambda *_args: []
+                navigator.git_changed = lambda *_args: [".codex-plugin/plugin.json", "README.md"]
+                report = navigator.decide("implement audit events generator", root, [], "tailtrail")
+            finally:
+                navigator.goal_discovered_paths = original_discovery
+                navigator.git_changed = original_git_changed
+
+        self.assertEqual(report["target_origin"], "none")
+        self.assertEqual(report["likely_impacted_files"], [])
+
+    def test_feature_start_uses_existing_ui_structure_not_git_noise_when_lexical_match_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src" / "pages").mkdir(parents=True)
+            (root / "src" / "components").mkdir(parents=True)
+            (root / "tests").mkdir()
+            (root / "package.json").write_text('{"scripts":{"test":"vitest"}}', encoding="utf-8")
+            (root / "src" / "pages" / "AuditEventsPage.tsx").write_text("export const AuditEventsPage = () => null;", encoding="utf-8")
+            (root / "src" / "components" / "StatusBadge.tsx").write_text("export const StatusBadge = () => null;", encoding="utf-8")
+            (root / "tests" / "audit-events.test.tsx").write_text("test('audit events', () => {});", encoding="utf-8")
+            (root / "package-lock.json").write_text("irrelevant lock content", encoding="utf-8")
+            report = navigator.decide("create a new UI workspace for operators", root, [], "tailtrail", detect_git_changes=False)
+
+        paths = [item["path"] for item in report["likely_impacted_files"]]
+        self.assertEqual(report["target_origin"], "repository-discovery")
+        self.assertIn("src/pages/AuditEventsPage.tsx", paths)
+        self.assertIn("src/components/StatusBadge.tsx", paths)
+        self.assertIn("package.json", paths)
+        self.assertNotIn("package-lock.json", paths)
+        self.assertTrue(all("repository structure candidate" in item["reason"] for item in report["likely_impacted_files"]))
+
+    def test_explicit_review_may_use_git_changes_when_goal_discovery_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original_discovery = navigator.goal_discovered_paths
+            original_git_changed = navigator.git_changed
+            try:
+                navigator.goal_discovered_paths = lambda *_args: []
+                navigator.git_changed = lambda *_args: ["src/service.py"]
+                report = navigator.decide("review my uncommitted changes", root, [], "tailtrail")
+            finally:
+                navigator.goal_discovered_paths = original_discovery
+                navigator.git_changed = original_git_changed
+
+        self.assertEqual(report["target_origin"], "git-changes")
+        self.assertEqual([item["path"] for item in report["likely_impacted_files"]], ["src/service.py"])
+        self.assertEqual(report["likely_impacted_files"][0]["role"], "implementation-owner")
+        self.assertEqual(report["likely_impacted_files"][0]["status"], "inspection-only")
+        self.assertEqual(report["likely_impacted_files"][0]["seed_sources"], ["git-change"])
+        self.assertIn(
+            "git-change-needs-task-specific-evidence",
+            report["likely_impacted_files"][0]["reason_codes"],
+        )
+
+    def test_task_start_renders_installed_pack_command_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tailtrail" / "scripts").mkdir(parents=True)
+            (root / "tailtrail" / "scripts" / "tailtrail.py").write_text("", encoding="utf-8")
+            report = task_start.build_report("fix validation", root, [], "python3 tailtrail.py")
+            self.assertEqual(report["command_prefix"], "python3 tailtrail/scripts/tailtrail.py")
+
+    def test_task_start_keeps_already_resolved_installed_pack_command(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tailtrail" / "scripts").mkdir(parents=True)
+            (root / "tailtrail" / "scripts" / "tailtrail.py").write_text("", encoding="utf-8")
+            prefix = "python3 tailtrail/scripts/tailtrail.py"
+            report = task_start.build_report("fix validation", root, [], prefix)
+            self.assertEqual(report["command_prefix"], prefix)
+
+    def test_task_start_keeps_source_checkout_command_without_duplicate_scripts_segment(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "scripts").mkdir()
+            (root / "scripts" / "tailtrail.py").write_text("", encoding="utf-8")
+            report = task_start.build_report("fix validation", root, [], "python3 scripts/tailtrail.py")
+            self.assertEqual(report["command_prefix"], "python3 scripts/tailtrail.py")
+
+    def test_review_graph_paths_are_bounded_for_windows_safe_subprocesses(self) -> None:
+        changed = [f"generated/{index:04d}-{'x' * 300}.py" for index in range(100)]
+        selected = navigator.bounded_review_graph_paths(changed)
+        self.assertLessEqual(len(selected), navigator.MAX_REVIEW_GRAPH_CHANGED_PATHS)
+        self.assertLessEqual(
+            sum(len("--changed") + 1 + len(path) + 1 for path in selected),
+            navigator.MAX_REVIEW_GRAPH_ARGUMENT_CHARS,
+        )
+        self.assertLess(len(selected), len(changed))
+
+    def test_classifies_sonar_vulnerability_handoff_prompt(self) -> None:
+        goal = "Fix failing Sonar issue, check CVE impact, and prepare PR handoff"
+        tasks = core.task_types(goal)
+        risks = core.risk_indicators(goal, ["src/main/java/PaymentValidator.java"])
+
+        self.assertIn("ci-sonar", tasks)
+        self.assertIn("security", tasks)
+        self.assertIn("handoff", tasks)
+        self.assertIn("ci/sonar", risks)
+        self.assertIn("vulnerability scan", risks)
+        self.assertTrue(core.ci_sonar_requested(goal, tasks, risks))
+        self.assertTrue(core.vulnerability_requested(goal, risks))
+
+    def test_tiny_task_stays_lean_without_risk(self) -> None:
+        risks = core.risk_indicators("fix typo in README", ["README.md"])
+        self.assertEqual(risks, [])
+        self.assertTrue(core.is_tiny("fix typo in README", risks, ["README.md"]))
+
+    def test_repo_overview_prompt_is_not_feature_implementation(self) -> None:
+        self.assertEqual(core.task_types("tell me important features of this repo"), ["repo-overview"])
+
+    def test_explicit_navigator_parser_keeps_control_words_out_of_task_scope(self) -> None:
+        request = core.explicit_navigator_request(
+            "using TailTrail Navigator, give me plan for Phase 1 before implementation"
+        )
+        self.assertIsNotNone(request)
+        assert request is not None
+        self.assertEqual(request.depth, "plan")
+        self.assertEqual(request.subject, "Phase 1")
+
+    def test_explicit_navigator_plan_resolves_phase_and_keeps_edit_gate_separate(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tailtrail-implementation-backlog.md").write_text(
+                "# Backlog\n\n## Phase 1 — Canonical local state\n\nPlan the local state.\n",
+                encoding="utf-8",
+            )
+            report = navigator.decide(
+                "TailTrail Navigator plan tailtrail-implementation-backlog.md Phase 1",
+                root,
+                [],
+                "tailtrail",
+            )
+        self.assertEqual(report["navigator_request"]["depth"], "plan")
+        self.assertEqual(report["phase_context"]["status"], "resolved")
+        rendered = navigator.markdown(report)
+        self.assertIn("# TailTrail Navigator Decision", rendered)
+        self.assertIn("Approve the Navigator plan", rendered)
+        self.assertNotIn("## Detailed Implementation Proposal", rendered)
+        self.assertIn("**No files were changed.**", rendered)
+        self.assertIn("## Proposed Requirement-to-Impact Matrix", rendered)
+        self.assertIn("## Requirement Discovery Feedback", rendered)
+
+    def test_explicit_navigator_implementation_has_separate_proposal(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("TailTrail Navigator implement fix validation", root, [], "tailtrail")
+        rendered = navigator.markdown(report)
+        self.assertIn("## Navigator Plan", rendered)
+        self.assertIn("## Detailed Implementation Proposal", rendered)
+        self.assertIn("Approve the implementation proposal", rendered)
+
+    def test_explicit_navigator_does_not_guess_ambiguous_phase_document(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name in ("ROADMAP.md", "harness-engineering.md"):
+                (root / name).write_text("## Phase 1 — Example\n", encoding="utf-8")
+            report = navigator.decide("TailTrail Navigator plan Phase 1", root, [], "tailtrail")
+        self.assertEqual(report["phase_context"]["status"], "ambiguous")
+        self.assertIn("Choose one before implementation planning", navigator.markdown(report))
+
+    def test_add_unit_tests_does_not_become_feature_task_by_itself(self) -> None:
+        self.assertEqual(core.task_types("fix payment validation bug and add unit tests"), ["bug", "qa"])
+        self.assertEqual(core.task_types("fix claim amount validation and add focused tests"), ["bug", "qa"])
+        self.assertEqual(core.task_types("fix the claim amount validation bug and add focused validation"), ["bug", "qa"])
+        self.assertIn("feature", core.task_types("add payment approval feature and unit tests"))
+
+    def test_review_graph_excludes_markdown_from_code_caller_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src" / "claims_api").mkdir(parents=True)
+            (root / "tests").mkdir()
+            (root / "src" / "claims_api" / "validation.py").write_text("def valid(amount):\n    return amount > 0\n", encoding="utf-8")
+            (root / "tests" / "test_claim_validation.py").write_text("from claims_api.validation import valid\n", encoding="utf-8")
+            for name in ("AGENTS.md", "BUILDWEEK-SUBMISSION.md", "DEMO-PROMPTS.md"):
+                (root / name).write_text("Validation demo guidance.\n", encoding="utf-8")
+
+            report = review_graph.graph(root, ["src/claims_api/validation.py"], limit=5)
+
+        self.assertEqual(
+            report["suggested_read_order"],
+            ["src/claims_api/validation.py", "tests/test_claim_validation.py"],
+        )
+
+    def test_review_graph_serves_reads_into_phase1_cache(self) -> None:
+        import capture_hooks
+        import code_graph_cache
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src" / "claims_api").mkdir(parents=True)
+            (root / "tests").mkdir()
+            (root / "src" / "claims_api" / "validation.py").write_text("def valid(amount):\n    return amount > 0\n", encoding="utf-8")
+            (root / "tests" / "test_claim_validation.py").write_text("from claims_api.validation import valid\n", encoding="utf-8")
+            capture_hooks.reset_for_tests(root)
+            report = review_graph.graph(root, ["src/claims_api/validation.py"], limit=5)
+            data, error = code_graph_cache.load(root / ".tailtrail" / "code-graph-cache.json")
+        self.assertEqual(
+            report["suggested_read_order"],
+            ["src/claims_api/validation.py", "tests/test_claim_validation.py"],
+        )
+        self.assertIsNone(error)
+        self.assertIn("src/claims_api/validation.py", data["files"])
+        self.assertIn("tests/test_claim_validation.py", data["files"])
+
+    def _repair_fixture(self, root: Path) -> tuple:
+        goal = "add widget handling in widget_store"
+        artifact = root / "spec.md"
+        artifact.write_text("widget_store keeps widget facts", encoding="utf-8")
+        artifact_inputs = [{
+            "input_id": "IN-02",
+            "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
+            "content": artifact.read_text(encoding="utf-8"),
+        }]
+        bad = {
+            "schema_version": "1",
+            "type": "tailtrail-host-requirement-interpretation",
+            "host": "codex",
+            "goal": goal,
+            "private_reasoning_excluded": True,
+            "clauses": [
+                {"clause_id": "C-01", "role": "outcome", "text": "add widget handling in widget_store"},
+                {"clause_id": "C-02", "role": "outcome", "source_input_id": "IN-02",
+                 "text": "unrelated banana hammock"},
+            ],
+            "artifact_evidence": [{
+                "input_id": "IN-02",
+                "sha256": artifact_inputs[0]["sha256"],
+                "source_clause_ids": ["C-02"],
+            }],
+            "requirements": [{
+                "display_id": "REQ-01",
+                "statement": "Add widget handling in widget_store keeping widget facts",
+                "kind": "change",
+                "source_clause_ids": ["C-01", "C-02"],
+                "intent_terms": ["widget", "widget_store"],
+                "quoted_literals": [],
+            }],
+            "material_questions": [],
+        }
+        return goal, "codex", [str(artifact)], artifact_inputs, bad
+
+    def _good_draft(self, root: Path) -> Path:
+        draft = root / "good.json"
+        draft.write_text(json.dumps({
+            "host": "codex",
+            "clauses": [
+                {"clause_id": "C-01", "role": "outcome", "text": "add widget handling in widget_store"},
+                {"clause_id": "C-02", "role": "outcome", "source_input_id": "IN-02",
+                 "text": "widget_store keeps widget facts"},
+            ],
+            "requirements": [{
+                "display_id": "REQ-01",
+                "statement": "Add widget handling in widget_store keeping widget facts",
+                "kind": "change",
+                "source_clause_ids": ["C-01", "C-02"],
+                "intent_terms": ["widget", "widget_store"],
+                "quoted_literals": [],
+            }],
+            "material_questions": [],
+        }), encoding="utf-8")
+        return draft
+
+    def test_repair_loop_accepts_corrected_draft(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            goal, host, paths, inputs, bad = self._repair_fixture(root)
+            good = self._good_draft(root)
+            with mock.patch.object(task_start.sys, "stdin") as stdin:
+                stdin.isatty.return_value = True
+                with mock.patch("builtins.input", side_effect=[str(good)]) as prompted:
+                    fixed = task_start.repair_interpretation_loop(goal, host, paths, bad, inputs)
+            self.assertEqual(prompted.call_count, 1)
+        self.assertEqual(fixed["goal"], goal)
+        self.assertIn("widget_store keeps widget facts", fixed["clauses"][1]["text"])
+
+    def test_repair_loop_quit_reraises_named_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            goal, host, paths, inputs, bad = self._repair_fixture(root)
+            with mock.patch.object(task_start.sys, "stdin") as stdin:
+                stdin.isatty.return_value = True
+                with mock.patch("builtins.input", side_effect=[""]) as prompted:
+                    with self.assertRaisesRegex(ValueError, "C-02"):
+                        task_start.repair_interpretation_loop(goal, host, paths, bad, inputs)
+            self.assertEqual(prompted.call_count, 1)
+
+    def test_repair_loop_eof_reraises_named_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            goal, host, paths, inputs, bad = self._repair_fixture(root)
+            with mock.patch("builtins.input", side_effect=EOFError) as prompted:
+                with self.assertRaisesRegex(ValueError, "C-02"):
+                    task_start.repair_interpretation_loop(goal, host, paths, bad, inputs)
+            self.assertEqual(prompted.call_count, 1)
+
+    def test_repair_loop_exhausts_attempts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            goal, host, paths, inputs, bad = self._repair_fixture(root)
+            still_bad = root / "bad.json"
+            still_bad.write_text(json.dumps({
+                "host": "codex", "clauses": [], "requirements": [], "material_questions": [],
+            }), encoding="utf-8")
+            with mock.patch.object(task_start.sys, "stdin") as stdin:
+                stdin.isatty.return_value = True
+                with mock.patch("builtins.input", side_effect=[str(still_bad)] * 5):
+                    with self.assertRaises(ValueError):
+                        task_start.repair_interpretation_loop(
+                            goal, host, paths, bad, inputs, max_attempts=2)
+
+    def test_review_graph_capture_opt_out_persists_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.py").write_text("def a():\n    return 1\n", encoding="utf-8")
+            report = review_graph.graph(root, ["src/a.py"], 5, capture=False)
+            self.assertEqual(report["changed"], ["src/a.py"])
+            self.assertFalse((root / ".tailtrail" / "code-graph-cache.json").exists())
+            self.assertFalse((root / "tailtrail-meta" / "code-graph-cache.json").exists())
+
+    def test_mapper_reuses_fresh_per_file_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.ts").write_text(
+                "import { thing } from './b';\nexport function run(){ return thing(); }\n",
+                encoding="utf-8",
+            )
+            (root / "src" / "b.ts").write_text(
+                "export function thing(){ return 1; }\n", encoding="utf-8"
+            )
+            first = code_graph_mapper.build_graph(root, ["src/a.ts", "src/b.ts"], "review", [], 5)
+            calls: list[str] = []
+            original = code_graph_mapper.extract_language_data
+
+            def spy(path: Path, scope: Path) -> dict:
+                calls.append(path.as_posix())
+                return original(path, scope)
+
+            code_graph_mapper.extract_language_data = spy  # type: ignore[method-assign]
+            try:
+                second = code_graph_mapper.build_graph(
+                    root, ["src/a.ts", "src/b.ts"], "review", [], 5, previous=first
+                )
+            finally:
+                code_graph_mapper.extract_language_data = original  # type: ignore[method-assign]
+            scrub = lambda payload: {
+                key: value for key, value in payload.items()
+                if key not in {"created_at", "updated_at", "freshness"}
+            }
+        self.assertEqual(calls, [])
+        self.assertEqual(scrub(first), scrub(second))
+
+    def test_mapper_reextracts_only_stale_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            a_path = root / "src" / "a.py"
+            b_path = root / "src" / "b.py"
+            a_path.write_text("def run():\n    return 1\n", encoding="utf-8")
+            b_path.write_text("def thing():\n    return 1\n", encoding="utf-8")
+            first = code_graph_mapper.build_graph(root, ["src/a.py", "src/b.py"], "review", [], 5)
+            b_path.write_text("def thing():\n    return 2\ndef extra():\n    return 3\n", encoding="utf-8")
+            stamp = b_path.stat().st_mtime + 5
+            os.utime(b_path, (stamp, stamp))
+            calls: list[str] = []
+            original = code_graph_mapper.extract_language_data
+
+            def spy(path: Path, scope: Path) -> dict:
+                calls.append(os.path.relpath(path, os.path.realpath(temp)).replace("\\", "/"))
+                return original(path, scope)
+
+            code_graph_mapper.extract_language_data = spy  # type: ignore[method-assign]
+            try:
+                second = code_graph_mapper.build_graph(
+                    root, ["src/a.py", "src/b.py"], "review", [], 5, previous=first
+                )
+            finally:
+                code_graph_mapper.extract_language_data = original  # type: ignore[method-assign]
+            names = sorted(symbol["name"] for symbol in second["graph"]["symbols"])
+        self.assertEqual(sorted(calls), ["src/b.py"])
+        self.assertIn("run", names)
+        self.assertIn("extra", names)
+
+    def test_mapper_narrower_previous_build_forces_full_reextract(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.py").write_text("def run():\n    return 1\n", encoding="utf-8")
+            (root / "src" / "b.py").write_text("def thing():\n    return 1\n", encoding="utf-8")
+            narrow = code_graph_mapper.build_graph(root, ["src/a.py", "src/b.py"], "review", [], 1)
+            calls: list[str] = []
+            original = code_graph_mapper.extract_language_data
+
+            def spy(path: Path, scope: Path) -> dict:
+                calls.append(os.path.relpath(path, os.path.realpath(temp)).replace("\\", "/"))
+                return original(path, scope)
+
+            code_graph_mapper.extract_language_data = spy  # type: ignore[method-assign]
+            try:
+                code_graph_mapper.build_graph(
+                    root, ["src/a.py", "src/b.py"], "review", [], 5, previous=narrow
+                )
+            finally:
+                code_graph_mapper.extract_language_data = original  # type: ignore[method-assign]
+        self.assertEqual(sorted(calls), ["src/a.py", "src/b.py"])
+
+    def test_mapper_drops_out_of_scope_previous_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.py").write_text("def run():\n    return 1\n", encoding="utf-8")
+            (root / "src" / "c.py").write_text("def solo():\n    return 0\n", encoding="utf-8")
+            first = code_graph_mapper.build_graph(root, ["src/a.py"], "review", [], 5)
+            second = code_graph_mapper.build_graph(root, ["src/c.py"], "review", [], 5, previous=first)
+            files = {symbol["file"] for symbol in second["graph"]["symbols"]}
+        self.assertNotIn("src/a.py", files)
+        self.assertIn("src/c.py", files)
+
+    def test_mapper_query_slice_reports_anchor_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.ts").write_text(
+                "import { thing } from './b';\nexport function run(){ return thing(); }\n",
+                encoding="utf-8",
+            )
+            (root / "src" / "b.ts").write_text(
+                "export function thing(){ return 1; }\n", encoding="utf-8"
+            )
+            graph = code_graph_mapper.build_graph(root, ["src/a.ts"], "review", [], 5)
+            covered = code_graph_mapper.query_slice(graph, ["src/a.ts"])
+            missing = code_graph_mapper.query_slice(graph, ["src/nope.ts"])
+            filtered = code_graph_mapper.query_slice(graph, ["src/a.ts"], relations=["text-or-import-token"])
+            narrowed = code_graph_mapper.query_slice(graph, ["src/a.ts"], relations=["import"])
+        self.assertEqual(covered["covered"], ["src/a.ts"])
+        self.assertIn("src/b.ts", covered["files"])
+        self.assertIn("import", covered["anchors"]["src/a.ts"]["relations"])
+        self.assertEqual(missing["covered"], [])
+        self.assertEqual(missing["uncovered"], ["src/nope.ts"])
+        self.assertEqual(filtered["files"], ["src/a.ts"])
+        self.assertIn("src/b.ts", narrowed["files"])
+
+    def test_review_graph_excludes_installed_tailtrail_pack_from_suggested_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src" / "order_service").mkdir(parents=True)
+            (root / "tailtrail" / "hooks").mkdir(parents=True)
+            (root / "src" / "order_service" / "validation.py").write_text(
+                "def validate(quantity):\n    return quantity > 0\n", encoding="utf-8"
+            )
+            (root / "tailtrail" / "hooks" / "learning-capture-hook.py").write_text(
+                "def validation_hook(quantity):\n    return quantity\n", encoding="utf-8"
+            )
+            report = review_graph.graph(root, ["src/order_service/validation.py"], limit=5)
+
+        self.assertNotIn("tailtrail/hooks/learning-capture-hook.py", report["suggested_read_order"])
+
+    def test_render_includes_anchor_section(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.py").write_text(
+                "def calculate_total(items):\n    return sum(items)\n", encoding="utf-8"
+            )
+            report = navigator.decide("fix the calculate_total bug", root, [], "tailtrail")
+            rendered = navigator.markdown(report)
+        self.assertIn("### Anchors", rendered)
+        self.assertIn("Anchor state:", rendered)
+
+    def test_semantic_v3_markdown_uses_a_provenance_table(self) -> None:
+        report = {
+            "depth": "v3",
+            "scope": ["src/claims_api/validation.py"],
+            "symbols": [
+                {"name": "validate_claim_amount", "file": "src/claims_api/validation.py", "line": 9, "confidence": "provider-backed"},
+                {"name": "validate_claim", "file": "src/claims_api/validation.py", "line": 14, "confidence": "provider-backed"},
+            ],
+            "references": [{"symbol": "validate_claim_amount", "file": "tests/test_claim_validation.py", "line": 27, "confidence": "provider-backed"}],
+            "call_hints": [{"caller": "accept_claim", "callee": "validate_claim", "file": "src/claims_api/service.py", "line": 8, "confidence": "provider-backed"}],
+            "semantic": {"provider_outputs": [{"path": "tailtrail-meta/providers/sample-semantic.json"}]},
+            "evidence_summary": {"heuristic": 0, "local-ast": 2, "provider-backed": 4, "measured/validated": 0},
+        }
+
+        rendered = ast_map.markdown(report)
+
+        self.assertIn("# TailTrail Semantic V3", rendered)
+        self.assertIn("| Evidence type | Count | Meaning |", rendered)
+        self.assertIn("| `provider-backed` | `4` | Read from the approved local provider-output JSON |", rendered)
+        self.assertIn("`validate_claim_amount` reference in `tests/test_claim_validation.py:27`", rendered)
+        self.assertIn("`validate_claim` call hint in `src/claims_api/service.py:8`", rendered)
+        self.assertIn("The report labels this input as: `provider-backed`.", rendered)
+        self.assertNotIn("## Provider Outputs", rendered)
+
+    def test_semantic_v2_markdown_matches_the_compact_evidence_pattern(self) -> None:
+        report = {
+            "depth": "v2",
+            "references": [{"symbol": "validate_claim_amount", "file": "tests/test_claim_validation.py", "line": 27, "confidence": "heuristic"}],
+            "call_hints": [{"caller": "accept_claim", "callee": "validate_claim", "file": "src/claims_api/service.py", "line": 8, "confidence": "local-ast"}],
+            "evidence_summary": {"heuristic": 14, "local-ast": 24, "provider-backed": 0, "measured/validated": 0},
+        }
+
+        rendered = ast_map.markdown(report)
+
+        self.assertIn("# TailTrail Semantic V2", rendered)
+        self.assertIn("| Evidence type | Count | Meaning |", rendered)
+        self.assertIn("| `provider-backed` | `0` | Not used in Semantic V2 |", rendered)
+        self.assertIn("## Local semantic additions include:", rendered)
+        self.assertIn("`validate_claim` call hint in `src/claims_api/service.py:8` [`local-ast`]", rendered)
+        self.assertIn("The report labels this input as: `local-ast` and `heuristic`.", rendered)
+
+    def test_cross_repo_reference_parses_labeled_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            goal = "Use TailTrail cross-repo reference. Target: /tmp/service-a Reference: /tmp/service-b Goal: match validation style"
+            plan = core.cross_repo_reference_plan(goal, root, "tailtrail")
+
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertEqual(plan["target"], "/tmp/service-a")
+        self.assertEqual(plan["reference"], "/tmp/service-b")
+        self.assertIn('tailtrail reference --target "/tmp/service-a" --reference "/tmp/service-b"', str(plan["command"]))
+
+    def test_navigator_decide_selects_scan_approval_for_sonar_and_vulnerability(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide(
+                "Fix Sonar quality gate failure and check vulnerability impact before PR",
+                root,
+                ["src/main/java/PaymentValidator.java"],
+                "tailtrail",
+            )
+
+        selected = {item["name"] for item in report["selected_features"]}
+        self.assertIn("CI/Sonar Intelligence", selected)
+        self.assertIn("Security And Vulnerability Intelligence", selected)
+        self.assertIn("Quality Signal Scanner", selected)
+        self.assertEqual(report["registry_workflow"]["workflow"], "sonar")
+        self.assertIn("quality-signals", report["registry_workflow"]["feature_ids"])
+        self.assertIsNotNone(report["scan_approval"])
+        self.assertIn("Reply approve to proceed", " ".join(report["approval"]))
+
+    def test_navigator_decide_selects_test_precision_for_unit_tests(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide(
+                "fix payment validation bug and add unit tests",
+                root,
+                ["src/service/payment.py"],
+                "tailtrail",
+            )
+
+        selected = {item["name"] for item in report["selected_features"]}
+        skipped = {item["name"] for item in report["skipped_features"]}
+        commands = "\n".join(report["suggested_commands"])
+        rendered = navigator.markdown(report)
+
+        self.assertIn("Test Precision Planner", selected)
+        self.assertIn("token_budget", report)
+        self.assertGreater(report["token_budget"]["budget_tokens"], 0)
+        self.assertIn("Budget is guidance", report["token_budget"]["claim_guardrail"])
+        self.assertIn("context_strategy", report)
+        self.assertEqual(report["context_strategy"]["profile"], "testing")
+        self.assertEqual(report["registry_workflow"]["workflow"], "qa")
+        self.assertIn("testing", report["registry_workflow"]["feature_ids"])
+        self.assertNotIn("AIDLC", selected)
+        self.assertIn("AIDLC", skipped)
+        self.assertNotIn("Test Precision Planner", skipped)
+        self.assertIn("test_precision", report["recommended_workflow"])
+        self.assertNotIn("aidlc", report["recommended_workflow"])
+        self.assertEqual(
+            report["recommended_workflow"],
+            ["implementation", "qa_review", "test_precision", "review"],
+        )
+        self.assertIn("tailtrail test plan", commands)
+        self.assertIn("--root", commands)
+        self.assertIn("--goal", commands)
+        self.assertIn("--changed src/service/payment.py", commands)
+        self.assertIn("Test Precision Planner", rendered)
+        self.assertIn("## Token Budget", rendered)
+        self.assertIn("## Context Strategy", rendered)
+        self.assertIn("regression, negative, boundary, and guard-preservation test cases", rendered)
+
+    def test_navigator_commands_use_explicit_root_and_views(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide(
+                "Fix Sonar quality gate failure and check vulnerability impact before PR",
+                root,
+                ["src/main/java/PaymentValidator.java"],
+                "tailtrail",
+            )
+
+        commands = "\n".join(report["suggested_commands"])
+        compact = navigator.markdown(report, "compact")
+        commands_only = navigator.markdown(report, "commands-only")
+
+        self.assertIn(f'graph --root "{root.as_posix()}" --changed src/main/java/PaymentValidator.java', commands)
+        self.assertIn(f'vulnerability scan --root "{root.as_posix()}"', commands)
+        self.assertIn("Vulnerability routing is planning-only", compact)
+        self.assertIn("TailTrail Navigator Commands", commands_only)
+        self.assertIn("Approval Required", commands_only)
+        self.assertIn("Evidence Needed", commands_only)
+
+    def test_navigator_decide_uses_compact_repo_overview_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("tell me important features of this repo", root, [], "tailtrail")
+
+        self.assertEqual(report["navigator_mode"], "repo_overview")
+        self.assertEqual(report["recommended_workflow"], ["repo_overview"])
+        self.assertEqual(report["registry_workflow"]["workflow"], "overview")
+        self.assertIsNone(report["scan_approval"])
+        self.assertIsNone(report["learning_capture_suggestion"])
+        self.assertEqual(report["optional_deeper_discovery"]["name"], "Code Graph Mapper")
+        self.assertIn("graph map --root", report["optional_deeper_discovery"]["command"])
+        self.assertIn("tailtrail-meta/code-graph-cache.json", report["optional_deeper_discovery"]["creates"])
+        self.assertEqual(report["bootstrap_snapshot"]["status"], "missing")
+        selected = {item["name"] for item in report["selected_features"]}
+        self.assertIn("Repo Overview", selected)
+        self.assertIn("Bootstrap Snapshot", selected)
+
+        rendered = navigator.markdown(report)
+        self.assertIn("Repo Overview / Discovery", rendered)
+        self.assertIn("Bootstrap Snapshot", rendered)
+        self.assertIn("Optional Deeper Discovery", rendered)
+        self.assertIn("tailtrail-meta/code-graph-cache.json", rendered)
+        self.assertNotIn("## Skipped Features", rendered)
+        self.assertNotIn("AIDLC.md", rendered)
+
+    def test_repo_overview_markdown_matches_golden_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("tell me important features of this repo", root, [], "tailtrail")
+            rendered = navigator.markdown(report).replace(root.as_posix(), "<ROOT>")
+
+        expected = (ROOT / "tests" / "golden" / "navigator_repo_overview.md").read_text(encoding="utf-8")
+        self.assertEqual(rendered, expected)
+
+    def test_learning_capture_command_points_to_tailtrail_install(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("fix bug in parser", root, ["src/parser.py"], "tailtrail")
+
+        selected = {item["name"] for item in report["selected_features"]}
+        commands = "\n".join(report["suggested_commands"])
+
+        self.assertIn("Bootstrap Snapshot", selected)
+        self.assertIn("Code Graph Mapper", selected)
+        self.assertIn("Learning Capture Trigger", selected)
+        self.assertIn("bootstrap snapshot", commands)
+        self.assertIn('graph map --root "', commands)
+        command = report["learning_capture_suggestion"]["command"]
+        compact = navigator.markdown(report, "compact")
+        self.assertIn("/hooks/learning-capture-hook.py", command)
+        self.assertNotIn("python3 hooks/learning-capture-hook.py", command)
+        self.assertIn("Post-Task Learning Capture", compact)
+        self.assertIn(command, compact)
+        self.assertIn("run only after user approval", compact)
+        self.assertIn("After user acceptance or reviewer feedback", " ".join(report["implementation_plan"]))
+
+    def test_navigator_refreshes_stale_code_graph_for_code_change(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "src"
+            trail = root / "tailtrail-meta"
+            source.mkdir()
+            trail.mkdir()
+            (source / "parser.py").write_text("def parse(value):\n    return value\n", encoding="utf-8")
+            (trail / "code-graph-cache.json").write_text(
+                json.dumps(
+                    {
+                        "root": root.as_posix(),
+                        "scope": ["src/parser.py"],
+                        "graph_mode": "review",
+                        "source_files": {"src/parser.py": {"sha256": "old-hash"}},
+                        "watch_files": {},
+                        "scanner_evidence": {},
+                        "graph": {"confidence": "medium", "suggested_read_order": ["src/parser.py"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = navigator.decide("fix parser bug", root, ["src/parser.py"], "tailtrail")
+
+        selected = {item["name"] for item in report["selected_features"]}
+        commands = "\n".join(report["suggested_commands"])
+
+        self.assertIn("Code Graph Mapper", selected)
+        self.assertEqual(report["graph_cache"]["status"], "stale")
+        self.assertEqual(report["graph_cache"]["source"], "shared")
+        self.assertIn(f'graph refresh --root "{root.as_posix()}" --changed src/parser.py', commands)
+
+    def test_navigator_uses_legacy_local_code_graph_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "src"
+            trail = root / ".tailtrail"
+            source.mkdir()
+            trail.mkdir()
+            content = "def parse(value):\n    return value\n"
+            (source / "parser.py").write_text(content, encoding="utf-8")
+            digest = navigator.file_sha256(source / "parser.py")
+            (trail / "code-graph-cache.json").write_text(
+                json.dumps(
+                    {
+                        "root": root.as_posix(),
+                        "scope": ["src/parser.py"],
+                        "graph_mode": "review",
+                        "source_files": {"src/parser.py": {"sha256": digest}},
+                        "watch_files": {},
+                        "scanner_evidence": {},
+                        "inventory": navigator.graph_inventory(root),
+                        "graph": {"confidence": "medium", "suggested_read_order": ["src/parser.py"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = navigator.decide("fix parser bug", root, ["src/parser.py"], "tailtrail")
+
+        self.assertEqual(report["graph_cache"]["status"], "fresh")
+        self.assertEqual(report["graph_cache"]["source"], "local")
+        self.assertIn("Code Graph Mapper", {item["name"] for item in report["selected_features"]})
+
+    def test_navigator_marks_graph_cache_stale_when_relevant_file_is_added(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "src"; source.mkdir()
+            trail = root / "tailtrail-meta"; trail.mkdir()
+            parser = source / "parser.py"; parser.write_text("def parse(value):\n    return value\n", encoding="utf-8")
+            digest = navigator.file_sha256(parser)
+            (trail / "code-graph-cache.json").write_text(json.dumps({
+                "root": root.as_posix(), "scope": ["src/parser.py"], "graph_mode": "review",
+                "source_files": {"src/parser.py": {"sha256": digest}}, "watch_files": {}, "scanner_evidence": {},
+                "inventory": navigator.graph_inventory(root),
+                "graph": {"confidence": "medium", "suggested_read_order": ["src/parser.py"]},
+            }), encoding="utf-8")
+            (source / "new_rule.py").write_text("def validate(value):\n    return value\n", encoding="utf-8")
+            report = navigator.decide("add validation feature", root, ["src/parser.py"], "tailtrail")
+        self.assertEqual(report["graph_cache"]["status"], "stale")
+        self.assertIn("inventory changed", " ".join(report["graph_cache"]["reasons"]).lower())
+
+    def test_code_graph_mapper_inventory_detects_untracked_relevant_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "src"; source.mkdir()
+            (source / "parser.py").write_text("def parse(value):\n    return value\n", encoding="utf-8")
+            cache = code_graph_mapper.build_graph(root, ["src/parser.py"], "review", [], 20)
+            fresh = code_graph_mapper.status_for(root, cache, ["src/parser.py"])
+            (source / "new_rule.py").write_text("def validate(value):\n    return value\n", encoding="utf-8")
+            stale = code_graph_mapper.status_for(root, cache, ["src/parser.py"])
+        self.assertEqual(fresh["status"], "fresh")
+        self.assertEqual(stale["status"], "stale")
+        self.assertIn("inventory changed", " ".join(stale["reasons"]).lower())
+
+    def test_navigator_surfaces_only_approved_relevant_meta_harness_hints(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            trail = root / ".tailtrail"
+            trail.mkdir()
+            proposal_path = trail / "meta-harness-proposals.jsonl"
+            proposed_only = {
+                "schema_version": "1",
+                "type": "tailtrail-meta-harness-proposal",
+                "proposal_id": "MH-PROPOSED",
+                "status": "proposed",
+                "affected_features": ["navigator"],
+                "proposal_evidence_label": "local-evidence",
+                "expected_improvement": "Do not show this proposed hint yet.",
+                "source_finding": {"category": "navigator-routing"},
+            }
+            approved = {
+                "schema_version": "1",
+                "type": "tailtrail-meta-harness-proposal",
+                "proposal_id": "MH-APPROVED",
+                "status": "proposed",
+                "affected_features": ["navigator"],
+                "proposal_evidence_label": "local-evidence",
+                "expected_improvement": "Prefer graph-first reads for similar implementation work.",
+                "source_finding": {"category": "navigator-routing"},
+            }
+            record = {
+                "schema_version": "1",
+                "type": "tailtrail-meta-harness-proposal-record",
+                "proposal_id": "MH-APPROVED",
+                "status": "accepted",
+            }
+            proposal_path.write_text(
+                "\n".join(json.dumps(item) for item in (proposed_only, approved, record)) + "\n",
+                encoding="utf-8",
+            )
+
+            report = navigator.decide("fix parser bug", root, ["src/parser.py"], "tailtrail")
+            rendered = navigator.markdown(report)
+
+        selected = {item["name"] for item in report["selected_features"]}
+        self.assertIn("Approved Meta-Harness Hints", selected)
+        self.assertEqual(report["meta_harness_hints"]["status"], "available")
+        self.assertEqual(len(report["meta_harness_hints"]["hints"]), 1)
+        self.assertEqual(report["meta_harness_hints"]["hints"][0]["proposal_id"], "MH-APPROVED")
+        self.assertNotIn("MH-PROPOSED", rendered)
+        self.assertIn("Prefer graph-first reads", rendered)
+
+    def test_task_start_report_wraps_navigator_decision(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("fix typo in README", root, ["README.md"], "tailtrail")
+
+        self.assertEqual(report["navigator"]["recommended_workflow"], ["lean"])
+        self.assertEqual(report["next_step"], "Review the guided delivery plan, then approve or edit before implementation.")
+        actions = {item["action"] for item in report["next_actions"]}
+        self.assertIn("review", actions)
+        self.assertIn("approve", actions)
+        self.assertEqual(report["token_posture"]["mode"], "file_body_upper_bound")
+        self.assertIn("recommended_check", report["setup_posture"])
+        self.assertEqual(report["code_intelligence"]["default_engine_path"], ["lite", "v1", "v2"])
+        self.assertIn("V3 is never default", report["code_intelligence"]["v3_rule"])
+        self.assertIn("must not auto-run JDT", report["code_intelligence"]["auto_run_rule"])
+        self.assertEqual(report["guided_delivery"]["mode"], "lean")
+        self.assertIn("Lean delivery", {item["name"] for item in report["guided_delivery"]["selected"]})
+
+    def test_official_runs_prepend_the_same_turn_questions_checklist(self) -> None:
+        report = {
+            "aidlc_requirements": {"state": "official-aidlc-host-generation-required"},
+            "next_actions": [{"action": "review", "label": "Review", "when": "Always.", "prompt": "Review."}],
+        }
+        task_start.append_official_questions_action(report, "run-1")
+        first = report["next_actions"][0]
+        self.assertEqual(first["action"], "official-questions")
+        self.assertIn("--run-id run-1", first["prompt"])
+        self.assertIn("Official AI-DLC Requirements report", first["prompt"])
+        self.assertEqual(report["next_actions"][-1]["action"], "review")
+
+    def test_non_official_runs_keep_next_actions_unchanged(self) -> None:
+        report = {"aidlc_requirements": {"state": "authority-bound-in-start-plan"}, "next_actions": []}
+        task_start.append_official_questions_action(report, "run-1")
+        self.assertEqual(report["next_actions"], [])
+        plain: dict[str, object] = {"next_actions": []}
+        task_start.append_official_questions_action(plain, "run-1")
+        self.assertEqual(plain["next_actions"], [])
+
+    def test_start_detects_an_inaccessible_target_repo_in_the_goal_before_discovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            missing = Path(temp) / "repository-that-does-not-exist"
+            goal = f"User Story: generate audit events. Changes has to be made in this repo; check this too {missing}"
+            resolution = task_start.resolve_target_root(goal, None)
+            report = task_start.target_boundary_report(goal, resolution, "tailtrail")
+            rendered = task_start.render_markdown(report)
+
+        self.assertEqual(resolution["status"], "inaccessible")
+        self.assertEqual(resolution["source"], "goal")
+        self.assertEqual(resolution["requested"], missing.as_posix())
+        self.assertIn("## Target repository boundary", rendered)
+        self.assertIn("No Planning Lock was created", rendered)
+        self.assertNotIn("## Scope", rendered)
+
+    def test_explicit_root_overrides_a_target_path_mentioned_in_the_goal(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            goal = "changes must be made in /missing/target-repo"
+            resolution = task_start.resolve_target_root(goal, Path(temp))
+
+        self.assertEqual(resolution["status"], "verified")
+        self.assertEqual(resolution["source"], "--root")
+
+    def test_target_fit_boundary_is_crisp_and_creates_no_planning_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            fit = {
+                "status": "needs-confirmation",
+                "blocking": True,
+                "reason": "only test matches were found",
+                "discovered_candidates": ["tests/test_validation.py"],
+            }
+            report = task_start.target_fit_boundary_report(
+                "add API validation,\\nthen preserve service behavior",
+                root,
+                fit,
+                "tailtrail",
+                {
+                    "aidlc_mode": {"mode": "full", "state": "official-full-ready"},
+                    "navigator": {"requirement_matrix": [{"display_id": "REQ-01", "statement": "Preserve service behavior."}]},
+                    "guided_delivery": {
+                        "selected": [{"name": "Requirement Completion Harness", "why": "prove requirement completion"}],
+                        "hands_free_program": None,
+                    },
+                },
+            )
+            rendered = task_start.render_markdown(report)
+        self.assertIn("# TailTrail Pre-Target Start Plan", rendered)
+        self.assertIn("add API validation, then preserve service behavior", rendered)
+        self.assertIn("`tests/test_validation.py`", rendered)
+        self.assertIn("No Planning Lock was created", rendered)
+        self.assertIn("## Requirement bifurcation", rendered)
+        self.assertIn("## Intended technical scope", rendered)
+        self.assertIn("## AIDLC route", rendered)
+        self.assertIn("Requested mode: **full**", rendered)
+        self.assertIn("## Selected TailTrail features", rendered)
+        self.assertIn('append an explicit target', rendered)
+        self.assertIn('--root \"D:/absolute/path/to/target-project\"', rendered)
+        self.assertNotIn('start \"your goal\"', rendered)
+        self.assertNotIn("\\n", rendered)
+
+    def test_start_compact_report_lists_selected_tailtrail_features(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("fix zero quantity validation", root, ["src/order_service/validation.py"], "tailtrail")
+            rendered = task_start.compact_start_report(report)
+
+        self.assertIn("## Selected TailTrail features", rendered)
+        self.assertIn("- **Navigator**", rendered)
+        self.assertIn("- **When:** Planning now", rendered)
+        self.assertIn("- **Used for this task:**", rendered)
+        self.assertIn("Requirement Completion Harness", rendered)
+        self.assertIn("## Token posture", rendered)
+        self.assertIn("Planned TailTrail working set:", rendered)
+        self.assertIn("Full scoped-file ceiling:", rendered)
+        self.assertNotIn("Repository inventory ceiling", rendered)
+
+    def test_guided_report_keeps_lock_and_responsive_markdown_structure(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("fix zero quantity validation", root, ["src/order_service/validation.py"], "tailtrail")
+            report["planning_lock"] = task_start.planning_lock.create(root, report["goal"], "start-guided-report")
+            rendered = task_start.render_markdown(report, presentation_mode="guided")
+
+        self.assertIn("## Planning Lock", rendered)
+        self.assertIn("Run ID: `start-guided-report`", rendered)
+        self.assertIn("- **Navigator**", rendered)
+        self.assertIn("- **When:** Planning now", rendered)
+        self.assertNotIn("| Feature | When | Used for this task |", rendered)
+        self.assertNotIn("&#x20;", rendered)
+
+    def test_automatic_plan_detail_policy_matches_lifecycle_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lite = task_start.build_report(
+                "add payment API workflow and preserve customer-visible behavior",
+                root,
+                ["src/api.py", "src/service.py"],
+                "tailtrail",
+                aidlc_mode="lite",
+            )
+            off = task_start.build_report(
+                "fix zero quantity validation",
+                root,
+                ["src/validation.py"],
+                "tailtrail",
+                aidlc_mode="off",
+            )
+
+        lite_rendered = task_start.render_markdown(lite)
+        off_rendered = task_start.render_markdown(off)
+        self.assertIn("**Plan detail:** `Expert` (automatic for AIDLC Lite)", lite_rendered)
+        self.assertIn("## Navigator Decision", lite_rendered)
+        self.assertNotIn("## Architecture Fitness Plan", lite_rendered)
+        self.assertNotIn("## Behaviour Harness Plan", lite_rendered)
+        self.assertIn("## Required later in this run", lite_rendered)
+        self.assertIn("## Conditional TailTrail controls", lite_rendered)
+        self.assertIn("Focused testing and validation", lite_rendered)
+        self.assertNotIn("## Deferred TailTrail features", lite_rendered)
+        self.assertIn("### Included", lite_rendered)
+        self.assertIn("### Not included in this mode", lite_rendered)
+        self.assertNotIn("| Included | Not included in this mode |", lite_rendered)
+        self.assertNotIn("| Feature | When | Why |", lite_rendered)
+        self.assertIn("**Plan detail:** `Quick` (automatic for AIDLC Off)", off_rendered)
+        self.assertIn("## Plan", off_rendered)
+        self.assertIn("## Required later in this run", off_rendered)
+        self.assertIn("Focused testing and validation", off_rendered)
+        self.assertIn("mandatory before completion", off_rendered)
+        self.assertNotIn("## Deferred TailTrail features", off_rendered)
+        self.assertNotIn("## Navigator Decision", off_rendered)
+
+        standard = dict(lite)
+        standard["aidlc_mode"] = {**lite["aidlc_mode"], "mode": "standard"}
+        standard_rendered = task_start.render_markdown(standard)
+        self.assertIn("**Plan detail:** `Full`", standard_rendered)
+        self.assertIn("## Architecture Fitness Plan", standard_rendered)
+        self.assertIn("## Behaviour Harness Plan", standard_rendered)
+        self.assertNotIn("| Requirement | Architecture invariant |", standard_rendered)
+        self.assertNotIn("| Requirement | Scenario |", standard_rendered)
+
+        intent = dict(lite)
+        intent["spec_kit_source"] = {"feature_id": "014-order-amendment"}
+        self.assertEqual(task_start.presentation_policy(intent)["level"], "full")
+
+    def test_verbose_always_includes_full_harness_detail(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            report = task_start.build_report(
+                "add payment API workflow and preserve customer-visible behavior",
+                Path(temp),
+                ["src/api.py", "src/service.py"],
+                "tailtrail",
+                aidlc_mode="off",
+            )
+        rendered = task_start.render_markdown(report, verbose=True)
+        self.assertIn("**Plan detail:** `Full` (requested by `--verbose`)", rendered)
+        self.assertIn("## Architecture Fitness Plan", rendered)
+        self.assertIn("## Behaviour Harness Plan", rendered)
+
+        with tempfile.TemporaryDirectory() as temp:
+            narrow = task_start.build_report(
+                "fix zero quantity validation",
+                Path(temp),
+                ["src/validation.py"],
+                "tailtrail",
+                aidlc_mode="off",
+            )
+        narrow_rendered = task_start.render_markdown(narrow, verbose=True)
+        self.assertIn("## Architecture Fitness Plan", narrow_rendered)
+        self.assertIn("## Behaviour Harness Plan", narrow_rendered)
+        self.assertGreaterEqual(narrow_rendered.count("State: `not-selected`."), 2)
+
+    def test_cold_start_learning_proposal_names_the_empty_store(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            proposal = navigator.learning_use_proposal(Path(temp), "fix validation", [], ["qa"], [])
+        self.assertEqual(proposal["state"], "blocked")
+        reasons = proposal["blocked"][0]["reasons"]
+        self.assertIn("No learning store exists yet", reasons)
+        self.assertTrue(any("accepted closures" in str(reason) for reason in reasons))
+
+    def test_start_focused_validation_uses_only_the_interpreter_when_pack_path_contains_tailtrail(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_path = root / "tests" / "unit" / "test_validation.py"
+            test_path.parent.mkdir(parents=True)
+            test_path.write_text("import unittest\n", encoding="utf-8")
+            command = task_start.focused_validation_command(
+                root,
+                [{"path": "tests/unit/test_validation.py"}],
+                "python3 D:/PD/TailTrail_Test/tailtrail/scripts/tailtrail.py",
+            )
+        self.assertEqual(command, "python3 -m unittest discover -s tests/unit -p test_validation.py -v")
+
+    def test_start_focused_validation_prefers_real_test_module_over_init(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tests").mkdir(parents=True)
+            (root / "tests" / "__init__.py").write_text("", encoding="utf-8")
+            (root / "tests" / "test_notify.py").write_text("import unittest\n", encoding="utf-8")
+            command = task_start.focused_validation_command(
+                root,
+                [{"path": "tests/__init__.py", "role": "test"}, {"path": "tests/test_notify.py", "role": "test"}],
+                "python3",
+            )
+        self.assertEqual(command, "python3 -m unittest discover -s tests -p test_notify.py -v")
+
+    def test_declared_test_file_fills_proof_gap(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tests").mkdir()
+            (root / "tests" / "test_fix.py").write_text("import unittest\n", encoding="utf-8")
+            rows = task_start.focused_validation_plan(root, [], [], "python3", ["tests/test_fix.py"])
+        self.assertEqual(rows[0]["candidate"], "tests/test_fix.py")
+        self.assertIn("unittest", rows[0]["command"])
+        self.assertEqual(rows[0]["candidate_state"], "existing")
+
+    def test_declared_paths_supplement_never_replace(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tests").mkdir()
+            (root / "tests" / "test_mined.py").write_text("import unittest\n", encoding="utf-8")
+            (root / "tests" / "test_declared.py").write_text("import unittest\n", encoding="utf-8")
+            rows = task_start.focused_validation_plan(
+                root,
+                [{"path": "tests/test_mined.py", "role": "test"}],
+                [], "python3", ["tests/test_declared.py"],
+            )
+        self.assertEqual(rows[0]["candidate"], "tests/test_mined.py")
+
+    def test_declared_paths_ignore_non_test_missing_and_unsafe(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.py").write_text("x = 1\n", encoding="utf-8")
+            rows = task_start.focused_validation_plan(
+                root, [], [], "python3",
+                ["src/a.py", "tests/test_missing.py", "../escape.py", ".env"],
+            )
+        self.assertEqual(rows[0]["candidate_state"], "unresolved")
+        self.assertEqual(rows[0]["command"], "")
+
+    def test_build_report_threads_changed_test_into_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tests").mkdir()
+            (root / "tests" / "test_fix.py").write_text("import unittest\n", encoding="utf-8")
+            report = task_start.build_report("fix the thing", root, ["tests/test_fix.py"], "tailtrail")
+            unit_rows = [row for row in report["focused_validation"] if row.get("tier") == "unit"]
+        self.assertTrue(unit_rows)
+        self.assertEqual(unit_rows[0]["candidate"], "tests/test_fix.py")
+        self.assertIn("unittest", unit_rows[0]["command"])
+
+    def test_start_reports_show_active_pipeline_badge(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("fix zero quantity validation", root, ["src/order_service/validation.py"], "tailtrail")
+            report["planning_lock"] = task_start.planning_lock.create(
+                root, report["goal"], "start-badge-report", pipeline_stage="IMPLEMENTATION")
+            verbose = task_start.render_markdown(report, verbose=True)
+            compact = task_start.compact_start_report(report)
+        for rendered in (verbose, compact):
+            self.assertIn("## Pipeline badges", rendered)
+            self.assertIn("IMPLEMENTATION", rendered)
+            self.assertIn("impl-badge", rendered)
+
+    def test_start_verbose_report_has_required_feature_and_evidence_sections(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("fix zero quantity validation", root, ["src/order_service/validation.py"], "tailtrail")
+            report["planning_lock"] = task_start.planning_lock.create(root, report["goal"], "start-verbose-report")
+            rendered = task_start.render_markdown(report, verbose=True)
+
+        for heading in (
+            "## Planning Lock",
+            "## Start Here",
+            "## Navigator Decision",
+            "## Selected TailTrail features",
+            "## Required later in this run",
+            "## Conditional TailTrail controls",
+            "## Guided Delivery",
+            "## Validation",
+            "## Evidence posture",
+            "## Approval",
+        ):
+            self.assertIn(heading, rendered)
+
+    def test_verbose_start_lists_every_impacted_file_without_a_verbose_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            changed = [f"src/module_{index}.py" for index in range(9)]
+            report = task_start.build_report("add a multi-file service feature", root, changed, "tailtrail")
+            rendered = task_start.verbose_start_report(report)
+
+        for path in changed:
+            self.assertIn(f"`{path}`", rendered)
+        self.assertNotIn("more in verbose Navigator output", rendered)
+
+    def test_task_start_selects_multi_file_delivery_controls_without_auto_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("add payment API workflow", root, ["src/api.py", "src/service.py"], "tailtrail")
+            rendered = task_start.render_markdown(report)
+
+        selected = {item["name"] for item in report["guided_delivery"]["selected"]}
+        self.assertTrue({"Canonical requirements", "Requirement Completion Harness", "Architecture Fitness Harness", "Behaviour Harness"}.issubset(selected))
+        self.assertIn("## Guided Delivery", rendered)
+        self.assertIn("does not itself edit source", report["guided_delivery"]["execution_boundary"])
+
+    def test_hands_free_multi_task_request_still_returns_a_program_plan_before_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("tailtrail start, work on task 1 and task 2 using hands free mode", root, [], "tailtrail")
+
+        selected = {item["name"] for item in report["guided_delivery"]["selected"]}
+        self.assertEqual(report["guided_delivery"]["mode"], "guided-delivery")
+        self.assertIn("Program Delivery Harness", selected)
+        self.assertIn("propose feature requirements and dependency order", report["guided_delivery"]["stages"])
+        self.assertTrue(report["guided_delivery"]["approval_required"])
+        self.assertEqual(report["guided_delivery"]["hands_free_program"]["status"], "proposed")
+        self.assertIn("no source implementation", report["guided_delivery"]["hands_free_program"]["first_active_slice"])
+        self.assertIn("does not itself edit source", report["guided_delivery"]["execution_boundary"])
+
+    def test_compact_hands_free_report_shows_requirement_boundary_and_program_slices(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report(
+                "hands-free: add order cancellation, refund payment, release inventory, notify customers, retain an audit event, update API tests, and include rollout safety",
+                root, [], "tailtrail",
+            )
+            rendered = task_start.compact_start_report(report)
+        self.assertIn("**REQ-01:** Add order cancellation.", rendered)
+        self.assertIn("**REQ-02:** Refund payment.", rendered)
+        self.assertEqual(
+            report["guided_delivery"]["hands_free_program"]["feature_requirements"],
+            report["navigator"]["canonical_requirements"]["requirements"],
+        )
+        self.assertEqual(
+            report["guided_delivery"]["hands_free_program"]["canonical_requirement_set_fingerprint"],
+            report["navigator"]["canonical_requirements"]["fingerprint"],
+        )
+        self.assertIn("## Plan", rendered)
+        self.assertIn("Proposed dependency order", rendered)
+        self.assertIn("First active slice", rendered)
+        self.assertNotIn("Inspect the validator", rendered)
+
+    def test_hands_free_amendment_requirements_preserve_cancellation_without_becoming_cancellation_work(self) -> None:
+        goal = (
+            "hands-free: add an order-amendment capability. Before fulfilment a customer may change quantity and delivery address; "
+            "after allocation quantity may only decrease and release excess inventory; after shipment only an authorized address correction is allowed. "
+            "Use idempotent payment delta, audit, notification, API, tests, migration, CI, and rollout evidence. Preserve create-order and cancellation behavior."
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            report = task_start.build_report(goal, Path(temp), [], "tailtrail")
+
+        requirements = report["guided_delivery"]["hands_free_program"]["feature_requirements"]
+        statements = [item["statement"] for item in requirements]
+        joined = " ".join(statements).lower()
+        self.assertIn("order-amendment capability", joined)
+        self.assertIn("authorized address correction", joined)
+        self.assertIn("release excess inventory", joined)
+        self.assertIn("create-order and cancellation behavior", joined)
+        self.assertNotIn("eligible cancellation succeeds", joined)
+        self.assertNotIn("stale concurrent amendment", joined)
+        self.assertEqual(
+            [(item["requirement_id"], item["statement"]) for item in requirements],
+            [
+                (item["requirement_id"], item["statement"])
+                for item in report["navigator"]["requirement_matrix"]
+            ],
+        )
+        self.assertIn("new Full-mode Planning Lock", report["aidlc_mode"]["full_escalation"]["reason"])
+
+    def test_task_start_uses_only_explicit_run_evidence_for_correction_and_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            run = root / ".tailtrail" / "runs" / "payment-retry"
+            (run / "feedback").mkdir(parents=True)
+            (run / "checkpoints").mkdir()
+            (run / "recovery").mkdir()
+            (run / "feedback" / "feedback-1.json").write_text(json.dumps({"packet": {"evidence": "worker proof missing"}}), encoding="utf-8")
+            (run / "checkpoints" / "checkpoint-1.json").write_text(json.dumps({"drift": [{"classification": "regressed"}]}), encoding="utf-8")
+            (run / "recovery" / "plan-1.json").write_text("{}", encoding="utf-8")
+            report = task_start.build_report("fix payment retry", root, ["src/worker.py"], "tailtrail", "payment-retry")
+
+        selected = {item["name"] for item in report["guided_delivery"]["selected"]}
+        self.assertIn("Context Continuity Harness", selected)
+        self.assertIn("Bounded Correction", selected)
+        self.assertIn("Git Readiness / Recovery Boundary", selected)
+        self.assertEqual(report["guided_delivery"]["run_signals"]["drift"], ["regressed"])
+
+    def test_task_start_does_not_guess_prior_run_state_without_run_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / ".tailtrail" / "runs" / "other-task" / "feedback").mkdir(parents=True)
+            (root / ".tailtrail" / "runs" / "other-task" / "feedback" / "feedback-1.json").write_text("{}", encoding="utf-8")
+            report = task_start.build_report("fix payment retry", root, ["src/worker.py"], "tailtrail")
+
+        selected = {item["name"] for item in report["guided_delivery"]["selected"]}
+        self.assertNotIn("Context Continuity Harness", selected)
+        self.assertEqual(report["guided_delivery"]["run_signals"]["status"], "not-requested")
+
+    def test_task_start_keeps_evaluation_harness_available_for_simple_tasks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("fix typo in README", root, ["README.md"], "tailtrail")
+            rendered = task_start.render_markdown(report)
+
+        self.assertFalse(report["evaluation_posture"]["selected"])
+        self.assertNotIn("Evaluation Harness", rendered)
+        self.assertNotIn("Evaluation scenarios: `tailtrail eval scenario list`", rendered)
+        self.assertNotIn("## Evaluation Harness\n\n- Selected: `true`", rendered)
+
+    def test_task_start_selects_evaluation_harness_for_evidence_tasks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = task_start.build_report("show evaluation harness evidence", root, [], "tailtrail")
+            rendered = task_start.render_markdown(report)
+
+        self.assertTrue(report["evaluation_posture"]["selected"])
+        self.assertEqual(report["evaluation_posture"]["scenario"], "validation-bug")
+        self.assertIn("## Plan", rendered)
+        self.assertNotIn("Evaluation scenarios:", rendered)
+
+    def test_navigator_selects_evaluation_harness_for_evidence_tasks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("show evaluation harness evidence", root, [], "tailtrail")
+            rendered = navigator.markdown(report)
+            compact = navigator.markdown(report, "compact")
+            commands_only = navigator.markdown(report, "commands-only")
+
+        selected = {item["name"] for item in report["selected_features"]}
+        commands = "\n".join(report["suggested_commands"])
+
+        self.assertIn("Evaluation Harness", selected)
+        self.assertTrue(report["evaluation_harness"]["selected"])
+        self.assertEqual(report["evaluation_harness"]["scenario"], "validation-bug")
+        self.assertIn("tailtrail eval scenario list", commands)
+        self.assertIn("tailtrail eval scenario run --scenario validation-bug", commands)
+        self.assertIn("## Evaluation Harness", rendered)
+        self.assertIn("## Evaluation Harness", compact)
+        self.assertIn("## Evaluation Harness", commands_only)
+
+    def test_navigator_selects_security_scenario_for_security_proof(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("create a security proof report", root, [], "tailtrail")
+
+        selected = {item["name"] for item in report["selected_features"]}
+        commands = "\n".join(report["suggested_commands"])
+
+        self.assertIn("Evaluation Harness", selected)
+        self.assertEqual(report["evaluation_harness"]["scenario"], "security-triage")
+        self.assertIn("tailtrail eval scenario run --scenario security-triage", commands)
+
+    def test_navigator_does_not_select_evaluation_harness_for_tiny_task(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("fix typo in README", root, ["README.md"], "tailtrail")
+            rendered = navigator.markdown(report)
+
+        selected = {item["name"] for item in report["selected_features"]}
+        skipped = {item["name"] for item in report["skipped_features"]}
+        commands = "\n".join(report["suggested_commands"])
+
+        self.assertNotIn("Evaluation Harness", selected)
+        self.assertIn("Evaluation Harness", skipped)
+        self.assertFalse(report["evaluation_harness"]["selected"])
+        self.assertNotIn("eval scenario", commands)
+        self.assertNotIn("## Evaluation Harness", rendered)
+
+    def test_declared_paths_veto_evaluation_only_routing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "src").mkdir()
+            (root / "src" / "a.py").write_text("def a():\n    return 1\n", encoding="utf-8")
+            report = navigator.decide(
+                "Review harness scenario evidence", root, ["src/a.py"], "tailtrail")
+        self.assertNotEqual(report.get("navigator_mode"), "evaluation_harness")
+        self.assertIn("scope_evidence", report)
+        self.assertIn("src/a.py", {
+            row["path"] for row in report["scope_evidence"].get("candidates", [])})
+
+    def test_improve_verb_vetoes_evaluation_only_routing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide(
+                "Improve behaviour harness generation with scenario evidence",
+                root, [], "tailtrail")
+        self.assertNotEqual(report.get("navigator_mode"), "evaluation_harness")
+
+    def test_evaluation_only_reports_routing_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide("show evaluation harness evidence", root, [], "tailtrail")
+        evidence = report.get("routing_evidence", {})
+        self.assertIn("evidence", evidence.get("triggered_terms", []))
+        self.assertEqual(evidence.get("declared_paths", []), [])
+        self.assertEqual(report.get("navigator_mode"), "evaluation_harness")
+
+    def test_skip_eval_override_keeps_code_routing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            report = navigator.decide(
+                "show evaluation harness evidence skip eval", root, [], "tailtrail")
+        self.assertNotEqual(report.get("navigator_mode"), "evaluation_harness")
+
+
+if __name__ == "__main__":
+    unittest.main()
