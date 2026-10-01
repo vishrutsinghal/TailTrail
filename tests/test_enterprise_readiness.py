@@ -114,8 +114,17 @@ class EnterpriseReadinessTests(unittest.TestCase):
 
         issues = enterprise_readiness.validate_registry(registry, ROOT)
 
-        self.assertTrue(any("does not match HEAD" in issue for issue in issues))
+        self.assertTrue(any("cannot be resolved in the current repository" in issue for issue in issues))
         self.assertTrue(any("does not match current branch" in issue for issue in issues))
+
+    def test_validator_rejects_non_ancestor_baseline_commit(self) -> None:
+        registry = copy.deepcopy(self.registry())
+        registry["candidate_baseline"]["git_commit"] = "1" * 40
+
+        with mock.patch.object(enterprise_readiness, "git_commit_is_ancestor", return_value=False):
+            issues = enterprise_readiness.validate_registry(registry, ROOT)
+
+        self.assertTrue(any("is not an ancestor of HEAD" in issue for issue in issues))
 
     def test_validator_rejects_missing_owner_and_validation(self) -> None:
         registry = copy.deepcopy(self.registry())

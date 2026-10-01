@@ -99,6 +99,22 @@ def git_value(root: Path, *arguments: str) -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def git_commit_is_ancestor(root: Path, ancestor: str, descendant: str) -> bool | None:
+    """Return whether both commits resolve and ancestor is reachable from descendant."""
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return True
+    if result.returncode == 1:
+        return False
+    return None
+
+
 def discover_commands(root: Path) -> list[str]:
     source = (root / "scripts" / "tailtrail.py").read_text(encoding="utf-8")
     tree = ast.parse(source)
@@ -462,10 +478,17 @@ def validate_registry(registry: dict[str, Any], root: Path = ROOT) -> list[str]:
         check_closed_keys(baseline, BASELINE_KEYS, "candidate_baseline", issues)
     actual_commit = git_value(root, "rev-parse", "HEAD")
     actual_branch = git_value(root, "branch", "--show-current")
+    baseline_commit = baseline.get("git_commit")
     if actual_commit is None:
         issues.append("candidate baseline cannot resolve the current Git commit")
-    elif baseline.get("git_commit") != actual_commit:
-        issues.append(f"candidate baseline commit `{baseline.get('git_commit')}` does not match HEAD `{actual_commit}`")
+    elif not isinstance(baseline_commit, str) or not baseline_commit:
+        issues.append("candidate baseline git_commit must be a non-empty string")
+    else:
+        is_ancestor = git_commit_is_ancestor(root, baseline_commit, actual_commit)
+        if is_ancestor is None:
+            issues.append(f"candidate baseline commit `{baseline_commit}` cannot be resolved in the current repository")
+        elif not is_ancestor:
+            issues.append(f"candidate baseline commit `{baseline_commit}` is not an ancestor of HEAD `{actual_commit}`")
     if actual_branch is None:
         issues.append("candidate baseline cannot resolve the current Git branch")
     elif baseline.get("branch") != actual_branch:

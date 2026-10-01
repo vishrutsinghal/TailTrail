@@ -21,12 +21,12 @@
     }
   },
   "candidate_baseline": {
-    "captured_at": "2026-09-01",
-    "git_commit": "98e50830ba5d0b94c790bfdcf21cc3e0e9f8e8e3",
+    "captured_at": "2026-10-01",
+    "git_commit": "1987aa41a6935412b3dab37bd6cd99079ba9d99d",
     "branch": "master",
-    "worktree_state": "dirty-explicitly-classified",
+    "worktree_state": "clean",
     "release_candidate_state": "blocked",
-    "declaration": "E0-E4 are closed. E5 and the PM-6 enterprise conformance implementation are locally verified. The seven-part installation experience plus automatic AIDLC-authority plan detail and comprehensive closure reporting are included in this dirty candidate. Validation: python3 scripts/enterprise-readiness.py validate; python3 scripts/smoke-test.py; python3 -m unittest tests.test_installation_experience tests.test_transactional_installer. Hosted support remains evidence-blocked until one commit has all six Linux/macOS/Windows x CPython 3.12/3.13 receipts, current real-host receipts, and an observed identity-attested publication receipt. Configured workflows, offline verification, and local evidence are not represented as hosted support. Product-maturity PM-0 through PM-7 and learning PM-L0 through PM-L5 remain subject to the active feature freeze. PM-7 is protocol-ready; genuine usability evidence remains unobserved and no adoption claim is made.",
+    "declaration": "E0-E4 are closed. E5 and the PM-6 enterprise conformance implementation are locally verified. The seven-part installation experience plus automatic AIDLC-authority plan detail and comprehensive closure reporting are included in the clean TailTrail 1.0.0 import baseline. Validation: python3 scripts/enterprise-readiness.py validate; python3 scripts/smoke-test.py; python3 -m unittest tests.test_installation_experience tests.test_transactional_installer. The imported source has hosted Linux/macOS/Windows x CPython 3.12/3.13 qualification evidence on master, but release readiness remains blocked until current real-host receipts and an observed identity-attested publication receipt exist. Configured workflows, offline verification, and local evidence are not represented as published support. Product-maturity PM-0 through PM-7 and learning PM-L0 through PM-L5 remain subject to the active feature freeze. PM-7 is protocol-ready; genuine usability evidence remains unobserved and no adoption claim is made.",
     "untracked_dispositions": [
       {"path": "aidlc-docs/phase-installation-experience-design.md", "disposition": "include", "owner": "tailtrail-install", "reason": "Approved seven-part installation experience architecture and evidence boundary."},
       {"path": "aidlc-docs/phase-installation-experience-requirements.md", "disposition": "include", "owner": "tailtrail-install", "reason": "Approved seven-part installation experience requirements."},
