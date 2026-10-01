@@ -1,6 +1,6 @@
 {
   "name": "tailtrail",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "TailTrail local development guidance for Codex with native plugin skills and review prompts.",
   "license": "Apache-2.0",
   "skills": "./skills/",

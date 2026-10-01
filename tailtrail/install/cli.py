@@ -25,7 +25,7 @@ def check_interpreter(executable: str | None = None) -> str | None:
     if "windowsapps" in lowered:
         return (
             f"refusing to install under the Microsoft Store python alias ({value}); "
-            "use `py -3.12`/`py -3.13` or a venv python instead"
+            "use `py -3.12`/`py -3.13`/`py -3.14` or a venv python instead"
         )
     return None
 

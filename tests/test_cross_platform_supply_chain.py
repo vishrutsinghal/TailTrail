@@ -27,7 +27,7 @@ class CrossPlatformSupplyChainTests(unittest.TestCase):
         contract = json.loads((ROOT / "platform-release-contract.json").read_text(encoding="utf-8"))
         self.assertEqual(contract["supported_operating_systems"], ["linux", "macos", "windows"])
         self.assertEqual(contract["compatibility_fixtures"], ["wsl"])
-        self.assertEqual(contract["supported_python_versions"], ["3.12", "3.13"])
+        self.assertEqual(contract["supported_python_versions"], ["3.12", "3.13", "3.14"])
         self.assertEqual(contract["artifact_routes"], ["wheel", "sdist-to-wheel"])
         self.assertEqual(contract["host_profiles"], ["codex:core", "copilot:core", "claude:core"])
         self.assertFalse(contract["evidence_policy"]["configured_is_observed"])
@@ -92,12 +92,12 @@ class CrossPlatformSupplyChainTests(unittest.TestCase):
             sdist_wheel.write_bytes(b"sdist wheel")
             commit = "2" * 40
             for system in ("linux", "macos", "windows"):
-                for python in ("3.12", "3.13"):
+                for python in ("3.12", "3.13", "3.14"):
                     payload = self._receipt(system, python, commit, PLATFORM.digest(wheel), PLATFORM.digest(sdist_wheel))
                     (receipts / f"{system}-{python}.json").write_text(json.dumps(payload), encoding="utf-8")
             report = PLATFORM.report(receipts, ROOT / "platform-release-contract.json", commit, wheel, sdist_wheel)
             self.assertTrue(report["valid"], report["issues"])
-            (receipts / "windows-3.13.json").unlink()
+            (receipts / "windows-3.14.json").unlink()
             report = PLATFORM.report(receipts, ROOT / "platform-release-contract.json", commit, wheel, sdist_wheel)
             self.assertFalse(report["valid"])
             self.assertTrue(any("matrix coverage mismatch" in issue for issue in report["issues"]))
@@ -107,7 +107,7 @@ class CrossPlatformSupplyChainTests(unittest.TestCase):
         self.assertNotIn("actions/checkout@v", workflow)
         self.assertNotIn("actions/setup-python@v", workflow)
         self.assertIn("os: [ubuntu-latest, macos-latest, windows-latest]", workflow)
-        self.assertIn('python-version: ["3.12", "3.13"]', workflow)
+        self.assertIn('python-version: ["3.12", "3.13", "3.14"]', workflow)
         self.assertIn("needs: qualification-gate", workflow)
         self.assertIn("id-token: write", workflow)
         self.assertIn("attestations: write", workflow)

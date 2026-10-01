@@ -1,7 +1,7 @@
 # Install TailTrail
 
 This is the canonical installation, update, and verification guide. TailTrail
-requires CPython 3.12 or 3.13.
+requires CPython 3.12, 3.13 or 3.14.
 
 ## Install the self-contained command
 
@@ -32,7 +32,7 @@ qualification boundaries are defined in [HOST-ADAPTERS.md](HOST-ADAPTERS.md).
 E4 host adapters are contract-tested; this does not claim a runtime-observed or
 release-supported host/operating-system version.
 E5 platform support is commit-specific and begins only when the published
-Linux/macOS/Windows x CPython 3.12/3.13 hosted receipt aggregate is green.
+Linux/macOS/Windows x CPython 3.12/3.13/3.14 hosted receipt aggregate is green.
 
 ## Pick one host profile
 

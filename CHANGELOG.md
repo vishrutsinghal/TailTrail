@@ -6,7 +6,12 @@ TailTrail follows semantic versioning as described in `VERSIONING.md`.
 
 ## Unreleased
 
-No unreleased changes.
+### Added
+
+- CPython 3.14 support: `requires-python` widened to `>=3.12,<3.15`,
+  runtime compatibility gate, platform contract, and CI matrices now cover
+  3.12/3.13/3.14. Build backend pins unchanged (verified wheel build on
+  3.14.6).
 
 ## 1.0.0 - 2026-10-01
 

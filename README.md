@@ -13,7 +13,7 @@ requirement.
 
 It works with Codex, GitHub Copilot, Claude, Cursor, ChatGPT, and Gemini.
 
-The self-contained `tailtrail` wheel and sdist support CPython 3.12 and 3.13,
+The self-contained `tailtrail` wheel and sdist support CPython 3.12, 3.13 and 3.14,
 have no runtime dependencies, verify their packaged resources before command
 dispatch, and do not need a source checkout. See [INSTALL.md](INSTALL.md).
 

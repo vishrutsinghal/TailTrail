@@ -120,7 +120,7 @@ command, and installation command. It identifies the trusted channel; it does
 not claim a release exists.
 
 Before installation, verify the downloaded wheel's SHA-256 and GitHub identity
-attestation. The self-contained wheel supports CPython 3.12 and 3.13 and has no
+attestation. The self-contained wheel supports CPython 3.12, 3.13 and 3.14 and has no
 runtime package dependencies.
 
 ### 2. Install into an isolated Python environment

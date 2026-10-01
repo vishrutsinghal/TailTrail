@@ -3,7 +3,7 @@
   "type": "tailtrail-release-channel",
   "repository": "https://github.com/vishrutsinghal/TailTrail",
   "latest_release": "https://github.com/vishrutsinghal/TailTrail/releases/latest",
-  "current_source_version": "1.0.0",
+  "current_source_version": "1.1.0",
   "publication": "tag-gated",
   "artifact": "tailtrail-{version}-py3-none-any.whl",
   "verification": {

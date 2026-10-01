@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tailtrail"
-version = "1.0.0"
+version = "1.1.0"
 description = "Local-first development guidance for smaller, evidence-backed coding workflows."
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.15"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE.md"]
 authors = [{ name = "TailTrail" }]

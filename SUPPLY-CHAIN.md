@@ -2,7 +2,7 @@
 
 `platform-release-contract.json` is the machine-readable E5 support and
 evidence boundary. TailTrail supports canonical wheel and sdist distribution
-on CPython 3.12 and 3.13 only after the exact Linux, macOS, and Windows hosted
+on CPython 3.12, 3.13 and 3.14 only after the exact Linux, macOS, and Windows hosted
 matrix succeeds for a source commit. A configured job, a local simulation, or
 one operating system cannot substitute for an observed receipt.
 
