@@ -14,7 +14,7 @@ import hashlib
 import os
 import shutil
 import tempfile
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -69,7 +69,15 @@ def safe_managed_path(root: Path, relative: str) -> Path:
     from .engine import InstallFailure
 
     value = Path(relative)
-    if value.is_absolute() or not value.parts or any(part in {"", ".", ".."} for part in value.parts):
+    windows_value = PureWindowsPath(relative)
+    if (
+        value.is_absolute()
+        or windows_value.is_absolute()
+        or bool(windows_value.drive)
+        or not value.parts
+        or any(part in {"", ".", ".."} for part in value.parts)
+        or any(part in {"", ".", ".."} for part in windows_value.parts)
+    ):
         raise InstallFailure("unsafe-path", f"unsafe managed path: {relative}")
     destination = root / value
     current = root

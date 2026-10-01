@@ -9,6 +9,7 @@ __pycache__/
 *$py.class
 /build/
 *.egg-info/
+tailtrail-meta/code-graph-cache.json
 .DS_Store
 Thumbs.db
 __MACOSX/

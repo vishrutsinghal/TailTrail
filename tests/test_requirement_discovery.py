@@ -788,6 +788,10 @@ class InterpretationErrorDetailTests(unittest.TestCase):
             command.extend(["--requirement-artifact", str(artifact)])
         return subprocess.run(command, cwd=root, text=True, capture_output=True, check=False)
 
+    def _repository_runs(self):
+        runs = Path(ROOT) / ".tailtrail" / "runs"
+        return sorted(runs.iterdir()) if runs.is_dir() else []
+
     def test_draft_helper_passes_and_emits_envelope(self):
         import base64
         with tempfile.TemporaryDirectory() as temp:
@@ -796,9 +800,9 @@ class InterpretationErrorDetailTests(unittest.TestCase):
             artifact.write_text(self.ARTIFACT_TEXT, encoding="utf-8")
             draft = root / "draft.json"
             draft.write_text(json.dumps(self._draft_payload()), encoding="utf-8")
-            runs_before = sorted((Path(ROOT) / ".tailtrail" / "runs").iterdir())
+            runs_before = self._repository_runs()
             result = self._run_draft(root, draft, [artifact])
-            runs_after = sorted((Path(ROOT) / ".tailtrail" / "runs").iterdir())
+            runs_after = self._repository_runs()
         self.assertEqual(result.returncode, 0, result.stderr)
         envelope = json.loads(base64.b64decode(result.stdout.strip()).decode("utf-8"))
         self.assertEqual(envelope["goal"], self.GOAL)
@@ -816,9 +820,9 @@ class InterpretationErrorDetailTests(unittest.TestCase):
             payload["clauses"][1]["text"] = "unrelated banana hammock"
             draft = root / "draft.json"
             draft.write_text(json.dumps(payload), encoding="utf-8")
-            runs_before = sorted((Path(ROOT) / ".tailtrail" / "runs").iterdir())
+            runs_before = self._repository_runs()
             result = self._run_draft(root, draft, [artifact])
-            runs_after = sorted((Path(ROOT) / ".tailtrail" / "runs").iterdir())
+            runs_after = self._repository_runs()
         self.assertEqual(result.returncode, 2)
         self.assertIn("C-02", result.stderr)
         self.assertEqual(result.stdout.strip(), "")

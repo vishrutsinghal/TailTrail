@@ -63,7 +63,7 @@ class WorkflowMcpTests(unittest.TestCase):
   self.assertEqual(result["state_view"]["workflow_id"],wid); self.assertEqual(scope_status,"fresh")
  def test_create_does_not_invent_runtime_for_a_legacy_approved_run(self):
   with tempfile.TemporaryDirectory() as temp:
-   root=Path(temp); lock.create(root,"legacy approved run","legacy-run"); lock.save_start_report(root,"legacy-run",{"goal":"legacy"}); lock.approve(root,"legacy-run",True)
+   root=Path(temp); lock.create(root,"legacy approved run","legacy-run"); lock.save_start_report(root,"legacy-run",{"goal":"legacy"}); proposal=root/"proposal.json"; proposal.write_text(json.dumps({"requirements":[{"statement":"Preserve the legacy run without inventing a workflow runtime.","acceptance_criteria":["No runtime is created"],"preserve_rules":["Keep approval boundaries"],"likely_paths":["legacy.txt"],"evidence_plan":["MCP refusal"]}]}),encoding="utf-8"); anchor.draft(root,"legacy-run",proposal); anchor.approve(root,"legacy-run"); lock.approve(root,"legacy-run",True)
    with self.assertRaisesRegex(ValueError,"enabled workflow draft"):
     mcp.call_tool("workflow_create",{"root":root.as_posix(),"run_id":"legacy-run","approved":True})
  def test_evidence_view_includes_canonical_completion_receipt_slot(self):

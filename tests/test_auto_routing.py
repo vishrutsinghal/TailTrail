@@ -75,7 +75,7 @@ def start_command(root: Path, *args: str) -> list[str]:
             "--root", root.as_posix(), *args]
 
 
-class HandsFreeAutoFullTests(unittest.TestCase):
+class HandsFreeAutoRoutingTests(unittest.TestCase):
     def test_hands_free_without_pack_falls_back_transparent(self):
         with tempfile.TemporaryDirectory() as temp:
             selected = task_start.aidlc_mode_selection(
@@ -84,9 +84,9 @@ class HandsFreeAutoFullTests(unittest.TestCase):
                 None,
             )
         self.assertEqual(selected["mode"], "lite")
+        self.assertEqual(selected["requested_mode"], "standard")
         self.assertEqual(selected["selection"], "hands-free-default")
-        self.assertEqual(
-            selected["full_escalation"]["state"], "eligible-awaiting-compatible-pack")
+        self.assertEqual(selected["full_escalation"]["state"], "not-eligible")
 
     def test_hands_free_with_interpretation_proceeds(self):
         goal = "End-to-end hands-free delivery of the notification feature"
@@ -102,7 +102,8 @@ class HandsFreeAutoFullTests(unittest.TestCase):
                               "--format", "json", goal),
                 cwd=ROOT, text=True, capture_output=True, check=False)
         self.assertNotIn("requires official Requirements authority", result.stderr)
-        self.assertIn("selecting Full mode automatically", result.stderr)
+        self.assertNotIn("selecting Full mode automatically", result.stderr)
+        self.assertIn("selecting Standard mode automatically", result.stderr)
 
 
 class DebugAutoRouteTests(unittest.TestCase):

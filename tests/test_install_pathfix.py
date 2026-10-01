@@ -22,17 +22,17 @@ class PathValueTests(unittest.TestCase):
     def test_appends_missing_entry(self) -> None:
         sep = os.pathsep
         self.assertEqual(
-            pathfix.new_path_value(f"C:{sep}D:", "E:"),
-            f"C:{sep}D:{sep}E:",
+            pathfix.new_path_value(f"/c{sep}/d", "/e"),
+            f"/c{sep}/d{sep}/e",
         )
 
     def test_existing_entry_returns_none(self) -> None:
         sep = os.pathsep
-        self.assertIsNone(pathfix.new_path_value(f"C:{sep}D:", "D:"))
-        self.assertIsNone(pathfix.new_path_value("D:", "D:"))
+        self.assertIsNone(pathfix.new_path_value(f"/c{sep}/d", "/d"))
+        self.assertIsNone(pathfix.new_path_value("/d", "/d"))
 
     def test_empty_current(self) -> None:
-        self.assertEqual(pathfix.new_path_value("", "E:"), "E:")
+        self.assertEqual(pathfix.new_path_value("", "/e"), "/e")
 
 
 class EnsureCommandTests(unittest.TestCase):

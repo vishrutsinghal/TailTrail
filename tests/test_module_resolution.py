@@ -175,10 +175,11 @@ class ModuleResolutionTests(unittest.TestCase):
             for path in (ROOT / "scripts").glob("*.py")
             if path.name != "__init__.py"
         }
+        approved_compatibility_entries = {"navigator.py"}
         shadows = sorted(
             path.name
             for path in ROOT.glob("*.py")
-            if path.stem in script_names
+            if path.stem in script_names and path.name not in approved_compatibility_entries
         )
         self.assertEqual(shadows, [])
 

@@ -47,6 +47,8 @@ class SharedFileOpsTests(unittest.TestCase):
                 files.safe_managed_path(root, "../outside.txt")
             with self.assertRaises(InstallFailure):
                 files.safe_managed_path(root, "C:/outside.txt")
+            with self.assertRaises(InstallFailure):
+                files.safe_managed_path(root, "..\\outside.txt")
             self.assertEqual(
                 files.safe_managed_path(root, "a/b.txt"), root / "a" / "b.txt"
             )
