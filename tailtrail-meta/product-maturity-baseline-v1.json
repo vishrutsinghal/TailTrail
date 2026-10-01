@@ -5,8 +5,8 @@
     "signature": "SHA-256 integrity seal detects artifact modification. It is not an organizational identity signature.",
     "telemetry": "No network, model, scanner, source execution, or hidden telemetry is used."
   },
-  "captured_at": "2026-09-01T02:41:53+00:00",
-  "captured_revision": "21510e647af4b30bba2b86bb01417ec12ef8aaff",
+  "captured_at": "2026-10-01T03:47:37+00:00",
+  "captured_revision": "9486906660282b3f763a361839025c2f267515dc",
   "compatibility": {
     "deprecations": [],
     "minimum_release_window": 2,
@@ -46,6 +46,16 @@
           "approved_by": "PM-5 implementation authority",
           "id": "real_evaluation_portfolio_report",
           "reason": "Expose read-only coverage and claim-boundary reporting for the real evaluation portfolio."
+        },
+        {
+          "approved_by": "PM-6 implementation authority",
+          "id": "enterprise_conformance_report",
+          "reason": "Expose a read-only consolidated enterprise control and evidence-boundary report."
+        },
+        {
+          "approved_by": "PM-7 implementation authority",
+          "id": "adoption_validation_report",
+          "reason": "Expose read-only usability coverage, friction gates, safety posture, and evidence-backed wording/default recommendations without recording trials or changing product behavior."
         }
       ],
       "ownership_domains": [],
@@ -69,6 +79,81 @@
           "approved_by": "PM-5 implementation authority",
           "id": "schemas/real-evaluation-portfolio.schema.json",
           "reason": "PM-5 requires a versioned multi-repository task and repetition protocol without representing fixtures as measured outcomes."
+        },
+        {
+          "approved_by": "PM-6 implementation authority",
+          "id": "schemas/enterprise-conformance-report.schema.json",
+          "reason": "PM-6 requires one offline-verifiable enterprise control report with explicit hosted-evidence boundaries."
+        },
+        {
+          "approved_by": "PM-L0 implementation authority",
+          "id": "schemas/product-maturity-learning-inventory.schema.json",
+          "reason": "PM-L0 requires a closed, sealed inventory for canonical learning ownership, compatibility aliases, and non-destructive migration boundaries."
+        },
+        {
+          "approved_by": "PM-L1 implementation authority",
+          "id": "schemas/learning-v3-record.schema.json",
+          "reason": "PM-L1 requires a closed append-only class, provenance, applicability, freshness, utility, privacy, and lifecycle contract."
+        },
+        {
+          "approved_by": "PM-L2 implementation authority",
+          "id": "schemas/learning-use-proposal.schema.json",
+          "reason": "PM-L2 requires a closed project-framed retrieval, applicability ranking, three-result cap, invalidator, contradiction, and explicit-use proposal contract."
+        },
+        {
+          "approved_by": "PM-L3 implementation authority",
+          "id": "schemas/learning-use-receipt-event.schema.json",
+          "reason": "PM-L3 requires a closed append-only use-decision, requirement attribution, evidence join, privacy, digest-chain, and capped observed-utility contract."
+        },
+        {
+          "approved_by": "PM-L4 implementation authority",
+          "id": "schemas/learning-governance-event.schema.json",
+          "reason": "PM-L4 requires a closed append-only challenge, conflict, revalidation, repeated-rejection, privacy, and digest-chain governance contract."
+        },
+        {
+          "approved_by": "PM-L5 implementation authority",
+          "id": "schemas/learning-calibration-catalog.schema.json",
+          "reason": "PM-L5 requires a closed paired learning-on/control scenario catalog with later outcomes and claim boundaries."
+        },
+        {
+          "approved_by": "PM-L5 implementation authority",
+          "id": "schemas/learning-calibration-report.schema.json",
+          "reason": "PM-L5 requires a closed class-specific effectiveness, calibration, overhead, privacy, and claim report."
+        },
+        {
+          "approved_by": "PM-L5 implementation authority",
+          "id": "schemas/learning-calibration-projection.schema.json",
+          "reason": "PM-L5 requires a closed project-framed, report-linked, bounded confidence projection."
+        },
+        {
+          "approved_by": "PM-7 implementation authority",
+          "id": "schemas/adoption-validation-catalog.schema.json",
+          "reason": "PM-7 requires versioned cohorts, scenarios, numeric usability thresholds, safety boundaries, and evidence-based feedback signals."
+        },
+        {
+          "approved_by": "PM-7 implementation authority",
+          "id": "schemas/adoption-validation-trial.schema.json",
+          "reason": "PM-7 requires a closed privacy-safe, tamper-evident trial receipt for observed and fixture evidence."
+        },
+        {
+          "approved_by": "PM-7 implementation authority",
+          "id": "schemas/adoption-validation-report.schema.json",
+          "reason": "PM-7 requires a closed aggregate report that fails closed on missing, insufficient, unsafe, or tampered evidence."
+        },
+        {
+          "approved_by": "PM-7 implementation authority",
+          "id": "schemas/adoption-improvement-decision.schema.json",
+          "reason": "PM-7 requires approved, evidence-linked wording/default proposal and decision records without automatic source mutation."
+        },
+        {
+          "approved_by": "User-approved installation experience implementation",
+          "id": "schemas/release-channel.schema.json",
+          "reason": "Trusted release discovery requires a closed repository and verification-command contract without a publication claim."
+        },
+        {
+          "approved_by": "User-approved installation experience implementation",
+          "id": "schemas/release-publication-receipt.schema.json",
+          "reason": "The support gate requires a closed observed identity-verified publication receipt rather than workflow inference."
         }
       ],
       "top_level_commands": [
@@ -101,6 +186,26 @@
           "approved_by": "PM-3 implementation authority",
           "id": "presentation",
           "reason": "Expose deterministic canonical report validation, rendering, and host presentation conformance."
+        },
+        {
+          "approved_by": "User-approved installation experience implementation",
+          "id": "setup",
+          "reason": "Consolidate host selection, install/update, verification, diagnostics, and reload guidance behind the existing transactional lifecycle."
+        },
+        {
+          "approved_by": "User-approved installation experience implementation",
+          "id": "upgrade",
+          "reason": "Provide one hash-pinned offline package and transactional project-payload upgrade path."
+        },
+        {
+          "approved_by": "User-approved installation experience implementation",
+          "id": "release",
+          "reason": "Expose package-owned trusted release discovery without inferring publication."
+        },
+        {
+          "approved_by": "User-approved installation experience implementation",
+          "id": "qualify",
+          "reason": "Expose one fail-closed aggregate of host, platform, and signed-publication evidence. Validation: python3 -m unittest tests.test_installation_experience."
         }
       ]
     },
@@ -119,7 +224,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "sorted compact JSON excluding integrity",
-    "digest": "ec765342d23e8b5f7a133a0d09d17c5c4f4faea368143218514766e66524c914"
+    "digest": "3b15947156f00586ce13b8794ecceb3a540552d0991f5a36d9fc89dcbd10c9f6"
   },
   "inventory": {
     "features": [
@@ -520,6 +625,12 @@
         "surface": "core"
       },
       {
+        "id": "requirement-intake",
+        "owner": "tailtrail-core",
+        "status": "implemented",
+        "surface": "core"
+      },
+      {
         "id": "review",
         "owner": "tailtrail-core",
         "status": "implemented",
@@ -540,6 +651,12 @@
       {
         "id": "self-contained-package",
         "owner": "tailtrail-packaging",
+        "status": "implemented",
+        "surface": "core"
+      },
+      {
+        "id": "session-attachment-status",
+        "owner": "tailtrail-core",
         "status": "implemented",
         "surface": "core"
       },
@@ -604,6 +721,12 @@
         "surface": "core"
       },
       {
+        "id": "stop-resume-control",
+        "owner": "tailtrail-core",
+        "status": "implemented",
+        "surface": "core"
+      },
+      {
         "id": "target-workspace-resolver",
         "owner": "tailtrail-core",
         "status": "implemented",
@@ -658,6 +781,7 @@
       }
     ],
     "mcp_tools": [
+      "adoption_validation_report",
       "aidlc_official_bridge_show",
       "aidlc_official_sanitize_validate",
       "aidlc_official_session_status",
@@ -689,17 +813,23 @@
       "debug_intake_show",
       "debug_orientation_create",
       "debug_orientation_show",
+      "debug_preflight",
       "debug_release_gate",
       "debug_reproduction_approve",
+      "debug_reproduction_attempt_record",
+      "debug_reproduction_attempt_show",
       "debug_reproduction_draft",
+      "debug_reproduction_reopen",
       "debug_reproduction_revise",
       "debug_reproduction_show",
       "debug_root_cause_prove",
       "debug_start",
+      "enterprise_conformance_report",
       "enterprise_target_policy_inspect",
       "eval_scenario_list",
       "eval_scenario_report",
       "execution_evidence_record",
+      "execution_evidence_run",
       "execution_evidence_show",
       "git_readiness",
       "graph_map",
@@ -708,10 +838,12 @@
       "harness_control_check",
       "host_conformance_report",
       "install_status",
+      "intent_resolve",
       "ledger_state",
       "maintainability_assessment_show",
       "maintainability_inventory",
       "navigator_plan",
+      "navigator_scope_proposal_record",
       "planning_aidlc_question_approve",
       "planning_aidlc_question_challenge",
       "planning_aidlc_question_clarify",
@@ -736,6 +868,9 @@
       "recovery_boundary_show",
       "recovery_reconciliation_show",
       "release_confidence_show",
+      "requirement_intake_answer",
+      "requirement_intake_attach_visual",
+      "requirement_intake_show",
       "source_patch_apply",
       "spec_kit_amendment_propose",
       "spec_kit_anchor_approve",
@@ -746,7 +881,10 @@
       "spec_kit_import",
       "spec_kit_mapping_show",
       "start_report",
+      "tailtrail_resume",
+      "tailtrail_session_status",
       "tailtrail_start",
+      "tailtrail_stop",
       "validation_receipt_show",
       "workflow_adapter_record",
       "workflow_approval_decide",
@@ -898,8 +1036,13 @@
       }
     ],
     "schema_paths": [
+      "schemas/adoption-improvement-decision.schema.json",
+      "schemas/adoption-validation-catalog.schema.json",
+      "schemas/adoption-validation-report.schema.json",
+      "schemas/adoption-validation-trial.schema.json",
       "schemas/architecture-fitness.schema.json",
       "schemas/behavior-harness.schema.json",
+      "schemas/canonical-requirement-set.schema.json",
       "schemas/change-intent-anchor.schema.json",
       "schemas/closure-correction.schema.json",
       "schemas/closure-evaluation.schema.json",
@@ -920,13 +1063,18 @@
       "schemas/debug-experiment.schema.json",
       "schemas/debug-governance.schema.json",
       "schemas/debug-harness-convergence.schema.json",
+      "schemas/debug-host-diagnosis.schema.json",
       "schemas/debug-hypothesis-ranking.schema.json",
       "schemas/debug-intake.schema.json",
       "schemas/debug-investigation-handoff.schema.json",
       "schemas/debug-orientation.schema.json",
+      "schemas/debug-preflight.schema.json",
       "schemas/debug-release-gate.schema.json",
+      "schemas/debug-reproduction-attempt-status.schema.json",
+      "schemas/debug-reproduction-attempt.schema.json",
       "schemas/debug-reproduction-contract.schema.json",
       "schemas/dependency-decision.schema.json",
+      "schemas/enterprise-conformance-report.schema.json",
       "schemas/enterprise-target-policy.schema.json",
       "schemas/evaluation-delivery-dataset.schema.json",
       "schemas/evaluation-harness-event.schema.json",
@@ -941,16 +1089,41 @@
       "schemas/harness-result.schema.json",
       "schemas/harness-template-selection.schema.json",
       "schemas/host-adapter-contract.schema.json",
+      "schemas/host-decision.schema.json",
+      "schemas/host-requirement-routing-conformance.schema.json",
       "schemas/host-runtime-receipt.schema.json",
+      "schemas/host-scope-conformance.schema.json",
+      "schemas/host-scope-reasoning-conformance.schema.json",
       "schemas/host-workspace-resolution.schema.json",
       "schemas/hypothesis-ledger.schema.json",
       "schemas/input-role-registry.schema.json",
       "schemas/install-journal-event.schema.json",
       "schemas/install-ownership-manifest.schema.json",
       "schemas/install-plan.schema.json",
+      "schemas/intent-envelope.schema.json",
+      "schemas/learning-calibration-catalog.schema.json",
+      "schemas/learning-calibration-projection.schema.json",
+      "schemas/learning-calibration-report.schema.json",
+      "schemas/learning-governance-event.schema.json",
+      "schemas/learning-use-proposal.schema.json",
+      "schemas/learning-use-receipt-event.schema.json",
+      "schemas/learning-v3-record.schema.json",
       "schemas/maintainability-baseline.schema.json",
       "schemas/maintainability-harness.schema.json",
       "schemas/maintainability-inventory.schema.json",
+      "schemas/navigator-graph-lifecycle.schema.json",
+      "schemas/navigator-host-scope-packet-v2.schema.json",
+      "schemas/navigator-host-scope-proposal.schema.json",
+      "schemas/navigator-installed-release-proof.schema.json",
+      "schemas/navigator-run-mapping-index.schema.json",
+      "schemas/navigator-scope-baseline.schema.json",
+      "schemas/navigator-scope-calibration-catalog.schema.json",
+      "schemas/navigator-scope-calibration-report.schema.json",
+      "schemas/navigator-scope-evidence.schema.json",
+      "schemas/navigator-scope-migration-report.schema.json",
+      "schemas/navigator-scope-quality.schema.json",
+      "schemas/navigator-scope-release-policy.schema.json",
+      "schemas/navigator-scope-release-proof.schema.json",
       "schemas/official-aidlc-bridge.schema.json",
       "schemas/official-aidlc-pack.schema.json",
       "schemas/official-aidlc-run-state.schema.json",
@@ -967,25 +1140,33 @@
       "schemas/platform-qualification-receipt.schema.json",
       "schemas/presentation-report.schema.json",
       "schemas/product-maturity-baseline.schema.json",
+      "schemas/product-maturity-learning-inventory.schema.json",
       "schemas/program-plan.schema.json",
       "schemas/program-state.schema.json",
       "schemas/question-context.schema.json",
       "schemas/real-evaluation-portfolio.schema.json",
       "schemas/recovery-reconciliation.schema.json",
+      "schemas/release-channel.schema.json",
       "schemas/release-evidence.schema.json",
+      "schemas/release-publication-receipt.schema.json",
       "schemas/repository-enforcement-policy.schema.json",
       "schemas/repository-enforcement-report.schema.json",
       "schemas/repository-enforcement-suppression.schema.json",
       "schemas/reproduction-contract.schema.json",
+      "schemas/requirement-evidence-assistance.schema.json",
       "schemas/requirement-evidence.schema.json",
       "schemas/requirement-impact-map.schema.json",
+      "schemas/requirement-intake.schema.json",
+      "schemas/requirement-interpretation.schema.json",
       "schemas/requirement-recovery-manifest.schema.json",
+      "schemas/requirement-sufficiency.schema.json",
       "schemas/run-event.schema.json",
       "schemas/spec-kit-amendment.schema.json",
       "schemas/spec-kit-convergence.schema.json",
       "schemas/spec-kit-import.schema.json",
       "schemas/spec-kit-mapping.schema.json",
       "schemas/spec-kit-source.schema.json",
+      "schemas/tailtrail-session-attachment.schema.json",
       "schemas/target-resolution-receipt.schema.json",
       "schemas/task-recovery-boundary.schema.json",
       "schemas/task-recovery-plan.schema.json",
@@ -1072,18 +1253,33 @@
       "schemas/debug-experiment.schema.json",
       "schemas/debug-governance.schema.json",
       "schemas/debug-harness-convergence.schema.json",
+      "schemas/debug-host-diagnosis.schema.json",
       "schemas/debug-hypothesis-ranking.schema.json",
       "schemas/debug-intake.schema.json",
       "schemas/debug-investigation-handoff.schema.json",
       "schemas/debug-orientation.schema.json",
+      "schemas/debug-preflight.schema.json",
       "schemas/debug-release-gate.schema.json",
+      "schemas/debug-reproduction-attempt-status.schema.json",
+      "schemas/debug-reproduction-attempt.schema.json",
       "schemas/debug-reproduction-contract.schema.json",
       "schemas/execution-evidence.schema.json",
       "schemas/harness-checkpoint.schema.json",
+      "schemas/learning-calibration-catalog.schema.json",
+      "schemas/learning-calibration-projection.schema.json",
+      "schemas/learning-calibration-report.schema.json",
+      "schemas/learning-governance-event.schema.json",
+      "schemas/learning-use-proposal.schema.json",
+      "schemas/learning-use-receipt-event.schema.json",
+      "schemas/learning-v3-record.schema.json",
+      "schemas/navigator-run-mapping-index.schema.json",
+      "schemas/navigator-scope-evidence.schema.json",
       "schemas/official-aidlc-run-state.schema.json",
+      "schemas/product-maturity-learning-inventory.schema.json",
       "schemas/program-state.schema.json",
       "schemas/recovery-reconciliation.schema.json",
       "schemas/release-evidence.schema.json",
+      "schemas/requirement-evidence-assistance.schema.json",
       "schemas/requirement-evidence.schema.json",
       "schemas/requirement-recovery-manifest.schema.json",
       "schemas/run-event.schema.json",
@@ -1192,6 +1388,7 @@
       "harness",
       "hello",
       "help",
+      "host-reply",
       "install",
       "intent",
       "intent-bridge",
@@ -1208,24 +1405,31 @@
       "policy",
       "presentation",
       "profile",
+      "qualify",
       "quality",
       "quality-loop",
       "receipt",
       "recover",
       "reference",
       "registry",
+      "release",
       "release-check",
       "repair",
       "report",
+      "requirements",
+      "resume",
       "review",
       "rollback",
       "route",
       "run",
       "savings",
+      "session",
+      "setup",
       "setup-scan",
       "sonar",
       "start",
       "status",
+      "stop",
       "target",
       "team-init",
       "telemetry",
@@ -1235,6 +1439,7 @@
       "ui",
       "uninstall",
       "update",
+      "upgrade",
       "validation",
       "verify",
       "version",
