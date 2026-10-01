@@ -1,0 +1,16 @@
+{
+  "schema_version": "1",
+  "type": "tailtrail-repository-approval",
+  "policy_version": 1,
+  "approval_id": "PY314-001",
+  "approved": true,
+  "owner": "vishrutsinghal",
+  "reason": "Owner-requested CPython 3.14 support and TailTrail 1.1.0 release: widen requires-python to >=3.12,<3.15, extend the platform contract and CI matrices to 3.12/3.13/3.14, and bump version sources to 1.1.0.",
+  "paths": [
+    ".github/workflows/platform-supply-chain.yml",
+    ".github/workflows/trust.yml",
+    "pyproject.toml",
+    "release-manifest.json"
+  ],
+  "expires": "2026-10-31"
+}

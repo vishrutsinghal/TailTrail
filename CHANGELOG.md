@@ -4,14 +4,17 @@ All notable public release changes to TailTrail are recorded here.
 
 TailTrail follows semantic versioning as described in `VERSIONING.md`.
 
-## Unreleased
+## 1.1.0 - 2026-10-01
 
 ### Added
 
 - CPython 3.14 support: `requires-python` widened to `>=3.12,<3.15`,
   runtime compatibility gate, platform contract, and CI matrices now cover
-  3.12/3.13/3.14. Build backend pins unchanged (verified wheel build on
-  3.14.6).
+  3.12/3.13/3.14. Build backend pins unchanged. validation: wheel built on
+  CPython 3.14.6 (command: `py -3.14 -m pip wheel . --no-deps
+  --no-build-isolation`, result: success); the 9-cell Linux/macOS/Windows x
+  3.12/3.13/3.14 hosted matrix went green in the v1.1.0 platform run and
+  1.1.0 is published on PyPI.
 
 ## 1.0.0 - 2026-10-01
 
