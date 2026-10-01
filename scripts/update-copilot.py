@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import re
+import shutil
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+import pipeline_manager
+from write_guardian import guard_write
+
+# ... existing imports ...
+
+
+ROOT = Path(__file__).resolve().parents[1]
+IMPORT_ROOT = ROOT.parent if (ROOT / "__init__.py").is_file() else ROOT
+try:
+    sys.path.remove(IMPORT_ROOT.as_posix())
+except ValueError:
+    pass
+sys.path.insert(0, IMPORT_ROOT.as_posix())
+INSTALL_COPILOT_PATH = ROOT / "scripts" / "install-copilot.py"
+INSTALL_SPEC = importlib.util.spec_from_file_location("tailtrail_install_copilot", INSTALL_COPILOT_PATH)
+if INSTALL_SPEC is None or INSTALL_SPEC.loader is None:
+    raise SystemExit("Unable to load scripts/install-copilot.py")
+install_copilot = importlib.util.module_from_spec(INSTALL_SPEC)
+INSTALL_SPEC.loader.exec_module(install_copilot)
+MANIFEST_NAME = install_copilot.MANIFEST_NAME
+COPILOT_PATH = Path(".github") / "copilot-instructions.md"
+
+
+@dataclass
+class UpdateReport:
+    updated: list[str]
+    skipped_same: list[str]
+    conflicts: list[str]
+    missing: list[str]
+    backed_up: list[str]
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def relative_display(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def load_manifest(pack_root: Path) -> dict[str, Any] | None:
+    manifest_path = pack_root / MANIFEST_NAME
+    if not manifest_path.exists():
+        return None
+    return json.loads(manifest_path.read_text(encoding="utf-8"))
+
+
+def infer_pack_dir(target_root: Path) -> Path:
+    copilot = target_root / COPILOT_PATH
+    if copilot.exists():
+        body = copilot.read_text(encoding="utf-8")
+        match = re.search(r"TailTrail support files are installed under `([^`]+)`", body)
+        if match:
+            value = match.group(1)
+            if value == "repository root":
+                return Path(".")
+            return install_copilot.validate_pack_dir(value)
+
+    candidates = [Path("tailtrail"), Path("tools") / "tailtrail", Path(".")]
+    for candidate in candidates:
+        pack_root = target_root / candidate
+        if (pack_root / MANIFEST_NAME).exists() or (pack_root / "AIDLC.md").exists():
+            return candidate
+    return Path("tailtrail")
+
+
+def backup_file(path: Path, target_root: Path, backup_root: Path, report: UpdateReport) -> None:
+    if not path.exists():
+        return
+    destination = backup_root / relative_display(path, target_root)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(path, destination)
+    report.backed_up.append(relative_display(destination, target_root))
+
+
+def write_text_file(root: Path, path: Path, body: str) -> None:
+    # Installer context: no pipeline run exists, so the unenforced write
+    # is declared openly instead of silently bypassed.
+    guard_write(root, path, permissive=True)
+    install_copilot.shared_files().atomic_write_text(path, body)
+
+
+def copy_file(root: Path, path: Path, source: Path) -> None:
+    # Installer context: see write_text_file.
+    guard_write(root, path, permissive=True)
+    install_copilot.shared_files().atomic_copy(source, path)
+
+
+def current_was_managed(path: Path, relative_path: str, manifest: dict[str, Any] | None) -> bool:
+    if not path.exists():
+        return True
+    if manifest is None:
+        return False
+    files = manifest.get("files", {})
+    old_entry = files.get(relative_path)
+    if not isinstance(old_entry, dict):
+        return False
+    old_hash = old_entry.get("sha256")
+    return bool(old_hash and sha256(path) == old_hash)
+
+
+def should_update(
+    destination: Path,
+    relative_path: str,
+    source_hash: str,
+    manifest: dict[str, Any] | None,
+    strategy: str,
+    report: UpdateReport,
+) -> bool:
+    if not destination.exists():
+        report.missing.append(relative_path)
+        return True
+    if sha256(destination) == source_hash:
+        report.skipped_same.append(relative_path)
+        return False
+    if current_was_managed(destination, relative_path, manifest):
+        return True
+    if strategy == "preserve":
+        report.conflicts.append(relative_path)
+        return False
+    return True
+
+
+def write_manifest(
+    pack_root: Path,
+    pack_dir: Path,
+    surface: str,
+    pack_files: list[str] | tuple[str, ...],
+    pack_dirs: list[str] | tuple[str, ...],
+    pack_scripts: list[str] | tuple[str, ...],
+) -> None:
+    install_copilot.write_manifest(pack_root, pack_dir, [], surface, pack_files, pack_dirs, pack_scripts)
+
+
+def update_file(
+    destination: Path,
+    source: Path,
+    relative_path: str,
+    target_root: Path,
+    backup_root: Path,
+    manifest: dict[str, Any] | None,
+    strategy: str,
+    dry_run: bool,
+    report: UpdateReport,
+) -> None:
+    source_hash = sha256(source)
+    if not should_update(destination, relative_path, source_hash, manifest, strategy, report):
+        return
+    if destination.exists() and strategy == "backup-overwrite":
+        backup_file(destination, target_root, backup_root, report)
+    if not dry_run:
+        copy_file(target_root, destination, source)
+    report.updated.append(relative_path)
+
+
+def update_rendered_text(
+    destination: Path,
+    content: str,
+    relative_path: str,
+    target_root: Path,
+    backup_root: Path,
+    manifest: dict[str, Any] | None,
+    strategy: str,
+    dry_run: bool,
+    report: UpdateReport,
+) -> None:
+    """Update generated adapter content without copying its unresolved template."""
+    source_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if not should_update(destination, relative_path, source_hash, manifest, strategy, report):
+        return
+    if destination.exists() and strategy == "backup-overwrite":
+        backup_file(destination, target_root, backup_root, report)
+    if not dry_run:
+        write_text_file(target_root, destination, content)
+    report.updated.append(relative_path)
+
+
+def update_copilot(
+    target_root: Path,
+    pack_dir: Path,
+    strategy: str,
+    dry_run: bool,
+) -> UpdateReport:
+    pack_root = target_root / pack_dir
+    manifest = load_manifest(pack_root)
+    surface = install_copilot.installed_surface(manifest)
+    if surface not in install_copilot.SURFACES:
+        surface = install_copilot.DEFAULT_SURFACE
+    pack_files, pack_dirs, pack_scripts = install_copilot.resolve(
+        surface,
+        install_copilot.PACK_FILES,
+        install_copilot.PACK_DIRS,
+        install_copilot.PACK_SCRIPTS,
+    )
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    backup_root = target_root / ".tailtrail" / "backups" / f"copilot-update-{timestamp}"
+    report = UpdateReport(updated=[], skipped_same=[], conflicts=[], missing=[], backed_up=[])
+
+    copilot_body = install_copilot.copilot_body(pack_dir)
+    copilot_destination = target_root / COPILOT_PATH
+    copilot_hash = hashlib.sha256(copilot_body.encode("utf-8")).hexdigest()
+    if should_update(copilot_destination, COPILOT_PATH.as_posix(), copilot_hash, manifest, strategy, report):
+        if copilot_destination.exists() and strategy == "backup-overwrite":
+            backup_file(copilot_destination, target_root, backup_root, report)
+        if not dry_run:
+            write_text_file(target_root, copilot_destination, copilot_body)
+        report.updated.append(COPILOT_PATH.as_posix())
+
+    prompt_relative = ".github/prompts/tailtrail-start.prompt.md"
+    prompt_body = install_copilot.start_prompt_body(pack_dir)
+    update_rendered_text(
+        target_root / prompt_relative,
+        prompt_body,
+        prompt_relative,
+        target_root,
+        backup_root,
+        manifest,
+        strategy,
+        dry_run,
+        report,
+    )
+
+    for relative_path in install_copilot.pack_entries_for(pack_files, pack_dirs, pack_scripts):
+        if relative_path == prompt_relative:
+            update_rendered_text(
+                pack_root / relative_path,
+                prompt_body,
+                relative_path,
+                target_root,
+                backup_root,
+                manifest,
+                strategy,
+                dry_run,
+                report,
+            )
+            continue
+        source = ROOT / relative_path
+        destination = pack_root / relative_path
+        update_file(destination, source, relative_path, target_root, backup_root, manifest, strategy, dry_run, report)
+
+    if not dry_run and not report.conflicts:
+        write_manifest(pack_root, pack_dir, surface, pack_files, pack_dirs, pack_scripts)
+    if dry_run:
+        report.updated = [f"{path} (dry-run)" for path in report.updated]
+    return report
+
+
+def print_report(target_root: Path, pack_dir: Path, strategy: str, dry_run: bool, report: UpdateReport) -> None:
+    print(f"TailTrail Copilot update target: {target_root}")
+    print(f"TailTrail pack folder: {(target_root / pack_dir).resolve()}")
+    print(f"Strategy: {strategy}")
+    if dry_run:
+        print("Mode: dry-run")
+
+    sections = [
+        ("Updated", report.updated),
+        ("Already current", report.skipped_same),
+        ("Local edits preserved", report.conflicts),
+        ("Missing files restored", report.missing),
+        ("Backed up", report.backed_up),
+    ]
+    for title, items in sections:
+        if items:
+            print(f"{title}:")
+            for item in items:
+                print(f"- {item}")
+
+    if report.conflicts:
+        print("Next: review local edits, then rerun with --strategy backup-overwrite if you want TailTrail to refresh those files and keep backups.")
+    else:
+        print("Next: review git diff in the target project, then commit the TailTrail update.")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Safely update an existing TailTrail GitHub Copilot pack in a target project.")
+    parser.add_argument("--root", type=Path, default=Path.cwd(), help="Target project root.")
+    parser.add_argument("--pack-dir", help="Existing TailTrail pack folder. Defaults to auto-detection.")
+    parser.add_argument("--strategy", choices=["preserve", "backup-overwrite"], default="preserve", help="How to handle locally modified TailTrail-managed files.")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would change without writing files.")
+    args = parser.parse_args()
+    from tailtrail.install.cli import main as installer_main
+
+    forwarded = ["update", "--host", "copilot", "--target", args.root.resolve().as_posix()]
+    if args.strategy == "backup-overwrite":
+        forwarded.append("--force")
+    if args.dry_run:
+        forwarded.append("--dry-run")
+    return installer_main(forwarded)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

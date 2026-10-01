@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+"""Surface-area profiles for TailTrail installers (BL-8).
+
+Core is a deliberately small subset that supports first-run experience:
+install -> hello -> start -> guard check -> governance check.
+Extended is Core plus every other file currently shipped.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+CORE_FILES: tuple[str, ...] = (
+    ".cursor/rules/tailtrail.mdc",
+    ".github/copilot-instructions.md",
+    ".openai/chatgpt-instructions.md",
+    "AGENTS.md",
+    "CHEATSHEET.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "GOVERNANCE.md",
+    "GUARDRAILS.md",
+    "INSTALL.md",
+    "INSTALLER-LIFECYCLE.md",
+    "MANIFEST.in",
+    "PACKAGE-CONTRACT.md",
+    "PRODUCT-MATURITY-IMPROVEMENT-PLAN.md",
+    "QUICKSTART.md",
+    "README.md",
+    "REPOSITORY-ENFORCEMENT.md",
+    "ROADMAP.md",
+    "TAILTRAIL-COMMANDS.md",
+    "package-manifest.json",
+    "package-manifest.schema.json",
+    "pyproject.toml",
+    "setup.py",
+    "tailtrail-enforcement-baseline.json",
+    "tailtrail-enforcement-policy.json",
+    "tailtrail-enforcement-suppressions.json",
+    "tailtrail-meta/product-maturity-baseline-v1.json",
+    "tailtrail-meta/product-maturity-policy-v1.json",
+    "tailtrail-policy.example.md",
+    "tailtrail-registry.json",
+    "tailtrail-registry.schema.json",
+    "tailtrail_cli.py",
+)
+
+CORE_DIRS: tuple[str, ...] = (
+    "adapters",
+    "docs",
+    "tailtrail",
+)
+
+CORE_SCRIPTS: tuple[str, ...] = (
+    "scripts/aidlc-official-host.py",
+    "scripts/architecture-fitness.py",
+    "scripts/architecture_planning.py",
+    "scripts/behavior-harness.py",
+    "scripts/behaviour_planning.py",
+    "scripts/bootstrap-snapshot.py",
+    "scripts/change-intent-anchor.py",
+    "scripts/check-tailtrail.py",
+    "scripts/closure-close.py",
+    "scripts/closure-contract.py",
+    "scripts/closure-correction.py",
+    "scripts/closure-evaluation.py",
+    "scripts/closure-finalizer.py",
+    "scripts/closure-learning.py",
+    "scripts/closure-recorder.py",
+    "scripts/code-graph-mapper.py",
+    "scripts/code_graph_inventory.py",
+    "scripts/completion-report.py",
+    "scripts/completion-review.py",
+    "scripts/delivery-orchestrator.py",
+    "scripts/dependency-decision.py",
+    "scripts/enterprise-target-policy.py",
+    "scripts/evidence-tiers.py",
+    "scripts/execution-failure.py",
+    "scripts/expand-intent.py",
+    "scripts/git-readiness.py",
+    "scripts/guardrail-check.py",
+    "scripts/harness-checkpoint.py",
+    "scripts/harness-controls.py",
+    "scripts/harness-feedback.py",
+    "scripts/higher-tier-testing.py",
+    "scripts/host-workspace-adapter.py",
+    "scripts/install-copilot.py",
+    "scripts/install-launcher.py",
+    "scripts/install-local.py",
+    "scripts/install_surfaces.py",
+    "scripts/installer.py",
+    "scripts/maintainability-harness.py",
+    "scripts/maintainability_planning.py",
+    "scripts/navigator.py",
+    "scripts/navigator_core.py",
+    "scripts/navigator_discovery.py",
+    "scripts/navigator_graph_lifecycle.py",
+    "scripts/navigator_render.py",
+    "scripts/package-release-proof.py",
+    "scripts/planning_lock.py",
+    "scripts/policy-check.py",
+    "scripts/product-maturity.py",
+    "scripts/program-checkpoint.py",
+    "scripts/program-plan.py",
+    "scripts/prompt_profile.py",
+    "scripts/public-benchmark.py",
+    "scripts/question-orchestrator.py",
+    "scripts/recovery-diagnostician.py",
+    "scripts/recovery-reconcile.py",
+    "scripts/release-confidence.py",
+    "scripts/repository-enforcement.py",
+    "scripts/requirement-completion.py",
+    "scripts/requirement-recovery-manifest.py",
+    "scripts/requirement_discovery.py",
+    "scripts/requirement_evidence.py",
+    "scripts/requirement_intake.py",
+    "scripts/route-context.py",
+    "scripts/run-ledger.py",
+    "scripts/session-control.py",
+    "scripts/session_control.py",
+    "scripts/spec-kit-amendment.py",
+    "scripts/spec-kit-bridge.py",
+    "scripts/spec-kit-ci-gate.py",
+    "scripts/spec-kit-converge.py",
+    "scripts/spec-kit-detect.py",
+    "scripts/spec-kit-evidence.py",
+    "scripts/spec-kit-import.py",
+    "scripts/spec-kit-integration.py",
+    "scripts/spec-kit-observability.py",
+    "scripts/spec-kit-policy.py",
+    "scripts/spec-kit-slices.py",
+    "scripts/start_posture.py",
+    "scripts/sync-adapters.py",
+    "scripts/sync-governance.py",
+    "scripts/tailtrail-registry.py",
+    "scripts/tailtrail.py",
+    "scripts/target_workspace.py",
+    "scripts/task-recovery-boundary.py",
+    "scripts/task-recovery.py",
+    "scripts/task-start.py",
+    "scripts/testing-profile.py",
+    "scripts/token_budget_coach.py",
+    "scripts/ui-consistency.py",
+    "scripts/ui_planning.py",
+    "scripts/validation-receipt.py",
+)
+
+CORE_CONTEXT: tuple[str, ...] = (
+    "context/TailTrail.map.md",
+    "context/guardrail-layers.md",
+    "context/intent-aliases.md",
+    "context/slices.md",
+    "context/token-router.md",
+)
+
+CORE_TEMPLATES: tuple[str, ...] = (
+    "templates/dependency-decision.example.json",
+    "templates/enterprise-target-policy.example.json",
+    "templates/intent-overrides.json",
+)
+
+SURFACES = ("core", "extended")
+DEFAULT_SURFACE = "extended"
+
+
+def core_file_set() -> set[str]:
+    return set(CORE_FILES) | set(CORE_CONTEXT) | set(CORE_TEMPLATES)
+
+
+def registry_surface_entries(surface: str) -> dict[str, set[str]]:
+    path = ROOT / "tailtrail-registry.json"
+    if not path.is_file():
+        return {"files": set(), "scripts": set()}
+    try:
+        registry = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"files": set(), "scripts": set()}
+    files: set[str] = set()
+    scripts: set[str] = set()
+    for feature in registry.get("features", []):
+        if not isinstance(feature, dict):
+            continue
+        if feature.get("status") != "implemented" or feature.get("surface") != surface:
+            continue
+        files.update(item for item in feature.get("docs", []) if isinstance(item, str))
+        scripts.update(item for item in feature.get("scripts", []) if isinstance(item, str))
+    if surface == "core":
+        files.update({"tailtrail-registry.json", "tailtrail-registry.schema.json"})
+        scripts.add("scripts/tailtrail-registry.py")
+    return {"files": files, "scripts": scripts}
+
+
+def resolve(surface: str, extended_files, extended_dirs, extended_scripts):
+    """Return the (files, dirs, scripts) tuple for the requested surface.
+
+    Extended reproduces the caller's full lists byte-for-byte.
+    Core is a strict subset intersected with the caller's lists so upstream
+    additions to the extended manifest never leak into Core.
+    """
+    if surface == "extended":
+        return extended_files, extended_dirs, extended_scripts
+    if surface == "core":
+        registry_entries = registry_surface_entries("core")
+        core_files = core_file_set() | registry_entries["files"]
+        core_scripts = set(CORE_SCRIPTS) | registry_entries["scripts"]
+        files = tuple(sorted({p for p in extended_files if p in core_files} | registry_entries["files"]))
+        dirs = tuple(p for p in extended_dirs if p in CORE_DIRS)
+        scripts = tuple(sorted({p for p in extended_scripts if p in core_scripts} | registry_entries["scripts"]))
+        return files, dirs, scripts
+    raise ValueError(f"Unknown surface: {surface}")
