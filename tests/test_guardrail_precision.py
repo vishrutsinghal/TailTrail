@@ -79,7 +79,7 @@ class GuardrailPrecisionTests(unittest.TestCase):
             None,
             True,
         )
-        self.assertEqual(report["total_fixtures"], 64)
+        self.assertEqual(report["total_fixtures"], 65)
         self.assertEqual(report["below_threshold_rules"], [])
         self.assertEqual(set(report["rules"]), set(precision.RULES))
         self.assertTrue(all(rule["status"] == "ok" for rule in report["rules"].values()))

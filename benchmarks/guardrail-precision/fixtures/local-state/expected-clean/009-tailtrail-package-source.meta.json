@@ -1,0 +1,8 @@
+{
+  "extra_texts": {},
+  "id": "local-state/expected-clean/009",
+  "label": "expected-clean",
+  "notes": "The installable TailTrail Python package is source code, not local runtime state.",
+  "rule": "local-state",
+  "summary": "TailTrail package source remains eligible for reviewed commits."
+}

@@ -1,0 +1,6 @@
+diff --git a/tailtrail/install/files.py b/tailtrail/install/files.py
+--- a/tailtrail/install/files.py
++++ b/tailtrail/install/files.py
+@@ -1 +1,2 @@
+ old
++new

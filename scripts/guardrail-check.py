@@ -80,7 +80,6 @@ LOCAL_STATE_PATTERNS = (
     re.compile(r"^\.tailtrail/(quality-runs|vulnerability-runs|task-starts)/"),
     re.compile(r"^\.tailtrail/"),
     re.compile(r"^tailtrail/\.tailtrail-install\.json$"),
-    re.compile(r"^tailtrail/"),
     re.compile(r"^aidlc-docs/"),
 )
 
