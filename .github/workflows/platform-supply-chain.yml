@@ -29,19 +29,19 @@ jobs:
         run: |
           python -m pip wheel . --no-deps --no-build-isolation --wheel-dir dist
           python setup.py sdist --dist-dir dist
-          python -m pip wheel dist/tailtrail-1.0.0.tar.gz --no-deps --no-build-isolation --wheel-dir sdist-wheel
+          python -m pip wheel dist/tailtrail-1.1.0.tar.gz --no-deps --no-build-isolation --wheel-dir sdist-wheel
       - name: Rebuild and compare bytes
         run: |
           python -m pip wheel . --no-deps --no-build-isolation --wheel-dir reproducible
           python setup.py sdist --dist-dir reproducible
-          cmp dist/tailtrail-1.0.0-py3-none-any.whl reproducible/tailtrail-1.0.0-py3-none-any.whl
-          cmp dist/tailtrail-1.0.0.tar.gz reproducible/tailtrail-1.0.0.tar.gz
+          cmp dist/tailtrail-1.1.0-py3-none-any.whl reproducible/tailtrail-1.1.0-py3-none-any.whl
+          cmp dist/tailtrail-1.1.0.tar.gz reproducible/tailtrail-1.1.0.tar.gz
       - name: Inspect both publication artifacts
-        run: python scripts/package-release-proof.py --wheel dist/tailtrail-1.0.0-py3-none-any.whl --sdist dist/tailtrail-1.0.0.tar.gz
+        run: python scripts/package-release-proof.py --wheel dist/tailtrail-1.1.0-py3-none-any.whl --sdist dist/tailtrail-1.1.0.tar.gz
       - name: Generate and verify supply-chain evidence
         run: |
-          python scripts/supply-chain.py create --artifact dist/tailtrail-1.0.0-py3-none-any.whl --artifact dist/tailtrail-1.0.0.tar.gz --output release-evidence --commit "$GITHUB_SHA"
-          python scripts/supply-chain.py verify --artifact dist/tailtrail-1.0.0-py3-none-any.whl --artifact dist/tailtrail-1.0.0.tar.gz --bundle release-evidence
+          python scripts/supply-chain.py create --artifact dist/tailtrail-1.1.0-py3-none-any.whl --artifact dist/tailtrail-1.1.0.tar.gz --output release-evidence --commit "$GITHUB_SHA"
+          python scripts/supply-chain.py verify --artifact dist/tailtrail-1.1.0-py3-none-any.whl --artifact dist/tailtrail-1.1.0.tar.gz --bundle release-evidence
       - name: Upload immutable qualification inputs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -49,9 +49,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: |
-            dist/tailtrail-1.0.0-py3-none-any.whl
-            dist/tailtrail-1.0.0.tar.gz
-            sdist-wheel/tailtrail-1.0.0-py3-none-any.whl
+            dist/tailtrail-1.1.0-py3-none-any.whl
+            dist/tailtrail-1.1.0.tar.gz
+            sdist-wheel/tailtrail-1.1.0-py3-none-any.whl
             release-evidence/
 
   platform-matrix:
@@ -62,7 +62,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -76,7 +76,7 @@ jobs:
           name: canonical-release-inputs
           path: release-inputs
       - name: Exercise both artifact routes and every host lifecycle
-        run: python scripts/platform-qualification.py exercise --wheel release-inputs/dist/tailtrail-1.0.0-py3-none-any.whl --sdist-wheel release-inputs/sdist-wheel/tailtrail-1.0.0-py3-none-any.whl --output platform-receipts/${{ runner.os }}-py${{ matrix.python-version }}.json --commit ${{ github.sha }}
+        run: python scripts/platform-qualification.py exercise --wheel release-inputs/dist/tailtrail-1.1.0-py3-none-any.whl --sdist-wheel release-inputs/sdist-wheel/tailtrail-1.1.0-py3-none-any.whl --output platform-receipts/${{ runner.os }}-py${{ matrix.python-version }}.json --commit ${{ github.sha }}
       - name: Upload observed platform receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -103,7 +103,7 @@ jobs:
           path: observed-receipts
           merge-multiple: true
       - name: Require exact OS, Python, artifact, and host coverage
-        run: python scripts/platform-qualification.py report --receipts observed-receipts --commit ${{ github.sha }} --wheel release-inputs/dist/tailtrail-1.0.0-py3-none-any.whl --sdist-wheel release-inputs/sdist-wheel/tailtrail-1.0.0-py3-none-any.whl > platform-qualification-report.json
+        run: python scripts/platform-qualification.py report --receipts observed-receipts --commit ${{ github.sha }} --wheel release-inputs/dist/tailtrail-1.1.0-py3-none-any.whl --sdist-wheel release-inputs/sdist-wheel/tailtrail-1.1.0-py3-none-any.whl > platform-qualification-report.json
       - name: Upload the exact hosted aggregate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -136,8 +136,8 @@ jobs:
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
           subject-path: |
-            release-inputs/dist/tailtrail-1.0.0-py3-none-any.whl
-            release-inputs/dist/tailtrail-1.0.0.tar.gz
+            release-inputs/dist/tailtrail-1.1.0-py3-none-any.whl
+            release-inputs/dist/tailtrail-1.1.0.tar.gz
             qualification/platform-qualification-report.json
 
   pypi-publication:
@@ -189,8 +189,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create "$GITHUB_REF_NAME"
-          release-inputs/dist/tailtrail-1.0.0-py3-none-any.whl
-          release-inputs/dist/tailtrail-1.0.0.tar.gz
+          release-inputs/dist/tailtrail-1.1.0-py3-none-any.whl
+          release-inputs/dist/tailtrail-1.1.0.tar.gz
           release-inputs/release-evidence/SHA256SUMS
           release-inputs/release-evidence/tailtrail.cdx.json
           release-inputs/release-evidence/release-evidence.json
@@ -200,7 +200,7 @@ jobs:
       - name: Observe the published wheel
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python scripts/release-publication.py observe --version 1.0.0 --commit "$GITHUB_SHA" --artifact release-inputs/dist/tailtrail-1.0.0-py3-none-any.whl --output release-publication-receipt.json
+        run: python scripts/release-publication.py observe --version 1.1.0 --commit "$GITHUB_SHA" --artifact release-inputs/dist/tailtrail-1.1.0-py3-none-any.whl --output release-publication-receipt.json
       - name: Identity-attest the observed publication receipt
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:

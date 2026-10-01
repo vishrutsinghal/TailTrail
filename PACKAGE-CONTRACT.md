@@ -9,8 +9,8 @@ compatibility wrapper; it opts into that mode with
 
 ## Supported runtime
 
-- CPython 3.12 and 3.13 are supported.
-- Packaging metadata rejects Python versions outside `>=3.12,<3.14`.
+- CPython 3.12, 3.13 and 3.14 are supported.
+- Packaging metadata rejects Python versions outside `>=3.12,<3.15`.
 - `tailtrail --version` and `tailtrail version --format json` report the
   compatibility decision without running a project command.
 - The package has no runtime dependencies. Its existing build requirements are

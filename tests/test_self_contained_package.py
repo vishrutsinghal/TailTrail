@@ -100,9 +100,10 @@ class SelfContainedPackageTests(unittest.TestCase):
     def test_declared_python_and_exit_contract(self) -> None:
         self.assertTrue(python_compatibility((3, 12))[0])
         self.assertTrue(python_compatibility((3, 13))[0])
+        self.assertTrue(python_compatibility((3, 14))[0])
         supported, message = python_compatibility((3, 11))
         self.assertFalse(supported)
-        self.assertIn(">=3.12,<3.14", message)
+        self.assertIn(">=3.12,<3.15", message)
         self.assertEqual({int(item) for item in ExitCode}, {0, 1, 2, 3, 70})
 
     def test_migration_contract_is_versioned_and_fail_closed(self) -> None:

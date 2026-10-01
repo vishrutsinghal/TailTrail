@@ -3,7 +3,7 @@
   "type": "tailtrail-platform-release-contract",
   "supported_operating_systems": ["linux", "macos", "windows"],
   "compatibility_fixtures": ["wsl"],
-  "supported_python_versions": ["3.12", "3.13"],
+  "supported_python_versions": ["3.12", "3.13", "3.14"],
   "artifact_routes": ["wheel", "sdist-to-wheel"],
   "host_profiles": ["codex:core", "copilot:core", "claude:core"],
   "required_checks": [

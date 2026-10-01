@@ -7,7 +7,7 @@ This file explains the public support boundary for TailTrail.
 - Latest public `master` branch until tagged releases are introduced.
 - Latest tagged public release after tags are introduced.
 - Source checkout usage with `python3 scripts/tailtrail.py`.
-- Self-contained wheel and sdist installs on CPython 3.12 and 3.13.
+- Self-contained wheel and sdist installs on CPython 3.12, 3.13 and 3.14.
 - The `tailtrail` console command, resource-integrity check, and stable Python
   API named in `PACKAGE-CONTRACT.md`.
 - Transactional Codex, Copilot, and Claude repository projection through the
@@ -19,7 +19,7 @@ This file explains the public support boundary for TailTrail.
 - Documented local commands, public docs, and assistant adapter files.
 - Release candidates that pass the shared `release-manifest.json` gates in `.github/workflows/trust.yml`.
 - Linux, macOS, and Windows are release-supported for a specific commit only
-  when its exact CPython 3.12/3.13 hosted receipt aggregate passes. Until those
+  when its exact CPython 3.12/3.13/3.14 hosted receipt aggregate passes. Until those
   receipts exist, the workflow is configured but platform support is not
   claimed.
 - Canonical wheels and sdists whose hashes, CycloneDX SBOM, provenance

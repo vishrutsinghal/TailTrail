@@ -148,7 +148,7 @@ Main entry point:
 python3 scripts/tailtrail.py <command> [args]
 ```
 
-Self-contained package entry point (CPython 3.12 or 3.13):
+Self-contained package entry point (CPython 3.12, 3.13 or 3.14):
 
 ```bash
 tailtrail <command> [args]

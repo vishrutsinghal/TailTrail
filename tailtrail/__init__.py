@@ -15,4 +15,4 @@ def main(argv=None):
     return cli_main(argv)
 
 __all__ = ["ExitCode", "PackageStatus", "main", "package_status"]
-__version__ = "1.0.0"
+__version__ = "1.1.0"
