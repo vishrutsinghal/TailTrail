@@ -2,7 +2,7 @@
   "schema_version": "1",
   "type": "tailtrail-repository-enforcement-policy",
   "policy_version": 1,
-  "minimum_tailtrail_version": "0.6.0",
+  "minimum_tailtrail_version": "1.0.0",
   "rules": {
     "approval-scope": {"classification": "enforced", "enabled": true, "severity": "high", "protected_paths": [".github/actions/", ".github/workflows/", "schemas/", "pyproject.toml", "release-manifest.json", "tailtrail-enforcement-policy.json"]},
     "evidence-truth": {"classification": "enforced", "enabled": true, "severity": "high"},

@@ -12,4 +12,7 @@ from pathlib import Path
 
 SCRIPTS_DIR = str(Path(__file__).resolve().parents[1] / "scripts")
 if SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, SCRIPTS_DIR)
+    # Keep the repository root ahead of scripts so ``import tailtrail`` resolves
+    # the package directory rather than the compatibility script
+    # ``scripts/tailtrail.py``. Flat script imports remain available at index 1.
+    sys.path.insert(1 if sys.path else 0, SCRIPTS_DIR)

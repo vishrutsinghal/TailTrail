@@ -46,8 +46,8 @@ class CrossPlatformSupplyChainTests(unittest.TestCase):
     def test_supply_chain_bundle_round_trip_and_tamper_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            wheel = root / "tailtrail-0.6.0-py3-none-any.whl"
-            sdist = root / "tailtrail-0.6.0.tar.gz"
+            wheel = root / "tailtrail-1.0.0-py3-none-any.whl"
+            sdist = root / "tailtrail-1.0.0.tar.gz"
             wheel.write_bytes(b"wheel bytes")
             sdist.write_bytes(b"sdist bytes")
             bundle = root / "evidence"

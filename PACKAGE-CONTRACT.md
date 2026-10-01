@@ -1,6 +1,6 @@
 # TailTrail Package Contract
 
-TailTrail 0.6 is distributed as a self-contained Python wheel and source
+TailTrail 1.0 is distributed as a self-contained Python wheel and source
 distribution. Normal installed execution uses resources below the installed
 `tailtrail` package and never searches the current directory, parent
 directories, or a source checkout. `tailtrail_cli.py` is a source-checkout
@@ -23,7 +23,7 @@ The console command and these Python names are compatibility-controlled:
 `tailtrail.ExitCode`. Repository scripts, `tailtrail.scripts`, and migration
 implementation modules are internal. Additive fields may be introduced in JSON
 objects; existing field meanings and documented exit classes are preserved for
-the 0.6 line.
+the 1.0 line.
 
 Exit classes are: `0` success, `1` validation failure, `2` usage or rejected
 input, `3` unavailable runtime/resource, and `70` internal package failure.
@@ -33,10 +33,10 @@ legacy command that cannot emit native JSON is contained in a
 
 Guided-setup JSON is compact by default: it retains identity, status,
 diagnostics, issue text, counts, and `plan_summary`, while omitting bulk path
-arrays and plan entries. Existing lifecycle JSON remains full in the 0.6 line;
+arrays and plan entries. Existing lifecycle JSON remains full in the 1.0 line;
 `--compact` selects the summary and `--verbose` selects full setup detail.
 `tailtrail setup`, `upgrade`, `release info`, and `qualify`
-are additive 0.6 command surfaces; upgrade accepts only a local hash-pinned
+are stable 1.0 command surfaces; upgrade accepts only a local hash-pinned
 wheel and requires `--approved` before changing the active environment.
 
 ## Resources, integrity, and migrations
@@ -56,8 +56,8 @@ their schemas. Extended transactional Codex, Copilot, and Claude payloads copy
 these resources under the common versioned payload; install, update, verify,
 rollback, wheel, and sdist tests fail if any are missing.
 
-Migration API version `1` represents the initial packaged-state format. No
-data migration is required for TailTrail 0.6; future migrations must be
+Migration API version `1` represents the initial packaged-state format first
+shipped in 0.6. No data migration is required for TailTrail 1.0; future migrations must be
 versioned, forward-only by default, idempotently testable, and retain an
 explicit recovery path. Migration internals are not part of the stable Python
 API.

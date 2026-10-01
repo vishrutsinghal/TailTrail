@@ -2,7 +2,7 @@
   "schema_version": "1",
   "product": {
     "name": "tailtrail",
-    "version": "0.6.0",
+    "version": "1.0.0",
     "version_sources": [
       "pyproject.toml",
       ".codex-plugin/plugin.json",
@@ -334,6 +334,8 @@
         "python-version: [\"3.12\", \"3.13\"]",
         "python scripts/platform-qualification.py report",
         "python scripts/supply-chain.py verify",
+        "pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+        "https://pypi.org/p/tailtrail",
         "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6",
         "needs: identity-attestation",
         "gh release create",

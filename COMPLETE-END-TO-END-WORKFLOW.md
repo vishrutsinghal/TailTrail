@@ -127,7 +127,7 @@ runtime package dependencies.
 
 ```bash
 python3.12 -m venv .venv
-.venv/bin/python -m pip install tailtrail-0.6.0-py3-none-any.whl
+.venv/bin/python -m pip install tailtrail-1.0.0-py3-none-any.whl
 .venv/bin/tailtrail package-info --format json
 .venv/bin/tailtrail hello
 .venv/bin/tailtrail doctor
@@ -218,9 +218,9 @@ For a reviewed package upgrade, use one local hash-pinned wheel for the Python
 environment and all selected project payloads:
 
 ```bash
-tailtrail upgrade --artifact tailtrail-0.6.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target . --dry-run
-tailtrail upgrade --artifact tailtrail-0.6.0-py3-none-any.whl \
+tailtrail upgrade --artifact tailtrail-1.0.0-py3-none-any.whl \
   --sha256 <exact-sha256> --host all --target . --approved
 ```
 

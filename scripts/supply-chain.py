@@ -98,7 +98,7 @@ def create_bundle(artifacts: list[Path], output: Path, repository: str, commit: 
         "serialNumber": f"urn:uuid:{commit[:8]}-{commit[8:12]}-4{commit[13:16]}-a{commit[17:20]}-{commit[20:32]}",
         "version": 1,
         "metadata": {
-            "component": {"type": "application", "name": "tailtrail", "version": "0.6.0"},
+            "component": {"type": "application", "name": "tailtrail", "version": "1.0.0"},
             "properties": [{"name": "tailtrail:runtime-dependency-count", "value": "0"}],
         },
         "components": components,

@@ -17,7 +17,7 @@ SUPPORTED_MAX_EXCLUSIVE = (3, 14)
 def python_compatibility(version: tuple[int, int] | None = None) -> tuple[bool, str]:
     version = version or (sys.version_info.major, sys.version_info.minor)
     supported = SUPPORTED_MIN <= version < SUPPORTED_MAX_EXCLUSIVE
-    return supported, f"Python {version[0]}.{version[1]} is {'supported' if supported else 'unsupported'}; TailTrail 0.6 requires Python >=3.12,<3.14."
+    return supported, f"Python {version[0]}.{version[1]} is {'supported' if supported else 'unsupported'}; TailTrail 1.0 requires Python >=3.12,<3.14."
 
 
 def require_supported_python() -> None:

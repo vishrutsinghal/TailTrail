@@ -47,7 +47,7 @@ jobs:
         run: |
           python -m pip wheel . --no-deps --wheel-dir dist
           python setup.py sdist --dist-dir dist
-          python scripts/package-release-proof.py --wheel dist/tailtrail-0.6.0-py3-none-any.whl --sdist dist/tailtrail-0.6.0.tar.gz
+          python scripts/package-release-proof.py --wheel dist/tailtrail-1.0.0-py3-none-any.whl --sdist dist/tailtrail-1.0.0.tar.gz
       - name: Validate feature registry
         run: python scripts/tailtrail-registry.py validate --strict
       - name: Verify adapter guidance contracts

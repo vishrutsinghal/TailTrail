@@ -255,4 +255,4 @@ These controls are mandatory before TailTrail can report completion; they are sc
 
 # TailTrail Official AI-DLC Requirements
 
-(Recorded via \	ailtrail planning official-aidlc-questions\ for the same run; fixture stub stands in for host-generated questions.)
+(Recorded via `tailtrail planning official-aidlc-questions` for the same run; fixture stub stands in for host-generated questions.)

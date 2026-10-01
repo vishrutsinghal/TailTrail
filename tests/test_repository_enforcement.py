@@ -227,7 +227,7 @@ class RepositoryEnforcementTests(unittest.TestCase):
         self.assertNotIn("pull-requests: write", workflow)
         self.assertIn("actions/checkout@", workflow)
         self.assertIn("actions/upload-artifact@", workflow)
-        self.assertIn('version: "0.6.0"', workflow)
+        self.assertIn('version: "1.0.0"', workflow)
         self.assertIn("TailTrail version must be exact", action)
         self.assertIn("report.sarif", action)
         self.assertIn("TAILTRAIL_PR_BODY_INPUT", action)
